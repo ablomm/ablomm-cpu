@@ -1,0 +1,11 @@
+`define ALU_ADD 4'h0
+`define ALU_ADDC 4'h1
+`define ALU_SUB 4'h2
+`define ALU_SUBB 4'h3
+`define ALU_INC 4'h4
+`define ALU_DEC 4'h5
+`define ALU_SHL 4'h6
+`define ALU_SHR 4'h7
+`define ALU_NEG 4'h8
+`define ALU_PASSA 4'h9
+`define ALU_PASSB 4'ha
