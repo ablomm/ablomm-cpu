@@ -1,0 +1,13 @@
+alu.sv
+mem.sv
+counter.sv
+control.sv
+cpu.sv
+cpu_reg.sv
+soc.sv
+register_file.sv
+
+testbenches/alu_tb.v
+testbenches/control_tb.v
+testbenches/mem_tb.v
+
