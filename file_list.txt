@@ -7,7 +7,8 @@ cpu_reg.sv
 soc.sv
 register_file.sv
 
-testbenches/alu_tb.v
-testbenches/control_tb.v
-testbenches/mem_tb.v
-
+testbenches/alu_tb.sv
+testbenches/control_tb.sv
+testbenches/mem_tb.sv
+testbenches/cpu_reg_tb.sv
+testbenches/register_file_tb.sv

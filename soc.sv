@@ -21,4 +21,5 @@ module soc (
       .data(data_bus),
 	  .out (result_bus)
   );
+
 endmodule
