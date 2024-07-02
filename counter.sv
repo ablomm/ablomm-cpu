@@ -10,15 +10,15 @@ module counter #(
     output tri [SIZE-1:0] out
 );
 
-  reg [SIZE-1:0] out_reg;
+  reg [SIZE-1:0] value;
 
-  assign out = oe ? out_reg : 'hz;
+  assign out = oe ? value : 'hz;
 
   always_ff @(posedge clk) begin
-    if (cnt) out_reg <= out_reg + 1;
-	if (ld) out_reg <= in;
+    if (cnt) value <= value + 1;
+    if (ld) value <= in;
   end
 
-  always @(posedge rst) out_reg <= 0;
+  always @(posedge rst) value <= 0;
 
 endmodule
