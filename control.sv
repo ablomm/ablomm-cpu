@@ -1,7 +1,7 @@
 module control (
     input clk,
     input [31:0] ir,
-    input [2:0] status,
+    input [3:0] status,
     output logic pc_rst,
     output logic inc_pc,
     output logic oe_mdr,

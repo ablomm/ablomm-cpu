@@ -4,7 +4,7 @@ module alu_tb;
 
   logic oe;
   logic [31:0] a, b;
-  wire  [ 2:0] status;
+  wire  [ 3:0] status;
   logic [ 3:0] operation;
   wire  [31:0] out;
 
@@ -23,15 +23,17 @@ module alu_tb;
   initial begin
     $display("testing addition:");
 
-    test_sum(1, 1, 3'b000);
-    test_sum(2, 1, 3'b000);
-    test_sum(32'hffffffff, 2, 3'b001);
+    test_sum(1, 1, 4'b0000);
+    test_sum(2, 1, 4'b0000);
+    test_sum(32'hffffffff, 2, 4'b0010);
+    test_sum(32'h7fffffff, 1, 4'b1001);
 
     $display("\ntesting subtraction:");
 
-    test_sub(1, 1, 3'b010);
-    test_sub(2, 1, 3'b000);
-    test_sub(2, 3, 3'b101);
+    test_sub(1, 1, 4'b0100);
+    test_sub(2, 1, 4'b0000);
+    test_sub(2, 3, 4'b1010);
+    test_sub(-32'h80000000, 1, 4'b0001);
 
     // $finish(0);
   end
@@ -39,7 +41,7 @@ module alu_tb;
   initial $monitor("a = %d, b = %d, out = %d, op = %h, status = %b", a, b, out, operation, status);
 
   task static test_sum(input logic [31:0] a_in, input logic [31:0] b_in,
-                       input logic [2:0] status_in);
+                       input logic [3:0] status_in);
     begin
       operation = `ALU_ADD;
       a = a_in;
@@ -53,7 +55,7 @@ module alu_tb;
   endtask
 
   task static test_sub(input logic [31:0] a_in, input logic [31:0] b_in,
-                       input logic [2:0] status_in);
+                       input logic [3:0] status_in);
     begin
       operation = `ALU_SUB;
       a = a_in;

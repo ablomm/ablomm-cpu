@@ -75,9 +75,9 @@ module cpu (
       .value(ir_value)
   );
 
-  wire [2:0] status_value;
+  wire [3:0] status_value;
   cpu_reg #(
-      .SIZE(3)
+      .SIZE(4)
   ) status (
       .clk(clk),
       .result_bus(alu_status_out),
@@ -111,7 +111,7 @@ module cpu (
       .out(addr_bus)
   );
 
-  wire [2:0] alu_status_out;
+  wire [3:0] alu_status_out;
   alu alu0 (
       .oe(oe_alu),
       .operation(alu_op),

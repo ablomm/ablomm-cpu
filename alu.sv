@@ -5,7 +5,7 @@ module alu (
     input [31:0] a,  // data bus
     input [31:0] b,  // addr bus
     output tri [31:0] out,  // result bus
-    output logic [2:0] status  // NZC
+    output logic [3:0] status  // NZCV
 );
 
   `include "include/alu_op.vh"
@@ -16,14 +16,14 @@ module alu (
 
   always_comb begin
     case (operation)
-      `ALU_ADD: {status[0], out_reg} = a + b;
-      `ALU_ADDC: {status[0], out_reg} = a + b + carry_in;
-      `ALU_SUB: {status[0], out_reg} = a - b;
-      `ALU_SUBB: {status[0], out_reg} = a - b - ~carry_in;
-      `ALU_INC: {status[0], out_reg} = a + 1;
-      `ALU_DEC: {status[0], out_reg} = a - 1;
-      `ALU_SHL: {status[0], out_reg} = a << 1;
-      `ALU_SHR: {status[0], out_reg} = a >> 1;
+      `ALU_ADD: {status[1], out_reg} = a + b;
+      `ALU_ADDC: {status[1], out_reg} = a + b + carry_in;
+      `ALU_SUB: {status[1], out_reg} = a - b;
+      `ALU_SUBB: {status[1], out_reg} = a - b - ~carry_in;
+      `ALU_INC: {status[1], out_reg} = a + 1;
+      `ALU_DEC: {status[1], out_reg} = a - 1;
+      `ALU_SHL: {status[1], out_reg} = a << 1;
+      `ALU_SHR: {status[1], out_reg} = a >> 1;
       `ALU_NEG: out_reg = -a;
       `ALU_PASSA: out_reg = a;
       `ALU_PASSB: out_reg = b;
@@ -33,9 +33,13 @@ module alu (
 
   always @(out_reg) begin
     // negative
-    status[2] = out_reg[31] == 1;
+    status[3] = out_reg[31] == 1;
 
     // zero
-    status[1] = out_reg == 0;
+    status[2] = out_reg == 0;
+
+	// overflow
+	status[0] = out_reg[31] ^ a[31] ^ b[31] ^ status[1];
+
   end
 endmodule
