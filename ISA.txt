@@ -1,0 +1,24 @@
+# All in the form a <- B (OP) C
+AND[S] <A> <B> <C>				        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+OR[S] <A> <B> <C>				        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+XOR[S] <A> <B> <C>				        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+NOT[S] <A> <C>				            (14 bit operation (1 bit for if C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val)
+
+ADD[S] <A> <B> <C>		    	        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+SUB[S] <A> <B> <C>                      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+SHR[S] <A> <B> <C>                      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+ASHR[S] <A> <B> <C>(arithemic shr)      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+SHL[S] <A> <B> <C>                      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+
+LD <A> <B>				                (8 bit operation (1 bit for if B is addr/immediate)) (8 bit reg) (16 bit addr/immediate)
+ST (store) <A> <ADDR>	                (8 bit operation) (8 bit reg) (16 bit addr)
+
+PUSH <A>                                (24 bit operation) (8 bit reg)
+POP <A>                                 (24 bit operation) (8 bit reg)
+
+MOV <A> <B>                             (24 bit operation) (8 bit reg) (8 bit reg)
+
+JMP[<COND>] <ADDR>				        (12 bit operation) (4 bit COND) (16 bit addr) # dunno about 4 bit condition
+JMP <ADDR>		        		        (16 bit operation) (16 bit addr)
+
+NOP                                     (32 bit operation)

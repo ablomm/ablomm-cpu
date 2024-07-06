@@ -1,5 +1,6 @@
-module cpu_reg #(
-    parameter integer SIZE = 32
+module counter_cpu_reg #(
+    parameter integer SIZE  = 32,
+    parameter integer COUNT = 1
 ) (
     input clk,
     output tri [SIZE-1:0] a,
@@ -8,15 +9,19 @@ module cpu_reg #(
     input oe_a,
     input oe_b,
     input ld,
-    output logic [SIZE-1:0] value  // only if you need to direclty access (not on the data/addr bus)
+    output logic [SIZE-1:0] value,
+    input rst,
+    input cnt
 );
 
-  assign out   = value;
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
 
   always_ff @(posedge clk) begin
+    if (cnt) value <= value + COUNT;
     if (ld) value <= in;
   end
+
+  always @(posedge rst) value <= 0;
 
 endmodule

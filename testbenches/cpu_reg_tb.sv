@@ -1,19 +1,19 @@
 module cpu_reg_tb;
   logic clk;
-  tri [31:0] data_bus;
-  tri [31:0] addr_bus;
-  logic [31:0] result_bus;
-  logic oe_data;
-  logic oe_addr;
+  tri [31:0] a;
+  tri [31:0] b;
+  logic [31:0] in;
+  logic oe_a;
+  logic oe_b;
   logic ld;
 
   cpu_reg reg0 (
       .clk(clk),
-      .data_bus(data_bus),
-      .addr_bus(addr_bus),
-      .result_bus(result_bus),
-      .oe_data(oe_data),
-      .oe_addr(oe_addr),
+      .a(a),
+      .b(b),
+      .in(in),
+      .oe_a(oe_a),
+      .oe_b(oe_b),
       .ld(ld)
   );
 
@@ -22,13 +22,13 @@ module cpu_reg_tb;
     test_ld_oe(321);
   end
 
-  task static ld_data(input logic [31:0] data_in);
+  task static ld_a(input logic [31:0] data_in);
     begin
       clk = 0;
-      oe_data = 0;
-      oe_addr = 0;
+      oe_a = 0;
+      oe_b = 0;
       #1;
-      result_bus = data_in;
+      in = data_in;
       ld = 1;
       clk = 1;
       #1;
@@ -36,30 +36,30 @@ module cpu_reg_tb;
     end
   endtask
 
-  task static set_oe_data();
+  task static set_oe_a();
     begin
-      oe_data = 1;
+      oe_a = 1;
       #1;
     end
   endtask
 
-  task static set_oe_addr();
+  task static set_oe_b();
     begin
-      oe_addr = 1;
+      oe_b = 1;
       #1;
     end
   endtask
 
   task static test_ld_oe(input logic [32:0] data_in);
     begin
-      ld_data(data_in);
-      set_oe_data();
-      $display("data_bus = %d", data_bus);
-      if (data_bus !== data_in) $finish(1);
+      ld_a(data_in);
+      set_oe_a();
+      $display("a = %d", a);
+      if (a !== data_in) $finish(1);
 
-      set_oe_addr();
-      $display("addr_bus = %d", addr_bus);
-      if (addr_bus !== data_in) $finish(1);
+      set_oe_b();
+      $display("b_bus = %d", b);
+      if (b !== data_in) $finish(1);
     end
   endtask
 endmodule
