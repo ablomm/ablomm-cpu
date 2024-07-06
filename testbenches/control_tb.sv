@@ -23,12 +23,14 @@ module control_tb;
   logic oe_mar;
   logic ld_mar;
 
-  logic oe_pc;
+  logic oe_a_pc;
+  logic oe_b_pc;
   logic ld_pc;
   logic rst_pc;
   logic inc_pc;
 
-  logic oe_sp;
+  logic oe_a_sp;
+  logic oe_b_sp;
   logic ld_sp;
   logic rst_sp;
   logic dec_sp;
@@ -64,12 +66,14 @@ module control_tb;
 	  .oe_mar(oe_mar),
 	  .ld_mar(ld_mar),
 
-	  .oe_pc(oe_pc),
+	  .oe_a_pc(oe_pc),
+	  .oe_b_pc(oe_pc),
 	  .ld_pc(ld_pc),
 	  .rst_pc(rst_pc),
 	  .inc_pc(inc_pc),
 
-	  .oe_sp(oe_sp),
+	  .oe_a_sp(oe_sp),
+	  .oe_b_sp(oe_sp),
 	  .ld_sp(ld_sp),
 	  .rst_sp(rst_sp),
 	  .dec_sp(dec_sp),

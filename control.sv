@@ -9,8 +9,8 @@ module control (
     output logic oe_a_reg_file,
     output logic oe_b_reg_file,
     output logic ld_reg_file,
-    output logic [7:0] sel_a_reg_file,
-    output logic [7:0] sel_b_reg_file,
+    output logic [3:0] sel_a_reg_file,
+    output logic [3:0] sel_b_reg_file,
 
     output logic ld_ir,
 
@@ -22,12 +22,14 @@ module control (
     output logic oe_mar,
     output logic ld_mar,
 
-    output logic oe_pc,
+    output logic oe_a_pc,
+    output logic oe_b_pc,
     output logic ld_pc,
     output logic rst_pc,
     output logic inc_pc,
 
-    output logic oe_sp,
+    output logic oe_a_sp,
+    output logic oe_b_sp,
     output logic ld_sp,
     output logic rst_sp,
     output logic dec_sp,
@@ -91,12 +93,14 @@ module control (
 	  oe_mar,
 	  ld_mar,
 
-	  oe_pc,
+	  oe_a_pc,
+	  oe_b_pc,
 	  ld_pc,
 	  rst_pc,
 	  inc_pc,
 
-	  oe_sp,
+	  oe_a_sp,
+	  oe_b_sp,
 	  ld_sp,
 	  rst_sp,
 	  dec_sp,
@@ -111,7 +115,7 @@ module control (
 
     case (state)
       FETCH: begin
-        oe_pc  <= 1;
+        oe_b_pc  <= 1;
         mem_rd <= 1;
         ld_ir  <= 1;
       end

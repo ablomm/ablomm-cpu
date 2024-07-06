@@ -11,8 +11,8 @@ module cpu (
   wire oe_a_reg_file;
   wire oe_b_reg_file;
   wire ld_reg_file;
-  wire [7:0] sel_a_reg_file;
-  wire [7:0] sel_b_reg_file;
+  wire [3:0] sel_a_reg_file;
+  wire [3:0] sel_b_reg_file;
 
   wire ld_ir;
 
@@ -24,12 +24,14 @@ module cpu (
   wire oe_mar;
   wire ld_mar;
 
-  wire oe_pc;
+  wire oe_a_pc;
+  wire oe_b_pc;
   wire ld_pc;
   wire rst_pc;
   wire inc_pc;
 
-  wire oe_sp;
+  wire oe_a_sp;
+  wire oe_b_sp;
   wire ld_sp;
   wire rst_sp;
   wire dec_sp;
@@ -46,44 +48,60 @@ module cpu (
       .ir(ir_value),
       .status(status_value),
 
-	  .mem_rd(mem_rd),
-	  .mem_wr(mem_wr),
+      .mem_rd(mem_rd),
+      .mem_wr(mem_wr),
 
-	  .oe_a_reg_file(oe_a_reg_file),
-	  .oe_b_reg_file(oe_b_reg_file),
-	  .ld_reg_file(ld_reg_file),
-	  .sel_a_reg_file(sel_a_reg_file),
-	  .sel_b_reg_file(sel_b_reg_file),
+      .oe_a_reg_file(oe_a_reg_file),
+      .oe_b_reg_file(oe_b_reg_file),
+      .ld_reg_file(ld_reg_file),
+      .sel_a_reg_file(sel_a_reg_file),
+      .sel_b_reg_file(sel_b_reg_file),
 
-	  .ld_ir(ld_ir),
+      .ld_ir(ld_ir),
 
-	  .ld_status(ld_status),
+      .ld_status(ld_status),
 
-	  .oe_mdr(oe_mdr),
-	  .ld_mdr(ld_mdr),
+      .oe_mdr(oe_mdr),
+      .ld_mdr(ld_mdr),
 
-	  .oe_mar(oe_mar),
-	  .ld_mar(ld_mar),
+      .oe_mar(oe_mar),
+      .ld_mar(ld_mar),
 
-	  .oe_pc(oe_pc),
-	  .ld_pc(ld_pc),
-	  .rst_pc(rst_pc),
-	  .inc_pc(inc_pc),
+      .oe_a_pc(oe_a_pc),
+      .oe_b_pc(oe_b_pc),
+      .ld_pc  (ld_pc),
+      .rst_pc (rst_pc),
+      .inc_pc (inc_pc),
 
-	  .oe_sp(oe_sp),
-	  .ld_sp(ld_sp),
-	  .rst_sp(rst_sp),
-	  .dec_sp(dec_sp),
+      .oe_a_sp(oe_a_sp),
+      .oe_b_sp(oe_b_sp),
+      .ld_sp  (ld_sp),
+      .rst_sp (rst_sp),
+      .dec_sp (dec_sp),
 
-	  .oe_a_fp(oe_a_fp),
-	  .oe_b_fp(oe_b_fp),
-	  .ld_fp(ld_fp),
+      .oe_a_fp(oe_a_fp),
+      .oe_b_fp(oe_b_fp),
+      .ld_fp  (ld_fp),
 
-	  .oe_alu(oe_alu),
-	  .alu_op(alu_op)
+      .oe_alu(oe_alu),
+      .alu_op(alu_op)
   );
 
-  register_file reg_file (
+  wire [3:0] alu_status_out;
+  alu alu0 (
+      .oe(oe_alu),
+      .operation(alu_op),
+      .carry_in(status_value[0]),
+      .a(a_bus),
+      .b(b_bus),
+      .out(result_bus),
+      .status(alu_status_out)
+  );
+
+  // general registers
+  register_file #(
+      .SEL_WIDTH(4)
+  ) reg_file (
       .clk(clk),
       .a(a_bus),
       .b(b_bus),
@@ -95,6 +113,44 @@ module cpu (
       .sel_b(sel_b_reg_file)
   );
 
+  // special purpose registers
+  counter_cpu_reg pc (
+      .clk(clk),
+      .in(result_bus),
+      .a(a_bus),
+      .b(b_bus),
+      .oe_a(oe_a_pc),
+      .oe_b(oe_b_pc),
+      .ld(ld_pc),
+      .rst(rst_pc),
+      .cnt(inc_pc)
+  );
+
+  counter_cpu_reg #(
+      .COUNT(-1)
+  ) sp (
+      .clk(clk),
+      .a(a_bus),
+      .b(b_bus),
+      .in(result_bus),
+      .oe_a(oe_a_sp),
+      .oe_b(oe_b_sp),
+      .ld(ld_sp),
+      .rst(rst_sp),
+      .cnt(dec_sp)
+  );
+
+  cpu_reg fp (
+      .clk(clk),
+      .a(a_bus),
+      .b(b_bus),
+      .in(result_bus),
+      .oe_a(oe_a_fp),
+      .oe_b(oe_b_fp),
+      .ld(ld_fp)
+  );
+
+  // internal private registers
   wire [31:0] ir_value;
   cpu_reg ir (
       .clk(clk),
@@ -125,52 +181,8 @@ module cpu (
       .clk(clk),
       .b(b_bus),
       .in(result_bus),
-      .oe_a(oe_mar),
+      .oe_b(oe_mar),
       .ld(ld_mar)
-  );
-
-  counter pc (
-      .clk(clk),
-      .in (result_bus),
-      .out(b_bus),
-      .oe (oe_pc),
-      .ld (ld_pc),
-      .rst(rst_pc),
-      .cnt(inc_pc)
-  );
-
-  counter #(
-      .COUNT(-1)
-  ) sp (
-      .clk(clk),
-      .in (result_bus),
-      .out(b_bus),
-      .oe (oe_sp),
-      .ld (ld_sp),
-      .rst(rst_sp),
-      .cnt(dec_sp)
-  );
-
-  cpu_reg fp (
-      .clk(clk),
-      .a(a_bus),
-      .b(b_bus),
-      .in(result_bus),
-      .oe_a(oe_a_fp),
-      .oe_b(oe_b_fp),
-      .ld(ld_fp)
-  );
-
-
-  wire [3:0] alu_status_out;
-  alu alu0 (
-      .oe(oe_alu),
-      .operation(alu_op),
-      .carry_in(status_value[0]),
-      .a(a_bus),
-      .b(b_bus),
-      .out(result_bus),
-      .status(alu_status_out)
   );
 
 endmodule

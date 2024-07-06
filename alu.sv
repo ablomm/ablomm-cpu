@@ -16,17 +16,21 @@ module alu (
 
   always_comb begin
     case (operation)
+      `ALU_PASSA: out_reg = a;
+      `ALU_PASSB: out_reg = b;
+
+      `ALU_AND: out_reg = a & b;
+      `ALU_OR: out_reg = a | b;
+      `ALU_XOR: out_reg = a ^ b;
+      `ALU_NOT: out_reg = ~a;
+
       `ALU_ADD: {status[1], out_reg} = a + b;
       `ALU_ADDC: {status[1], out_reg} = a + b + carry_in;
       `ALU_SUB: {status[1], out_reg} = a - b;
       `ALU_SUBB: {status[1], out_reg} = a - b - ~carry_in;
-      `ALU_INC: {status[1], out_reg} = a + 1;
-      `ALU_DEC: {status[1], out_reg} = a - 1;
       `ALU_SHL: {status[1], out_reg} = a << 1;
       `ALU_SHR: {status[1], out_reg} = a >> 1;
-      `ALU_NEG: out_reg = -a;
-      `ALU_PASSA: out_reg = a;
-      `ALU_PASSB: out_reg = b;
+      `ALU_ASHR: {status[1], out_reg} = a >>> 1;
       default: out_reg = 0;
     endcase
   end
@@ -38,8 +42,8 @@ module alu (
     // zero
     status[2] = out_reg == 0;
 
-	// overflow
-	status[0] = out_reg[31] ^ a[31] ^ b[31] ^ status[1];
+    // overflow
+    status[0] = out_reg[31] ^ a[31] ^ b[31] ^ status[1];
 
   end
 endmodule
