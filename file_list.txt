@@ -8,8 +8,8 @@ soc.sv
 register_file.sv
 
 testbenches/alu_tb.sv
-testbenches/control_tb.sv
 testbenches/mem_tb.sv
+testbenches/counter_tb.sv
+testbenches/control_tb.sv
 testbenches/cpu_reg_tb.sv
 testbenches/register_file_tb.sv
-testbenches/counter_tb.sv
