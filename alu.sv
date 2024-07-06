@@ -29,8 +29,8 @@ module alu (
       `ALU_SUB: {status[1], out_reg} = a - b;
       `ALU_SUBB: {status[1], out_reg} = a - b - ~carry_in;
       `ALU_SHL: {status[1], out_reg} = a << 1;
-      `ALU_SHR: {status[1], out_reg} = a >> 1;
-      `ALU_ASHR: {status[1], out_reg} = a >>> 1;
+      `ALU_SHR: out_reg = a >> 1;
+      `ALU_ASHR: out_reg = a >>> 1;
       default: out_reg = 0;
     endcase
   end
