@@ -5,9 +5,12 @@ module register_file_tb;
   logic [31:0] in;
   logic oe_a;
   logic oe_b;
-  logic ld;
+  logic ld_a;
+  logic ld_b;
   logic [7:0] sel_a;
   logic [7:0] sel_b;
+  logic [7:0] count_a = 0;
+  logic [7:0] count_b = 0;
 
   register_file reg_file0 (
       .clk(clk),
@@ -16,29 +19,38 @@ module register_file_tb;
       .in(in),
       .oe_a(oe_a),
       .oe_b(oe_b),
-      .ld(ld),
+      .ld_a(ld_a),
+      .ld_b(ld_b),
       .sel_a(sel_a),
-      .sel_b(sel_b)
+      .sel_b(sel_b),
+      .count_a(count_a),
+      .count_b(count_b)
   );
 
   initial begin
     test_ld_oe(2, 123);
     test_ld_oe(3, 321);
     test_ld_oe(2, 567);
+
+    count(2, 5);
+    set_oe_a(2);
+    $display("a = %d", a);
+    if (a !== 567 + 5) $finish(1);
+    count(2, -6);
+    $display("a = %d", a);
+    if (a !== 567 - 1) $finish(1);
   end
 
   task static ld_data(input logic [7:0] addr, input logic [31:0] data_in);
     begin
-      clk  = 0;
-      oe_a = 0;
-      oe_b = 0;
+      clk = 0;
       #1;
       sel_a = addr;
       in = data_in;
-      ld = 1;
+      ld_a = 1;
       clk = 1;
       #1;
-      ld = 0;
+      ld_a = 0;
     end
   endtask
 
@@ -55,6 +67,18 @@ module register_file_tb;
       sel_b = addr;
       oe_b  = 1;
       #1;
+    end
+  endtask
+
+  task static count(input logic [7:0] addr, input logic [7:0] count);
+    begin
+      clk = 0;
+      #1;
+      count_a = count;
+      sel_a = addr;
+      clk = 1;
+      #1;
+      count_a = 0;
     end
   endtask
 

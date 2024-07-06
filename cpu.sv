@@ -10,9 +10,12 @@ module cpu (
   // control signals
   wire oe_a_reg_file;
   wire oe_b_reg_file;
-  wire ld_reg_file;
+  wire ld_a_reg_file;
+  wire ld_b_reg_file;
   wire [3:0] sel_a_reg_file;
   wire [3:0] sel_b_reg_file;
+  wire [7:0] count_a_reg_file;
+  wire [7:0] count_b_reg_file;
 
   wire ld_ir;
 
@@ -23,22 +26,6 @@ module cpu (
 
   wire oe_mar;
   wire ld_mar;
-
-  wire oe_a_pc;
-  wire oe_b_pc;
-  wire ld_pc;
-  wire rst_pc;
-  wire inc_pc;
-
-  wire oe_a_sp;
-  wire oe_b_sp;
-  wire ld_sp;
-  wire rst_sp;
-  wire dec_sp;
-
-  wire oe_a_fp;
-  wire oe_b_fp;
-  wire ld_fp;
 
   wire oe_alu;
   wire [3:0] alu_op;
@@ -56,6 +43,8 @@ module cpu (
       .ld_reg_file(ld_reg_file),
       .sel_a_reg_file(sel_a_reg_file),
       .sel_b_reg_file(sel_b_reg_file),
+	  .count_a_reg_file(count_a_reg_file),
+	  .count_b_reg_file(count_b_reg_file),
 
       .ld_ir(ld_ir),
 
@@ -66,22 +55,6 @@ module cpu (
 
       .oe_mar(oe_mar),
       .ld_mar(ld_mar),
-
-      .oe_a_pc(oe_a_pc),
-      .oe_b_pc(oe_b_pc),
-      .ld_pc  (ld_pc),
-      .rst_pc (rst_pc),
-      .inc_pc (inc_pc),
-
-      .oe_a_sp(oe_a_sp),
-      .oe_b_sp(oe_b_sp),
-      .ld_sp  (ld_sp),
-      .rst_sp (rst_sp),
-      .dec_sp (dec_sp),
-
-      .oe_a_fp(oe_a_fp),
-      .oe_b_fp(oe_b_fp),
-      .ld_fp  (ld_fp),
 
       .oe_alu(oe_alu),
       .alu_op(alu_op)
@@ -98,7 +71,11 @@ module cpu (
       .status(alu_status_out)
   );
 
-  // general registers
+  // public registers
+  // 0-12 => general registers
+  // 13 => pc
+  // 14 => sp
+  // 15 => fp
   register_file #(
       .SEL_WIDTH(4)
   ) reg_file (
@@ -108,46 +85,12 @@ module cpu (
       .in(result_bus),
       .oe_a(oe_a_reg_file),
       .oe_b(oe_b_reg_file),
-      .ld(ld_reg_file),
+      .ld_a(ld_a_reg_file),
+      .ld_b(ld_b_reg_file),
       .sel_a(sel_a_reg_file),
-      .sel_b(sel_b_reg_file)
-  );
-
-  // special purpose registers
-  counter_cpu_reg pc (
-      .clk(clk),
-      .in(result_bus),
-      .a(a_bus),
-      .b(b_bus),
-      .oe_a(oe_a_pc),
-      .oe_b(oe_b_pc),
-      .ld(ld_pc),
-      .rst(rst_pc),
-      .cnt(inc_pc)
-  );
-
-  counter_cpu_reg #(
-      .COUNT(-1)
-  ) sp (
-      .clk(clk),
-      .a(a_bus),
-      .b(b_bus),
-      .in(result_bus),
-      .oe_a(oe_a_sp),
-      .oe_b(oe_b_sp),
-      .ld(ld_sp),
-      .rst(rst_sp),
-      .cnt(dec_sp)
-  );
-
-  cpu_reg fp (
-      .clk(clk),
-      .a(a_bus),
-      .b(b_bus),
-      .in(result_bus),
-      .oe_a(oe_a_fp),
-      .oe_b(oe_b_fp),
-      .ld(ld_fp)
+      .sel_b(sel_b_reg_file),
+      .count_a(count_a_reg_file),
+      .count_b(count_b_reg_file)
   );
 
   // internal private registers
