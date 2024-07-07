@@ -43,8 +43,8 @@ module cpu (
       .mem_rd(mem_rd),
       .mem_wr(mem_wr),
 
-	  .a_reg_mask(a_reg_mask),
-	  .b_reg_mask(b_reg_mask),
+      .a_reg_mask(a_reg_mask),
+      .b_reg_mask(b_reg_mask),
 
       .oe_a_reg_file(oe_a_reg_file),
       .oe_b_reg_file(oe_b_reg_file),
@@ -54,9 +54,9 @@ module cpu (
       .count_a_reg_file(count_a_reg_file),
       .count_b_reg_file(count_b_reg_file),
 
-	  .oe_a_ir(oe_a_ir),
-	  .oe_b_ir(oe_b_ir),
-      .ld_ir(ld_ir),
+      .oe_a_ir(oe_a_ir),
+      .oe_b_ir(oe_b_ir),
+      .ld_ir  (ld_ir),
 
       .ld_status(ld_status),
 
@@ -70,15 +70,17 @@ module cpu (
       .alu_op(alu_op)
   );
 
-  filter filter0 (
-      .a_out (a_bus),
-      .b_out (b_bus),
-      .a_in  (a_reg_bus),
-      .b_in  (b_reg_bus),
-      .a_mask(a_reg_mask),
-      .b_mask(b_reg_mask)
+  filter filter_a (
+      .out (a_bus),
+      .in  (a_reg_bus),
+      .mask(a_reg_mask)
   );
 
+  filter filter_b (
+      .out (b_bus),
+      .in  (b_reg_bus),
+      .mask(b_reg_mask)
+  );
   wire [3:0] alu_status_out;
   alu alu0 (
       .oe(oe_alu),
@@ -116,11 +118,11 @@ module cpu (
   wire [31:0] ir_value;
   cpu_reg ir (
       .clk(clk),
-	  .a(a_reg_bus),
-	  .b(b_reg_bus),
+      .a(a_reg_bus),
+      .b(b_reg_bus),
       .in(result_bus),
-	  .oe_a(oe_a_ir),
-	  .oe_b(oe_b_ir),
+      .oe_a(oe_a_ir),
+      .oe_b(oe_b_ir),
       .ld(ld_ir),
       .value(ir_value)
   );
