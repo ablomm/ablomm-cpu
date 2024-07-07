@@ -17,6 +17,10 @@ module cpu (
   wire [7:0] count_a_reg_file;
   wire [7:0] count_b_reg_file;
 
+  wire oe_a_ir_8;
+  wire oe_a_ir_16;
+  wire oe_b_ir_8;
+  wire oe_b_ir_16;
   wire ld_ir;
 
   wire ld_status;
@@ -43,9 +47,13 @@ module cpu (
       .ld_reg_file(ld_reg_file),
       .sel_a_reg_file(sel_a_reg_file),
       .sel_b_reg_file(sel_b_reg_file),
-	  .count_a_reg_file(count_a_reg_file),
-	  .count_b_reg_file(count_b_reg_file),
+      .count_a_reg_file(count_a_reg_file),
+      .count_b_reg_file(count_b_reg_file),
 
+      .oe_a_ir_8(oe_a_ir_8),
+      .oe_a_ir_16(oe_a_ir_16),
+      .oe_b_ir_8(oe_b_ir_8),
+      .oe_b_ir_16(oe_b_ir_16),
       .ld_ir(ld_ir),
 
       .ld_status(ld_status),
@@ -95,9 +103,15 @@ module cpu (
 
   // internal private registers
   wire [31:0] ir_value;
-  cpu_reg ir (
+  ir ir (
       .clk(clk),
+	  .a(a_bus),
+	  .b(b_bus),
       .in(result_bus),
+	  .oe_a_8(oe_a_ir_8),
+	  .oe_a_16(oe_a_ir_16),
+	  .oe_b_8(oe_b_ir_8),
+	  .oe_b_16(oe_b_ir_16),
       .ld(ld_ir),
       .value(ir_value)
   );

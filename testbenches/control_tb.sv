@@ -15,6 +15,10 @@ module control_tb;
   logic [7:0] count_a_reg_file;
   logic [7:0] count_b_reg_file;
 
+  logic oe_a_ir_8;
+  logic oe_a_ir_16;
+  logic oe_b_ir_8;
+  logic oe_b_ir_16;
   logic ld_ir;
 
   logic ld_status;
@@ -44,6 +48,10 @@ module control_tb;
 	  .count_a_reg_file(count_a_reg_file),
 	  .count_b_reg_file(count_b_reg_file),
 
+	  .oe_a_ir_8(oe_a_ir_8),
+	  .oe_a_ir_16(oe_a_ir_16),
+	  .oe_b_ir_8(oe_b_ir_8),
+	  .oe_b_ir_16(oe_b_ir_16),
 	  .ld_ir(ld_ir),
 
 	  .ld_status(ld_status),
