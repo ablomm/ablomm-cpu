@@ -81,6 +81,7 @@ module cpu (
       .in  (b_reg_bus),
       .mask(b_reg_mask)
   );
+
   wire [3:0] alu_status_out;
   alu alu0 (
       .oe(oe_alu),
