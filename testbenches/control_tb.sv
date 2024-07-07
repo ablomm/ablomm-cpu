@@ -6,6 +6,9 @@ module control_tb;
   logic mem_rd;
   logic mem_wr;
 
+  logic [31:0] a_reg_mask;
+  logic [31:0] b_reg_mask;
+
   // control signals
   logic oe_a_reg_file;
   logic oe_b_reg_file;
@@ -15,10 +18,8 @@ module control_tb;
   logic [7:0] count_a_reg_file;
   logic [7:0] count_b_reg_file;
 
-  logic oe_a_ir_8;
-  logic oe_a_ir_16;
-  logic oe_b_ir_8;
-  logic oe_b_ir_16;
+  logic oe_a_ir;
+  logic oe_b_ir;
   logic ld_ir;
 
   logic ld_status;
@@ -40,6 +41,9 @@ module control_tb;
 	  .mem_rd(mem_rd),
 	  .mem_wr(mem_wr),
 
+	  .a_reg_mask(a_reg_mask),
+	  .b_reg_mask(b_reg_mask),
+
 	  .oe_a_reg_file(oe_a_reg_file),
 	  .oe_b_reg_file(oe_b_reg_file),
 	  .ld_reg_file(ld_reg_file),
@@ -48,10 +52,8 @@ module control_tb;
 	  .count_a_reg_file(count_a_reg_file),
 	  .count_b_reg_file(count_b_reg_file),
 
-	  .oe_a_ir_8(oe_a_ir_8),
-	  .oe_a_ir_16(oe_a_ir_16),
-	  .oe_b_ir_8(oe_b_ir_8),
-	  .oe_b_ir_16(oe_b_ir_16),
+	  .oe_a_ir(oe_a_ir),
+	  .oe_b_ir(oe_b_ir),
 	  .ld_ir(ld_ir),
 
 	  .ld_status(ld_status),

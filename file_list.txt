@@ -3,9 +3,9 @@ mem.sv
 control.sv
 cpu.sv
 cpu_reg.sv
-ir.sv
-soc.sv
+filter.sv
 register_file.sv
+soc.sv
 
 testbenches/alu_tb.sv
 testbenches/mem_tb.sv

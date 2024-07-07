@@ -6,8 +6,13 @@ module cpu (
     output mem_rd,
     output mem_wr
 );
+  tri [31:0] a_reg_bus;
+  tri [31:0] b_reg_bus;
 
   // control signals
+  wire [31:0] a_reg_mask;
+  wire [31:0] b_reg_mask;
+
   wire oe_a_reg_file;
   wire oe_b_reg_file;
   wire ld_a_reg_file;
@@ -17,10 +22,6 @@ module cpu (
   wire [7:0] count_a_reg_file;
   wire [7:0] count_b_reg_file;
 
-  wire oe_a_ir_8;
-  wire oe_a_ir_16;
-  wire oe_b_ir_8;
-  wire oe_b_ir_16;
   wire ld_ir;
 
   wire ld_status;
@@ -42,6 +43,9 @@ module cpu (
       .mem_rd(mem_rd),
       .mem_wr(mem_wr),
 
+	  .a_reg_mask(a_reg_mask),
+	  .b_reg_mask(b_reg_mask),
+
       .oe_a_reg_file(oe_a_reg_file),
       .oe_b_reg_file(oe_b_reg_file),
       .ld_reg_file(ld_reg_file),
@@ -50,10 +54,8 @@ module cpu (
       .count_a_reg_file(count_a_reg_file),
       .count_b_reg_file(count_b_reg_file),
 
-      .oe_a_ir_8(oe_a_ir_8),
-      .oe_a_ir_16(oe_a_ir_16),
-      .oe_b_ir_8(oe_b_ir_8),
-      .oe_b_ir_16(oe_b_ir_16),
+	  .oe_a_ir(oe_a_ir),
+	  .oe_b_ir(oe_b_ir),
       .ld_ir(ld_ir),
 
       .ld_status(ld_status),
@@ -66,6 +68,15 @@ module cpu (
 
       .oe_alu(oe_alu),
       .alu_op(alu_op)
+  );
+
+  filter filter0 (
+      .a_out (a_bus),
+      .b_out (b_bus),
+      .a_in  (a_reg_bus),
+      .b_in  (b_reg_bus),
+      .a_mask(a_reg_mask),
+      .b_mask(b_reg_mask)
   );
 
   wire [3:0] alu_status_out;
@@ -88,8 +99,8 @@ module cpu (
       .SEL_WIDTH(4)
   ) reg_file (
       .clk(clk),
-      .a(a_bus),
-      .b(b_bus),
+      .a(a_reg_bus),
+      .b(b_reg_bus),
       .in(result_bus),
       .oe_a(oe_a_reg_file),
       .oe_b(oe_b_reg_file),
@@ -103,15 +114,13 @@ module cpu (
 
   // internal private registers
   wire [31:0] ir_value;
-  ir ir (
+  cpu_reg ir (
       .clk(clk),
-	  .a(a_bus),
-	  .b(b_bus),
+	  .a(a_reg_bus),
+	  .b(b_reg_bus),
       .in(result_bus),
-	  .oe_a_8(oe_a_ir_8),
-	  .oe_a_16(oe_a_ir_16),
-	  .oe_b_8(oe_b_ir_8),
-	  .oe_b_16(oe_b_ir_16),
+	  .oe_a(oe_a_ir),
+	  .oe_b(oe_b_ir),
       .ld(ld_ir),
       .value(ir_value)
   );
@@ -128,7 +137,7 @@ module cpu (
 
   cpu_reg mdr (
       .clk(clk),
-      .a(a_bus),
+      .a(a_reg_bus),
       .in(result_bus),
       .oe_a(oe_mdr),
       .ld(ld_mdr)
@@ -136,7 +145,7 @@ module cpu (
 
   cpu_reg mar (
       .clk(clk),
-      .b(b_bus),
+      .b(b_reg_bus),
       .in(result_bus),
       .oe_b(oe_mar),
       .ld(ld_mar)
