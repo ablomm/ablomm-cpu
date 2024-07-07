@@ -50,7 +50,7 @@ module cpu_reg_tb;
     end
   endtask
 
-  task static test_ld_oe(input logic [32:0] data_in);
+  task static test_ld_oe(input logic [31:0] data_in);
     begin
       ld_a(data_in);
       set_oe_a();
