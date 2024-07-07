@@ -1,3 +1,7 @@
+packages/alu_pkg.sv
+packages/reg_pkg.sv
+packages/cpu_pkg.sv
+
 alu.sv
 mem.sv
 control.sv
@@ -13,3 +17,4 @@ testbenches/control_tb.sv
 testbenches/cpu_reg_tb.sv
 testbenches/register_file_tb.sv
 testbenches/filter_tb.sv
+
