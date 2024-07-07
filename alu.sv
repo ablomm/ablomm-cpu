@@ -1,14 +1,14 @@
+import ablomm_cpu::*;
+
 module alu (
     input oe,
-    input [3:0] operation,
+    input alu_op_e operation,
     input carry_in,
     input [31:0] a,  // data bus
     input [31:0] b,  // addr bus
     output tri [31:0] out,  // result bus
-    output logic [3:0] status  // NZCV
+    output status_t status  // NZCV
 );
-
-  `include "include/alu_op.vh"
 
   logic [31:0] out_reg = 'hz;
 
@@ -16,34 +16,34 @@ module alu (
 
   always_comb begin
     case (operation)
-      `ALU_PASSA: out_reg = a;
-      `ALU_PASSB: out_reg = b;
+      PASSA: out_reg = a;
+      PASSB: out_reg = b;
 
-      `ALU_AND: out_reg = a & b;
-      `ALU_OR: out_reg = a | b;
-      `ALU_XOR: out_reg = a ^ b;
-      `ALU_NOT: out_reg = ~a;
+      AND: out_reg = a & b;
+      OR:  out_reg = a | b;
+      XOR: out_reg = a ^ b;
+      NOT: out_reg = ~a;
 
-      `ALU_ADD: {status[1], out_reg} = a + b;
-      `ALU_ADDC: {status[1], out_reg} = a + b + carry_in;
-      `ALU_SUB: {status[1], out_reg} = a - b;
-      `ALU_SUBB: {status[1], out_reg} = a - b - ~carry_in;
-      `ALU_SHL: {status[1], out_reg} = a << 1;
-      `ALU_SHR: out_reg = a >> 1;
-      `ALU_ASHR: out_reg = a >>> 1;
+      ADD: {status.carry, out_reg} = a + b;
+      ADDC: {status.carry, out_reg} = a + b + carry_in;
+      SUB: {status.carry, out_reg} = a - b;
+      SUBB: {status.carry, out_reg} = a - b - ~carry_in;
+      SHL: {status.carry, out_reg} = a << 1;
+      SHR: out_reg = a >> 1;
+      ASHR: out_reg = a >>> 1;
       default: out_reg = 0;
     endcase
   end
 
   always @(out_reg) begin
     // negative
-    status[3] = out_reg[31] == 1;
+    status.negative = out_reg[31] == 1;
 
     // zero
-    status[2] = out_reg == 0;
+    status.zero = out_reg == 0;
 
     // overflow
-    status[0] = out_reg[31] ^ a[31] ^ b[31] ^ status[1];
+    status.overflow = out_reg[31] ^ a[31] ^ b[31] ^ status[1];
 
   end
 endmodule

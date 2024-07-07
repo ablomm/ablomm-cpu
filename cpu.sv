@@ -17,8 +17,8 @@ module cpu (
   wire oe_b_reg_file;
   wire ld_a_reg_file;
   wire ld_b_reg_file;
-  wire [3:0] sel_a_reg_file;
-  wire [3:0] sel_b_reg_file;
+  wire reg_e sel_a_reg_file;
+  wire reg_e sel_b_reg_file;
   wire [7:0] count_a_reg_file;
   wire [7:0] count_b_reg_file;
 
@@ -82,7 +82,7 @@ module cpu (
       .mask(b_reg_mask)
   );
 
-  wire [3:0] alu_status_out;
+  wire status_t alu_status_out;
   alu alu0 (
       .oe(oe_alu),
       .operation(alu_op),
@@ -128,7 +128,7 @@ module cpu (
       .value(ir_value)
   );
 
-  wire [3:0] status_value;
+  wire status_t status_value;
   cpu_reg #(
       .SIZE(4)
   ) status (

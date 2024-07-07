@@ -17,7 +17,7 @@ module filter_tb;
     begin
       in   = in_in;
       mask = mask_in;
-	  #1;
+      #1;
       $display("out = %d", out);
       if (out !== (in_in & mask_in)) $finish(1);
     end

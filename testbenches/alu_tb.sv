@@ -1,12 +1,11 @@
 module alu_tb;
-
-  `include "include/alu_op.vh"
+  import ablomm_cpu::*;
 
   logic oe;
   logic [31:0] a, b;
-  wire  [ 3:0] status;
-  logic [ 3:0] operation;
-  wire  [31:0] out;
+  wire [3:0] status;
+  alu_op_e operation;
+  wire [31:0] out;
 
   logic [31:0] c;
 
@@ -43,7 +42,7 @@ module alu_tb;
   task static test_sum(input logic [31:0] a_in, input logic [31:0] b_in,
                        input logic [3:0] status_in);
     begin
-      operation = `ALU_ADD;
+      operation = ADD;
       a = a_in;
       b = b_in;
       oe = 1;
@@ -57,7 +56,7 @@ module alu_tb;
   task static test_sub(input logic [31:0] a_in, input logic [31:0] b_in,
                        input logic [3:0] status_in);
     begin
-      operation = `ALU_SUB;
+      operation = SUB;
       a = a_in;
       b = b_in;
       oe = 1;
