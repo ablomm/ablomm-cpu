@@ -14,6 +14,10 @@ module control (
     output logic [7:0] count_a_reg_file,
     output logic [7:0] count_b_reg_file,
 
+	output logic oe_a_ir_8,
+	output logic oe_a_ir_16,
+	output logic oe_b_ir_8,
+	output logic oe_b_ir_16,
     output logic ld_ir,
 
     output logic ld_status,
@@ -72,6 +76,10 @@ module control (
 	  count_a_reg_file,
 	  count_b_reg_file,
 
+	  oe_a_ir_8,
+	  oe_a_ir_16,
+	  oe_b_ir_8,
+	  oe_b_ir_16,
 	  ld_ir,
 
 	  ld_status,

@@ -11,7 +11,6 @@ module cpu_reg #(
     output logic [SIZE-1:0] value  // only if you need to direclty access (not on the data/addr bus)
 );
 
-  assign out   = value;
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
 

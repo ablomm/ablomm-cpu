@@ -1,24 +1,50 @@
 # All in the form a <- B (OP) C
-AND[S] <A> <B> <C>				        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-OR[S] <A> <B> <C>				        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-XOR[S] <A> <B> <C>				        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-NOT[S] <A> <C>				            (14 bit operation (1 bit for if C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val)
+AND[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+ANDI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+OR[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+ORI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+XOR[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+XORI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+NOT[_S][_<COND>] <REG> <REG>					(4 bit condition) (18 bit operation) (1 bit status load) (4 bit reg) (4 bit reg)
+NOTI[_S][_<COND>] <REG> <IMMEDIATE>				(4 bit condition) (14 bit operation) (1 bit status load) (4 bit reg) (8 bit immediate)
 
-ADD[S] <A> <B> <C>		    	        (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-SUB[S] <A> <B> <C>                      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-SHR[S] <A> <B> <C>                      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-ASHR[S] <A> <B> <C>(arithemic shr)      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
-SHL[S] <A> <B> <C>                      (8 bit operation (2 bit for for if B and/or C is reg/val)) (1 bit status load) (8 bit reg) (8 bit reg/val) (8 bit reg/val)
+ADD[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+ADDI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+SUB[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+SUBI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+RSUBI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+SHR[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+SHRI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+ASHR[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+ASHRI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
+SHL[_S][_<COND>] <REG> <REG> <REG>				(4 bit condition) (16 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (4 bit reg)
+SHLI[_S][_<COND>] <REG> <REG> <IMMEDIATE>		(4 bit condition) (12 bit operation) (1 bit status load) (4 bit reg) (4 bit reg) (8 bit immediate)
 
-LD <A> <B>				                (8 bit operation (1 bit for if B is addr/immediate)) (8 bit reg) (16 bit addr/immediate)
-ST (store) <A> <ADDR>	                (8 bit operation) (8 bit reg) (16 bit addr)
+LD[_<COND>] <REG> <ADDR>						(4 bit condition) (8 bit operation) (4 bit reg) (16 bit address)
+LDR[_<COND>] <REG> <REG>						(4 bit condition) (24 bit operation) (4 bit reg) (4 bit reg)
+LDI[_<COND>] <REG> <IMMEDIATE>					(4 bit condition) (8 bit operation) (4 bit reg) (16 bit immediate)
+ST[_<COND>] <REG> <ADDR>						(4 bit condition) (8 bit operation) (4 bit reg) (16 bit address)
+STR[_<COND>] <REG> <REG>						(4 bit condition) (24 bit operation) (4 bit reg) (4 bit reg)
 
-PUSH <A>                                (24 bit operation) (8 bit reg)
-POP <A>                                 (24 bit operation) (8 bit reg)
+PUSH[_<COND>] <REG>								(4 bit condition) (24 bit operation) (4 bit reg)
+POP[_<COND>] <REG>								(4 bit condition) (24 bit operation) (4 bit reg)
 
-MOV <A> <B>                             (24 bit operation) (8 bit reg) (8 bit reg)
+MOV[_<COND>] <REG> <REG>						(4 bit condition) (20 bit operation) (4 bit reg) (4 bit reg)
 
-JMP[<COND>] <ADDR>				        (12 bit operation) (4 bit COND) (16 bit addr) # dunno about 4 bit condition
-JMP <ADDR>		        		        (16 bit operation) (16 bit addr)
+JMP[_<COND>] <ADDR>								(4 bit condition) (12 bit operation) (16 bit address)
+JMPR[_<COND>] <ADDR>							(4 bit condition) (24 bit operation) (4 bit reg)
 
-NOP                                     (32 bit operation)
+NOP												(4 bit condition) (28 bit operation)
+
+# COND
+NONE
+EQ
+NQ
+LT
+GT
+LE
+GE
+SGT
+SLT
+SLE
+SGE
