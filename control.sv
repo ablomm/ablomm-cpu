@@ -57,7 +57,7 @@ module control (
     endcase
   end
 
-  function static logic satisfies_condition(input cond_e [3:0] condition);
+  function static logic satisfies_condition(input cond_e condition);
     begin
       case (condition)
         NONE: satisfies_condition = 1;
