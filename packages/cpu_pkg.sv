@@ -1,6 +1,6 @@
 package cpu_pkg;
-	import alu_pkg::*;
-	import reg_pkg::*;
+  import alu_pkg::*;
+  import reg_pkg::*;
 
   typedef enum logic [3:0] {
     NONE = 0,
@@ -50,24 +50,96 @@ package cpu_pkg;
   } instruction_e;
 
   typedef struct packed {
-    logic [7:0] unused;
+    logic [6:0] unused;
     logic status_load;
     reg_e reg_a;
     reg_e reg_b;
     reg_e reg_c;
-  } and_params_t;
+  } binary_op_params_t;
 
   typedef struct packed {
-    logic [3:0] unused;
+    logic [2:0] unused;
     logic status_load;
     reg_e reg_a;
     reg_e reg_b;
     logic [7:0] immediate;
-  } andi_params_t;
+  } binary_immediate_op_params_t;
+
+  typedef struct packed {
+    logic [10:0] unused;
+    logic status_load;
+    reg_e reg_a;
+    reg_e reg_b;
+  } unary_op_params_t;
+
+  typedef struct packed {
+    logic [6:0] unused;
+    logic status_load;
+    reg_e reg_a;
+    logic [7:0] immediate;
+  } unary_immediate_op_params_t;
+
+  typedef struct packed {
+    reg_e reg_a;
+    logic [15:0] address;
+  } register_address_params_t;
+
+  typedef struct packed {
+    reg_e reg_a;
+    logic [15:0] immediate;
+  } register_immediate_params_t;
+
+  typedef struct packed {
+    logic [11:0] unused;
+    reg_e reg_a;
+    reg_e reg_b;
+  } register_register_params_t;
+
+  typedef struct packed {
+    logic [15:0] unused;
+    reg_e reg_a;
+  } register_params_t;
+
+  typedef struct packed {
+    logic [3:0]  unused;
+    logic [15:0] address;
+  } address_params_t;
 
   typedef union packed {
-    and_params_t  and_params;
-    andi_params_t andi_params;
+    binary_op_params_t and_parmas;
+    binary_immediate_op_params_t andi_params;
+    binary_op_params_t or_params;
+    binary_immediate_op_params_t ori_params;
+    binary_op_params_t xor_params;
+    binary_immediate_op_params_t xori_params;
+    unary_op_params_t not_params;
+    unary_immediate_op_params_t noti_params;
+
+    binary_op_params_t and_params;
+    binary_immediate_op_params_t andi_params;
+    binary_op_params_t sub_params;
+    binary_immediate_op_params_t subi_params;
+    binary_immediate_op_params_t rsubi_params;
+    binary_op_params_t shr_params;
+    binary_immediate_op_params_t shri_params;
+    binary_op_params_t ashr_params;
+    binary_immediate_op_params_t ashri_params;
+    binary_op_params_t shl_params;
+    binary_immediate_op_params_t shli_params;
+
+    register_address_params_t   ld_params;
+    register_register_params_t  ldr_params;
+    register_immediate_params_t ldi_params;
+    register_address_params_t   st_params;
+    register_register_params_t  str_params;
+
+    register_params_t push_params;
+    register_params_t pop_params;
+
+    register_register_params_t mov_params;
+
+	address_params_t jmp_params;
+	register_params_t jmpr_params;
   } ir_params_t;
 
   typedef struct packed {
