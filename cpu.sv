@@ -1,3 +1,7 @@
+import cpu_pkg::*;
+import alu_pkg::*;
+import reg_pkg::*;
+
 module cpu (
     input clk,
     output tri [31:0] a_bus,
@@ -33,7 +37,7 @@ module cpu (
   wire ld_mar;
 
   wire oe_alu;
-  wire [3:0] alu_op;
+  wire alu_op_e alu_op;
 
   control control0 (
       .clk(clk),
@@ -116,7 +120,7 @@ module cpu (
   );
 
   // internal private registers
-  wire [31:0] ir_value;
+  wire ir_t ir_value;
   cpu_reg ir (
       .clk(clk),
       .a(a_reg_bus),

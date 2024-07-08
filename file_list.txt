@@ -1,4 +1,6 @@
-packages/ablomm_cpu.sv
+packages/alu_pkg.sv
+packages/reg_pkg.sv
+packages/cpu_pkg.sv
 
 alu.sv
 mem.sv

@@ -1,5 +1,5 @@
 module alu_tb;
-  import ablomm_cpu::*;
+  import alu_pkg::*;
 
   logic oe;
   logic [31:0] a, b;
@@ -9,7 +9,7 @@ module alu_tb;
 
   logic [31:0] c;
 
-  alu a1 (
+  alu alu0 (
       .oe(oe),
       .a(a),
       .b(b),

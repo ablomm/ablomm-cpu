@@ -1,8 +1,10 @@
-import ablomm_cpu::*;
+import cpu_pkg::*;
+import alu_pkg::*;
+import reg_pkg::*;
 
 module control (
     input clk,
-    input [31:0] ir,
+    input wire ir_t ir,
     input wire status_t status,
 
     output logic mem_rd,

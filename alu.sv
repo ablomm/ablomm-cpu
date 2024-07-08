@@ -1,4 +1,5 @@
-import ablomm_cpu::*;
+import alu_pkg::*;
+import reg_pkg::*;
 
 module alu (
     input oe,
@@ -16,21 +17,21 @@ module alu (
 
   always_comb begin
     case (operation)
-      PASSA: out_reg = a;
-      PASSB: out_reg = b;
+      alu_pkg::PASSA: out_reg = a;
+      alu_pkg::PASSB: out_reg = b;
 
-      AND: out_reg = a & b;
-      OR:  out_reg = a | b;
-      XOR: out_reg = a ^ b;
-      NOT: out_reg = ~a;
+      alu_pkg::AND: out_reg = a & b;
+      alu_pkg::OR:  out_reg = a | b;
+      alu_pkg::XOR: out_reg = a ^ b;
+      alu_pkg::NOT: out_reg = ~a;
 
-      ADD: {status.carry, out_reg} = a + b;
-      ADDC: {status.carry, out_reg} = a + b + carry_in;
-      SUB: {status.carry, out_reg} = a - b;
-      SUBB: {status.carry, out_reg} = a - b - ~carry_in;
-      SHL: {status.carry, out_reg} = a << 1;
-      SHR: out_reg = a >> 1;
-      ASHR: out_reg = a >>> 1;
+      alu_pkg::ADD: {status.carry, out_reg} = a + b;
+      alu_pkg::ADDC: {status.carry, out_reg} = a + b + carry_in;
+      alu_pkg::SUB: {status.carry, out_reg} = a - b;
+      alu_pkg::SUBB: {status.carry, out_reg} = a - b - ~carry_in;
+      alu_pkg::SHL: {status.carry, out_reg} = a << 1;
+      alu_pkg::SHR: out_reg = a >> 1;
+      alu_pkg::ASHR: out_reg = a >>> 1;
       default: out_reg = 0;
     endcase
   end
