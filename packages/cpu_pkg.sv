@@ -3,7 +3,7 @@ package cpu_pkg;
   import reg_pkg::*;
 
   typedef enum logic [3:0] {
-    NONE = 0,
+    NONE = 4'h0,
     EQ,
     NE,
     LTU,
@@ -138,8 +138,8 @@ package cpu_pkg;
 
     register_register_params_t mov_params;
 
-	address_params_t jmp_params;
-	register_params_t jmpr_params;
+    address_params_t  jmp_params;
+    register_params_t jmpr_params;
   } ir_params_t;
 
   typedef struct packed {
