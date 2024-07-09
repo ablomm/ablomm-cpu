@@ -5,10 +5,10 @@ module register_file_tb;
   logic [31:0] in;
   logic oe_a;
   logic oe_b;
-  logic ld_a;
-  logic ld_b;
+  logic ld;
   logic [7:0] sel_a;
   logic [7:0] sel_b;
+  logic [7:0] sel_in;
   logic [7:0] count_a = 0;
   logic [7:0] count_b = 0;
 
@@ -19,10 +19,10 @@ module register_file_tb;
       .in(in),
       .oe_a(oe_a),
       .oe_b(oe_b),
-      .ld_a(ld_a),
-      .ld_b(ld_b),
+      .ld(ld),
       .sel_a(sel_a),
       .sel_b(sel_b),
+	  .sel_in(sel_in),
       .count_a(count_a),
       .count_b(count_b)
   );
@@ -45,12 +45,12 @@ module register_file_tb;
     begin
       clk = 0;
       #1;
-      sel_a = addr;
+      sel_in = addr;
       in = data_in;
-      ld_a = 1;
+      ld = 1;
       clk = 1;
       #1;
-      ld_a = 0;
+      ld = 0;
     end
   endtask
 

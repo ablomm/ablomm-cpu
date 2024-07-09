@@ -4,6 +4,7 @@ import reg_pkg::*;
 
 module cpu (
     input clk,
+	input start,
     output tri [31:0] a_bus,
     output tri [31:0] b_bus,
     output tri [31:0] result_bus,
@@ -19,10 +20,10 @@ module cpu (
 
   wire oe_a_reg_file;
   wire oe_b_reg_file;
-  wire ld_a_reg_file;
-  wire ld_b_reg_file;
+  wire ld_reg_file;
   wire reg_e sel_a_reg_file;
   wire reg_e sel_b_reg_file;
+  wire reg_e sel_in_reg_file;
   wire [7:0] count_a_reg_file;
   wire [7:0] count_b_reg_file;
 
@@ -41,6 +42,8 @@ module cpu (
 
   control control0 (
       .clk(clk),
+	  .start(start),
+
       .ir(ir_value),
       .status(status_value),
 
@@ -55,6 +58,7 @@ module cpu (
       .ld_reg_file(ld_reg_file),
       .sel_a_reg_file(sel_a_reg_file),
       .sel_b_reg_file(sel_b_reg_file),
+	  .sel_in_reg_file(sel_in_reg_file),
       .count_a_reg_file(count_a_reg_file),
       .count_b_reg_file(count_b_reg_file),
 
@@ -111,10 +115,10 @@ module cpu (
       .in(result_bus),
       .oe_a(oe_a_reg_file),
       .oe_b(oe_b_reg_file),
-      .ld_a(ld_a_reg_file),
-      .ld_b(ld_b_reg_file),
+      .ld(ld_reg_file),
       .sel_a(sel_a_reg_file),
       .sel_b(sel_b_reg_file),
+      .sel_in(sel_in_reg_file),
       .count_a(count_a_reg_file),
       .count_b(count_b_reg_file)
   );

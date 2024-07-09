@@ -3,9 +3,11 @@ module soc (
 );
   tri [31:0] a_bus, b_bus, result_bus;
   wire mem_rd, mem_wr;
+  wire start;
 
   cpu cpu0 (
       .clk(clk),
+	  .start(start),
       .a_bus(a_bus),
       .b_bus(b_bus),
       .result_bus(result_bus),
