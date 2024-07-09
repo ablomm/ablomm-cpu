@@ -11,10 +11,10 @@ module register_file #(
     input [WORD_SIZE-1:0] in,
     input oe_a,
     input oe_b,
-    input ld_a,
-    input ld_b,
+    input ld,
     input [SEL_WIDTH-1:0] sel_a,
     input [SEL_WIDTH-1:0] sel_b,
+    input [SEL_WIDTH-1:0] sel_in,
 	input [COUNT_WIDTH-1:0] count_a,
 	input [COUNT_WIDTH-1:0] count_b
 );
@@ -25,9 +25,7 @@ module register_file #(
   assign b = oe_b ? registers[sel_b] : 'hz;
 
   always @(posedge clk) begin
-    if (ld_a) registers[sel_a] = in;
-    if (ld_b) registers[sel_b] = in;
-
+    if (ld) registers[sel_in] = in;
 	registers[sel_a] = registers[sel_a] + WORD_SIZE'(signed'(count_a));
 	registers[sel_b] = registers[sel_b] + WORD_SIZE'(signed'(count_b));
   end

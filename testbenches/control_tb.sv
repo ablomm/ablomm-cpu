@@ -1,7 +1,11 @@
 module control_tb;
+  import cpu_pkg::*;
+  import reg_pkg::*;
+
   logic clk;
-  logic [31:0] ir_value;
-  logic [3:0] status_value;
+  logic start;
+  ir_t ir_value;
+  status_t status_value;
 
   logic mem_rd;
   logic mem_wr;
@@ -13,8 +17,9 @@ module control_tb;
   logic oe_a_reg_file;
   logic oe_b_reg_file;
   logic ld_reg_file;
-  logic [3:0] sel_a_reg_file;
-  logic [3:0] sel_b_reg_file;
+  reg_e sel_a_reg_file;
+  reg_e sel_b_reg_file;
+  reg_e sel_in_reg_file;
   logic [7:0] count_a_reg_file;
   logic [7:0] count_b_reg_file;
 
@@ -34,39 +39,77 @@ module control_tb;
   logic [3:0] alu_op;
 
   control control0 (
-      .clk(clk),
+      .clk  (clk),
+      .start(start),
+
       .ir(ir_value),
       .status(status_value),
 
-	  .mem_rd(mem_rd),
-	  .mem_wr(mem_wr),
+      .mem_rd(mem_rd),
+      .mem_wr(mem_wr),
 
-	  .a_reg_mask(a_reg_mask),
-	  .b_reg_mask(b_reg_mask),
+      .a_reg_mask(a_reg_mask),
+      .b_reg_mask(b_reg_mask),
 
-	  .oe_a_reg_file(oe_a_reg_file),
-	  .oe_b_reg_file(oe_b_reg_file),
-	  .ld_reg_file(ld_reg_file),
-	  .sel_a_reg_file(sel_a_reg_file),
-	  .sel_b_reg_file(sel_b_reg_file),
-	  .count_a_reg_file(count_a_reg_file),
-	  .count_b_reg_file(count_b_reg_file),
+      .oe_a_reg_file(oe_a_reg_file),
+      .oe_b_reg_file(oe_b_reg_file),
+      .ld_reg_file(ld_reg_file),
+      .sel_a_reg_file(sel_a_reg_file),
+      .sel_b_reg_file(sel_b_reg_file),
+      .sel_in_reg_file(sel_in_reg_file),
+      .count_a_reg_file(count_a_reg_file),
+      .count_b_reg_file(count_b_reg_file),
 
-	  .oe_a_ir(oe_a_ir),
-	  .oe_b_ir(oe_b_ir),
-	  .ld_ir(ld_ir),
+      .oe_a_ir(oe_a_ir),
+      .oe_b_ir(oe_b_ir),
+      .ld_ir  (ld_ir),
 
-	  .ld_status(ld_status),
+      .ld_status(ld_status),
 
-	  .oe_mdr(oe_mdr),
-	  .ld_mdr(ld_mdr),
+      .oe_mdr(oe_mdr),
+      .ld_mdr(ld_mdr),
 
-	  .oe_mar(oe_mar),
-	  .ld_mar(ld_mar),
+      .oe_mar(oe_mar),
+      .ld_mar(ld_mar),
 
-	  .oe_alu(oe_alu),
-	  .alu_op(alu_op)
+      .oe_alu(oe_alu),
+      .alu_op(alu_op)
   );
 
 
+  initial begin
+    // STOP state
+    clk   = 0;
+    start = 1;
+    #1;
+
+    // FETCH state
+    clk   = 1;
+    start = 0;
+    $display("sel_b_reg_file: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, count_b_reg_file: %d",
+             sel_b_reg_file, oe_b_reg_file, mem_rd, ld_ir, count_b_reg_file);
+
+    if (sel_b_reg_file !== reg_pkg::PC || oe_b_reg_file !== 1 || mem_rd !== 1 || count_b_reg_file !== 1)
+      $finish(1);
+    ir_value.condition = NONE;
+    ir_value.instruction = cpu_pkg::AND;
+    ir_value.params.and_params.reg_a = reg_pkg::R0;
+    ir_value.params.and_params.reg_b = reg_pkg::R1;
+    ir_value.params.and_params.reg_c = reg_pkg::R2;
+
+    #1;
+    clk = 0;
+    #1;
+    clk = 1;
+
+    // AND state
+    $display(
+        "sel_a_reg_file: %d, oe_a_reg_file: %d, sel_b_reg_file: %d, oe_b_reg_file: %d, alu_op: %d, sel_ing_reg_file: %d, ld_reg_file: %d",
+        sel_a_reg_file, oe_a_reg_file, sel_b_reg_file, oe_b_reg_file, alu_op, sel_in_reg_file,
+        ld_reg_file);
+
+    if (sel_a_reg_file !== reg_pkg::R1 || oe_a_reg_file !== 1 || sel_b_reg_file !== reg_pkg::R2 || oe_b_reg_file !== 1 || alu_op !== alu_pkg::AND || sel_in_reg_file !== reg_pkg::R0 || ld_reg_file !== 1)
+      $finish(1);
+
+  end
 endmodule

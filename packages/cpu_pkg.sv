@@ -145,7 +145,7 @@ package cpu_pkg;
   typedef struct packed {
     cond_e condition;
     instruction_e instruction;
-    ir_params_t parameters;
+    ir_params_t params;
   } ir_t;
 
 endpackage

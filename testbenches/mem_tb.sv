@@ -3,7 +3,7 @@ module mem_tb;
   logic [31:0] data;
   logic [15:0] addr;
   tri [31:0] out;
-  reg rd, wr;
+  logic rd, wr;
 
   mem m0 (
       .clk (clk),
