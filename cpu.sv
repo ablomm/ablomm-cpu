@@ -27,6 +27,8 @@ module cpu (
   wire [7:0] count_a_reg_file;
   wire [7:0] count_b_reg_file;
 
+  wire oe_a_ir;
+  wire oe_b_ir;
   wire ld_ir;
 
   wire ld_status;
