@@ -51,7 +51,7 @@ package cpu_pkg;
 
   typedef struct packed {
     logic [6:0] unused;
-    logic status_load;
+    logic set_status;
     reg_e reg_a;
     reg_e reg_b;
     reg_e reg_c;
@@ -59,7 +59,7 @@ package cpu_pkg;
 
   typedef struct packed {
     logic [2:0] unused;
-    logic status_load;
+    logic set_status;
     reg_e reg_a;
     reg_e reg_b;
     logic [7:0] immediate;
@@ -67,14 +67,14 @@ package cpu_pkg;
 
   typedef struct packed {
     logic [10:0] unused;
-    logic status_load;
+    logic set_status;
     reg_e reg_a;
     reg_e reg_b;
   } unary_op_params_t;
 
   typedef struct packed {
     logic [6:0] unused;
-    logic status_load;
+    logic set_status;
     reg_e reg_a;
     logic [7:0] immediate;
   } unary_immediate_op_params_t;
@@ -106,7 +106,7 @@ package cpu_pkg;
   } address_params_t;
 
   typedef union packed {
-    binary_op_params_t and_parmas;
+    binary_op_params_t and_params;
     binary_immediate_op_params_t andi_params;
     binary_op_params_t or_params;
     binary_immediate_op_params_t ori_params;
@@ -115,8 +115,8 @@ package cpu_pkg;
     unary_op_params_t not_params;
     unary_immediate_op_params_t noti_params;
 
-    binary_op_params_t and_params;
-    binary_immediate_op_params_t andi_params;
+    binary_op_params_t add_params;
+    binary_immediate_op_params_t addi_params;
     binary_op_params_t sub_params;
     binary_immediate_op_params_t subi_params;
     binary_immediate_op_params_t rsubi_params;
