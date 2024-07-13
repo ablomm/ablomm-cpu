@@ -113,6 +113,9 @@ module control (
             cpu_pkg::LDI: state <= LDI;
             cpu_pkg::ST: state <= ST;
             cpu_pkg::STR: state <= STR;
+            cpu_pkg::PUSH: state <= PUSH;
+            cpu_pkg::POP: state <= POP;
+            cpu_pkg::MOV: state <= MOV;
             default: ;
           endcase
         end
