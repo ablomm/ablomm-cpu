@@ -4,7 +4,7 @@ import reg_pkg::*;
 
 module cpu (
     input clk,
-	input start,
+    input start,
     output tri [31:0] a_bus,
     output tri [31:0] b_bus,
     output tri [31:0] result_bus,
@@ -26,6 +26,10 @@ module cpu (
   wire reg_e sel_in_reg_file;
   wire [7:0] count_a_reg_file;
   wire [7:0] count_b_reg_file;
+  wire pre_count_a_reg_file;
+  wire pre_count_b_reg_file;
+  wire post_count_a_reg_file;
+  wire post_count_b_reg_file;
 
   wire oe_a_ir;
   wire oe_b_ir;
@@ -43,41 +47,9 @@ module cpu (
   wire alu_op_e alu_op;
 
   control control0 (
-      .clk(clk),
-	  .start(start),
-
+      .*,
       .ir(ir_value),
-      .status(status_value),
-
-      .mem_rd(mem_rd),
-      .mem_wr(mem_wr),
-
-      .a_reg_mask(a_reg_mask),
-      .b_reg_mask(b_reg_mask),
-
-      .oe_a_reg_file(oe_a_reg_file),
-      .oe_b_reg_file(oe_b_reg_file),
-      .ld_reg_file(ld_reg_file),
-      .sel_a_reg_file(sel_a_reg_file),
-      .sel_b_reg_file(sel_b_reg_file),
-	  .sel_in_reg_file(sel_in_reg_file),
-      .count_a_reg_file(count_a_reg_file),
-      .count_b_reg_file(count_b_reg_file),
-
-      .oe_a_ir(oe_a_ir),
-      .oe_b_ir(oe_b_ir),
-      .ld_ir  (ld_ir),
-
-      .ld_status(ld_status),
-
-      .oe_mdr(oe_mdr),
-      .ld_mdr(ld_mdr),
-
-      .oe_mar(oe_mar),
-      .ld_mar(ld_mar),
-
-      .oe_alu(oe_alu),
-      .alu_op(alu_op)
+      .status(status_value)
   );
 
   filter filter_a (
@@ -122,7 +94,11 @@ module cpu (
       .sel_b(sel_b_reg_file),
       .sel_in(sel_in_reg_file),
       .count_a(count_a_reg_file),
-      .count_b(count_b_reg_file)
+      .count_b(count_b_reg_file),
+	  .pre_count_a(pre_count_a_reg_file),
+	  .pre_count_b(pre_count_b_reg_file),
+	  .post_count_a(post_count_a_reg_file),
+	  .post_count_b(post_count_b_reg_file)
   );
 
   // internal private registers

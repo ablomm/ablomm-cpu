@@ -6,16 +6,9 @@ module cpu_reg_tb;
   logic oe_a;
   logic oe_b;
   logic ld;
+  logic [31:0] value;
 
-  cpu_reg reg0 (
-      .clk(clk),
-      .a(a),
-      .b(b),
-      .in(in),
-      .oe_a(oe_a),
-      .oe_b(oe_b),
-      .ld(ld)
-  );
+  cpu_reg reg0 (.*);
 
   initial begin
     test_ld_oe(123);
@@ -24,12 +17,12 @@ module cpu_reg_tb;
 
   task static ld_a(input logic [31:0] data_in);
     begin
-      clk = 0;
+      clk  = 0;
       oe_a = 0;
       oe_b = 0;
       #1;
-      in = data_in;
-      ld = 1;
+      in  = data_in;
+      ld  = 1;
       clk = 1;
       #1;
       ld = 0;

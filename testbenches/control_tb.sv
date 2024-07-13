@@ -22,6 +22,10 @@ module control_tb;
   reg_e sel_in_reg_file;
   logic [7:0] count_a_reg_file;
   logic [7:0] count_b_reg_file;
+  logic pre_count_a_reg_file;
+  logic pre_count_b_reg_file;
+  logic post_count_a_reg_file;
+  logic post_count_b_reg_file;
 
   logic oe_a_ir;
   logic oe_b_ir;
@@ -39,41 +43,9 @@ module control_tb;
   logic [3:0] alu_op;
 
   control control0 (
-      .clk  (clk),
-      .start(start),
-
+      .*,
       .ir(ir_value),
-      .status(status_value),
-
-      .mem_rd(mem_rd),
-      .mem_wr(mem_wr),
-
-      .a_reg_mask(a_reg_mask),
-      .b_reg_mask(b_reg_mask),
-
-      .oe_a_reg_file(oe_a_reg_file),
-      .oe_b_reg_file(oe_b_reg_file),
-      .ld_reg_file(ld_reg_file),
-      .sel_a_reg_file(sel_a_reg_file),
-      .sel_b_reg_file(sel_b_reg_file),
-      .sel_in_reg_file(sel_in_reg_file),
-      .count_a_reg_file(count_a_reg_file),
-      .count_b_reg_file(count_b_reg_file),
-
-      .oe_a_ir(oe_a_ir),
-      .oe_b_ir(oe_b_ir),
-      .ld_ir  (ld_ir),
-
-      .ld_status(ld_status),
-
-      .oe_mdr(oe_mdr),
-      .ld_mdr(ld_mdr),
-
-      .oe_mar(oe_mar),
-      .ld_mar(ld_mar),
-
-      .oe_alu(oe_alu),
-      .alu_op(alu_op)
+      .status(status_value)
   );
 
 
@@ -86,10 +58,11 @@ module control_tb;
     // FETCH state
     clk   = 1;
     start = 0;
-    $display("sel_b_reg_file: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, count_b_reg_file: %d",
-             sel_b_reg_file, oe_b_reg_file, mem_rd, ld_ir, count_b_reg_file);
+    $display(
+        "sel_b_reg_file: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, count_b_reg_file: %d, post_count_b_reg_file",
+        sel_b_reg_file, oe_b_reg_file, mem_rd, ld_ir, count_b_reg_file, post_count_b_reg_file);
 
-    if (sel_b_reg_file !== reg_pkg::PC || oe_b_reg_file !== 1 || mem_rd !== 1 || count_b_reg_file !== 1)
+    if (sel_b_reg_file !== reg_pkg::PC || oe_b_reg_file !== 1 || mem_rd !== 1 || count_b_reg_file !== 1 || post_count_b_reg_file !== 1)
       $finish(1);
     ir_value.condition = NONE;
     ir_value.instruction = cpu_pkg::AND;
