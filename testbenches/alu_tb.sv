@@ -10,12 +10,7 @@ module alu_tb;
   logic [31:0] c;
 
   alu alu0 (
-      .oe(oe),
-      .a(a),
-      .b(b),
-      .out(out),
-      .status(status),
-      .operation(operation),
+	  .*,
       .carry_in(1'b0)
   );
 

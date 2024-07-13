@@ -5,14 +5,7 @@ module mem_tb;
   tri [31:0] out;
   logic rd, wr;
 
-  mem m0 (
-      .clk (clk),
-      .rd  (rd),
-      .wr  (wr),
-      .addr(addr),
-      .data(data),
-      .out (out)
-  );
+  mem m0 (.*);
 
   initial begin
     test_rd_wr(15, 123);

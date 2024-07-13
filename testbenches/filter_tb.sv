@@ -3,11 +3,7 @@ module filter_tb;
   logic [31:0] in;
   logic [31:0] mask;
 
-  filter filter0 (
-      .out (out),
-      .in  (in),
-      .mask(mask)
-  );
+  filter filter0 (.*);
   initial begin
     test_filter(32'hffffffff, 32'hf0f0f0f0);
     test_filter(32'h12312312, 32'h50f37431);

@@ -1,8 +1,8 @@
 module register_file #(
     parameter integer WORD_SIZE = 32,
-    parameter integer SEL_WIDTH  = 8,
-	parameter integer COUNT_WIDTH = 8,
-    parameter integer DEPTH  = 2 ** SEL_WIDTH
+    parameter integer SEL_WIDTH = 8,
+    parameter integer COUNT_WIDTH = 8,
+    parameter integer DEPTH = 2 ** SEL_WIDTH
 
 ) (
     input clk,
@@ -15,8 +15,12 @@ module register_file #(
     input [SEL_WIDTH-1:0] sel_a,
     input [SEL_WIDTH-1:0] sel_b,
     input [SEL_WIDTH-1:0] sel_in,
-	input [COUNT_WIDTH-1:0] count_a,
-	input [COUNT_WIDTH-1:0] count_b
+    input [COUNT_WIDTH-1:0] count_a,
+    input [COUNT_WIDTH-1:0] count_b,
+    input pre_count_a,
+    input pre_count_b,
+    input post_count_a,
+    input post_count_b
 );
 
   logic [WORD_SIZE-1:0] registers[DEPTH-1];
@@ -26,8 +30,11 @@ module register_file #(
 
   always @(posedge clk) begin
     if (ld) registers[sel_in] = in;
-	registers[sel_a] = registers[sel_a] + WORD_SIZE'(signed'(count_a));
-	registers[sel_b] = registers[sel_b] + WORD_SIZE'(signed'(count_b));
+    if (post_count_a) registers[sel_a] += WORD_SIZE'(signed'(count_a));
+    if (post_count_b) registers[sel_b] += WORD_SIZE'(signed'(count_b));
   end
+
+  always @(posedge pre_count_a) registers[sel_a] += WORD_SIZE'(signed'(count_a));
+  always @(posedge pre_count_b) registers[sel_b] += WORD_SIZE'(signed'(count_b));
 
 endmodule

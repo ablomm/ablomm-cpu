@@ -23,6 +23,10 @@ module control (
     output reg_e sel_in_reg_file,
     output logic [7:0] count_a_reg_file,
     output logic [7:0] count_b_reg_file,
+    output logic pre_count_a_reg_file,
+    output logic pre_count_b_reg_file,
+    output logic post_count_a_reg_file,
+    output logic post_count_b_reg_file,
 
     output logic oe_a_ir,
     output logic oe_b_ir,
@@ -62,11 +66,14 @@ module control (
     ASHRI,
     SHL,
     SHLI,
-	LD,
-	LDR,
-	LDI,
-	ST,
-	STR
+    LD,
+    LDR,
+    LDI,
+    ST,
+    STR,
+    PUSH,
+    POP,
+    MOV
   } states_e;
 
   states_e state;
@@ -108,7 +115,6 @@ module control (
             cpu_pkg::STR: state <= STR;
             default: ;
           endcase
-
         end
       end
       STOP: state <= STOP;
@@ -149,6 +155,10 @@ module control (
 	  sel_b_reg_file,
 	  count_a_reg_file,
 	  count_b_reg_file,
+	  pre_count_a_reg_file,
+	  pre_count_b_reg_file,
+	  post_count_a_reg_file,
+	  post_count_b_reg_file,
 
 	  oe_a_ir,
 	  oe_b_ir,
@@ -175,6 +185,7 @@ module control (
         mem_rd <= 1;
         ld_ir <= 1;
         count_b_reg_file <= 8'h1;
+        post_count_b_reg_file <= 1;
       end
 
       // reg_a <- reg_b & reb_c
@@ -309,15 +320,41 @@ module control (
         mem_wr <= 1;
       end
 
-	  // *reg_b <- reg_a
-	  STR: begin
+      // *reg_b <- reg_a
+      STR: begin
         sel_a_reg_file <= ir.params.str_params.reg_a;
         oe_a_reg_file <= 1;
         sel_b_reg_file <= ir.params.str_params.reg_b;
         oe_b_reg_file <= 1;
-		mem_wr <= 1;
-	  end
+        mem_wr <= 1;
+      end
 
+      // *(--sp) <- reg_a
+      PUSH: begin
+        sel_a_reg_file <= ir.params.push_params.reg_a;
+        sel_b_reg_file <= reg_pkg::SP;
+        count_b_reg_file <= -1;
+        pre_count_b_reg_file <= 1;
+        mem_wr <= 1;
+      end
+
+      // reg_a <- *(sp++)
+      POP: begin
+        sel_b_reg_file <= reg_pkg::SP;
+        count_b_reg_file <= 1;
+        post_count_b_reg_file <= 1;
+        mem_rd <= 1;
+        sel_in_reg_file <= ir.params.pop_params.reg_a;
+        ld_reg_file <= 1;
+      end
+
+      // reg_a <- reg_b
+      MOV: begin
+        sel_a_reg_file <= ir.params.mov_params.reg_b;
+        alu_op <= alu_pkg::PASSA;
+        sel_in_reg_file <= ir.params.mov_params.reg_a;
+        ld_reg_file <= 1;
+      end
       STOP: ;
       default: ;
     endcase

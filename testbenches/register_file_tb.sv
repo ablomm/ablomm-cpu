@@ -11,34 +11,28 @@ module register_file_tb;
   logic [7:0] sel_in;
   logic [7:0] count_a = 0;
   logic [7:0] count_b = 0;
+  logic pre_count_a;
+  logic pre_count_b;
+  logic post_count_a;
+  logic post_count_b;
 
-  register_file reg_file0 (
-      .clk(clk),
-      .a(a),
-      .b(b),
-      .in(in),
-      .oe_a(oe_a),
-      .oe_b(oe_b),
-      .ld(ld),
-      .sel_a(sel_a),
-      .sel_b(sel_b),
-	  .sel_in(sel_in),
-      .count_a(count_a),
-      .count_b(count_b)
-  );
+  register_file reg_file0 (.*);
 
   initial begin
     test_ld_oe(2, 123);
     test_ld_oe(3, 321);
     test_ld_oe(2, 567);
 
-    count(2, 5);
+    post_count(2, 5);
     set_oe_a(2);
     $display("a = %d", a);
     if (a !== 567 + 5) $finish(1);
-    count(2, -6);
+    post_count(2, -6);
     $display("a = %d", a);
     if (a !== 567 - 1) $finish(1);
+	pre_count(3, 2);
+    $display("a = %d", a);
+    if (a !== 321 + 2) $finish(1);
   end
 
   task static ld_data(input logic [7:0] addr, input logic [31:0] data_in);
@@ -70,15 +64,28 @@ module register_file_tb;
     end
   endtask
 
-  task static count(input logic [7:0] addr, input logic [7:0] count);
+  task static post_count(input logic [7:0] addr, input logic [7:0] count);
     begin
       clk = 0;
       #1;
-      count_a = count;
       sel_a = addr;
+      count_a = count;
+      post_count_a = 1;
       clk = 1;
       #1;
-      count_a = 0;
+      post_count_a = 0;
+    end
+  endtask
+
+  task static pre_count(input logic [7:0] addr, input logic [7:0] count);
+    begin
+      clk = 0;
+      #1;
+      sel_a = addr;
+      count_a = count;
+      pre_count_a = 1;
+      post_count_a <= 0;
+	  #1;
     end
   endtask
 

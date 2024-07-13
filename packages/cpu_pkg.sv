@@ -137,9 +137,6 @@ package cpu_pkg;
     register_params_t pop_params;
 
     register_register_params_t mov_params;
-
-    address_params_t  jmp_params;
-    register_params_t jmpr_params;
   } ir_params_t;
 
   typedef struct packed {
