@@ -62,10 +62,13 @@ module control (
     RSUBI,
     SHR,
     SHRI,
+    RSHRI,
     ASHR,
     ASHRI,
+    RASHRI,
     SHL,
     SHLI,
+    RSHLI,
     LD,
     LDR,
     LDI,
@@ -104,10 +107,13 @@ module control (
             cpu_pkg::RSUBI: state <= RSUBI;
             cpu_pkg::SHR: state <= SHR;
             cpu_pkg::SHRI: state <= SHRI;
+            cpu_pkg::RSHRI: state <= SHRI;
             cpu_pkg::SHR: state <= ASHR;
             cpu_pkg::ASHRI: state <= ASHRI;
+            cpu_pkg::RASHRI: state <= ASHRI;
             cpu_pkg::SHL: state <= SHL;
             cpu_pkg::SHLI: state <= SHLI;
+            cpu_pkg::RSHLI: state <= SHLI;
             cpu_pkg::LD: state <= LD;
             cpu_pkg::LDR: state <= LDR;
             cpu_pkg::LDI: state <= LDI;
@@ -266,6 +272,11 @@ module control (
       do_binary_operation_i(alu_pkg::SHR, ir.params.shri_params.set_status,
                             ir.params.shri_params.reg_a, ir.params.shri_params.reg_b);
 
+      // reg_a <- immediate >> reg_b
+      RSHRI:
+      do_reverse_binary_operation_i(alu_pkg::SHR, ir.params.rshri_params.set_status,
+                                    ir.params.rshri_params.reg_a, ir.params.rshri_params.reg_b);
+
       // reg_a <- reg_b >>> reg_c
       ASHR:
       do_binary_operation(alu_pkg::ASHR, ir.params.ashr_params.set_status,
@@ -277,6 +288,10 @@ module control (
       do_binary_operation_i(alu_pkg::ASHR, ir.params.ashri_params.set_status,
                             ir.params.ashri_params.reg_a, ir.params.ashri_params.reg_b);
 
+      // reg_a <- immediate >>> reg_b
+      RASHRI:
+      do_reverse_binary_operation_i(alu_pkg::ASHR, ir.params.rashri_params.set_status,
+                                    ir.params.rashri_params.reg_a, ir.params.rashri_params.reg_b);
       // reg_a <- reg_b << reg_c
       SHL:
       do_binary_operation(alu_pkg::SHL, ir.params.shl_params.set_status, ir.params.shl_params.reg_a,
@@ -287,6 +302,10 @@ module control (
       do_binary_operation_i(alu_pkg::SHR, ir.params.shli_params.set_status,
                             ir.params.shli_params.reg_a, ir.params.shli_params.reg_b);
 
+      // reg_a <- immediate << reg_b
+      RSHLI:
+      do_reverse_binary_operation_i(alu_pkg::SHR, ir.params.rshli_params.set_status,
+                                    ir.params.rshli_params.reg_a, ir.params.rshli_params.reg_b);
       // reg_a <- *address
       LD: begin
         oe_b_ir <= 1;
