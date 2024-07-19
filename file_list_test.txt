@@ -1,14 +1,14 @@
-packages/alu_pkg.sv
-packages/reg_pkg.sv
-packages/cpu_pkg.sv
+hdl/packages/alu_pkg.sv
+hdl/packages/reg_pkg.sv
+hdl/packages/cpu_pkg.sv
 
-alu.sv
-mem.sv
-control.sv
-cpu.sv
-cpu_reg.sv
-filter.sv
-register_file.sv
+hdl/alu.sv
+hdl/mem.sv
+hdl/control.sv
+hdl/cpu.sv
+hdl/cpu_reg.sv
+hdl/filter.sv
+hdl/register_file.sv
 
 testbenches/alu_tb.sv
 testbenches/mem_tb.sv
