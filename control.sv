@@ -82,48 +82,48 @@ module control (
   states_e state = STOP;
 
   // state changes
-  always @(posedge clk) begin
+  always_ff @(posedge clk) begin
     case (state)
       FETCH: begin
         if (satisfies_condition(ir.condition, status)) begin
           case (ir.instruction)
             cpu_pkg::NOP: ;
-            cpu_pkg::AND: state = AND;
-            cpu_pkg::ANDI: state = ANDI;
-            cpu_pkg::OR: state = OR;
-            cpu_pkg::ORI: state = ORI;
-            cpu_pkg::XOR: state = XOR;
-            cpu_pkg::XORI: state = XORI;
-            cpu_pkg::NOT: state = NOT;
-            cpu_pkg::NOTI: state = NOTI;
-            cpu_pkg::ADD: state = ADD;
-            cpu_pkg::ADDI: state = ADDI;
-            cpu_pkg::SUB: state = SUB;
-            cpu_pkg::SUBI: state = SUBI;
-            cpu_pkg::RSUBI: state = RSUBI;
-            cpu_pkg::SHR: state = SHR;
-            cpu_pkg::SHRI: state = SHRI;
-            cpu_pkg::RSHRI: state = SHRI;
-            cpu_pkg::SHR: state = ASHR;
-            cpu_pkg::ASHRI: state = ASHRI;
-            cpu_pkg::RASHRI: state = ASHRI;
-            cpu_pkg::SHL: state = SHL;
-            cpu_pkg::SHLI: state = SHLI;
-            cpu_pkg::RSHLI: state = SHLI;
-            cpu_pkg::LD: state = LD;
-            cpu_pkg::LDR: state = LDR;
-            cpu_pkg::LDI: state = LDI;
-            cpu_pkg::ST: state = ST;
-            cpu_pkg::STR: state = STR;
-            cpu_pkg::PUSH: state = PUSH;
-            cpu_pkg::POP: state = POP;
-            cpu_pkg::MOV: state = MOV;
+            cpu_pkg::AND: state <= AND;
+            cpu_pkg::ANDI: state <= ANDI;
+            cpu_pkg::OR: state <= OR;
+            cpu_pkg::ORI: state <= ORI;
+            cpu_pkg::XOR: state <= XOR;
+            cpu_pkg::XORI: state <= XORI;
+            cpu_pkg::NOT: state <= NOT;
+            cpu_pkg::NOTI: state <= NOTI;
+            cpu_pkg::ADD: state <= ADD;
+            cpu_pkg::ADDI: state <= ADDI;
+            cpu_pkg::SUB: state <= SUB;
+            cpu_pkg::SUBI: state <= SUBI;
+            cpu_pkg::RSUBI: state <= RSUBI;
+            cpu_pkg::SHR: state <= SHR;
+            cpu_pkg::SHRI: state <= SHRI;
+            cpu_pkg::RSHRI: state <= SHRI;
+            cpu_pkg::SHR: state <= ASHR;
+            cpu_pkg::ASHRI: state <= ASHRI;
+            cpu_pkg::RASHRI: state <= ASHRI;
+            cpu_pkg::SHL: state <= SHL;
+            cpu_pkg::SHLI: state <= SHLI;
+            cpu_pkg::RSHLI: state <= SHLI;
+            cpu_pkg::LD: state <= LD;
+            cpu_pkg::LDR: state <= LDR;
+            cpu_pkg::LDI: state <= LDI;
+            cpu_pkg::ST: state <= ST;
+            cpu_pkg::STR: state <= STR;
+            cpu_pkg::PUSH: state <= PUSH;
+            cpu_pkg::POP: state <= POP;
+            cpu_pkg::MOV: state <= MOV;
             default: ;
           endcase
         end
       end
       STOP: if (start) state <= FETCH;
-      default: state = FETCH;
+      default: state <= FETCH;
     endcase
   end
 
