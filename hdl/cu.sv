@@ -2,7 +2,7 @@ import cpu_pkg::*;
 import alu_pkg::*;
 import reg_pkg::*;
 
-module control (
+module cu (
     input clk,
     input wire start,
 
