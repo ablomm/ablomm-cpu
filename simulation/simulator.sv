@@ -4,22 +4,6 @@ module simulator;
   tri [31:0] a_bus, b_bus, result_bus;
   wire mem_rd, mem_wr;
 
-  /*
-  initial begin
-    // stop
-    #10 clk = ~clk;  //pos -- fetch
-    #10 clk = ~clk;  //neg
-    #10 clk = ~clk;  //pos -- LDI
-    #10 clk = ~clk;  //neg
-    #10 clk = ~clk;  //pos -- fetch
-    #10 clk = ~clk;  //neg
-    #10 clk = ~clk;  //pos -- ST
-    #10 clk = ~clk;  //pos -- ST
-    #10 clk = ~clk;  //pos -- ST
-    #10 clk = ~clk;  //pos -- ST
-    #10 clk = ~clk;  //pos -- ST
-  end*/
-
   initial forever #10 clk = ~clk;
 
   initial start = 1;
