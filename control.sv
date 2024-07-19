@@ -79,55 +79,51 @@ module control (
     MOV
   } states_e;
 
-  states_e state;
-
-  always @(posedge start) begin
-    state <= FETCH;
-  end
+  states_e state = STOP;
 
   // state changes
-  always_ff @(posedge clk) begin
+  always @(posedge clk) begin
     case (state)
       FETCH: begin
         if (satisfies_condition(ir.condition, status)) begin
           case (ir.instruction)
             cpu_pkg::NOP: ;
-            cpu_pkg::AND: state <= AND;
-            cpu_pkg::ANDI: state <= ANDI;
-            cpu_pkg::OR: state <= OR;
-            cpu_pkg::ORI: state <= ORI;
-            cpu_pkg::XOR: state <= XOR;
-            cpu_pkg::XORI: state <= XORI;
-            cpu_pkg::NOT: state <= NOT;
-            cpu_pkg::NOTI: state <= NOTI;
-            cpu_pkg::ADD: state <= ADD;
-            cpu_pkg::ADDI: state <= ADDI;
-            cpu_pkg::SUB: state <= SUB;
-            cpu_pkg::SUBI: state <= SUBI;
-            cpu_pkg::RSUBI: state <= RSUBI;
-            cpu_pkg::SHR: state <= SHR;
-            cpu_pkg::SHRI: state <= SHRI;
-            cpu_pkg::RSHRI: state <= SHRI;
-            cpu_pkg::SHR: state <= ASHR;
-            cpu_pkg::ASHRI: state <= ASHRI;
-            cpu_pkg::RASHRI: state <= ASHRI;
-            cpu_pkg::SHL: state <= SHL;
-            cpu_pkg::SHLI: state <= SHLI;
-            cpu_pkg::RSHLI: state <= SHLI;
-            cpu_pkg::LD: state <= LD;
-            cpu_pkg::LDR: state <= LDR;
-            cpu_pkg::LDI: state <= LDI;
-            cpu_pkg::ST: state <= ST;
-            cpu_pkg::STR: state <= STR;
-            cpu_pkg::PUSH: state <= PUSH;
-            cpu_pkg::POP: state <= POP;
-            cpu_pkg::MOV: state <= MOV;
+            cpu_pkg::AND: state = AND;
+            cpu_pkg::ANDI: state = ANDI;
+            cpu_pkg::OR: state = OR;
+            cpu_pkg::ORI: state = ORI;
+            cpu_pkg::XOR: state = XOR;
+            cpu_pkg::XORI: state = XORI;
+            cpu_pkg::NOT: state = NOT;
+            cpu_pkg::NOTI: state = NOTI;
+            cpu_pkg::ADD: state = ADD;
+            cpu_pkg::ADDI: state = ADDI;
+            cpu_pkg::SUB: state = SUB;
+            cpu_pkg::SUBI: state = SUBI;
+            cpu_pkg::RSUBI: state = RSUBI;
+            cpu_pkg::SHR: state = SHR;
+            cpu_pkg::SHRI: state = SHRI;
+            cpu_pkg::RSHRI: state = SHRI;
+            cpu_pkg::SHR: state = ASHR;
+            cpu_pkg::ASHRI: state = ASHRI;
+            cpu_pkg::RASHRI: state = ASHRI;
+            cpu_pkg::SHL: state = SHL;
+            cpu_pkg::SHLI: state = SHLI;
+            cpu_pkg::RSHLI: state = SHLI;
+            cpu_pkg::LD: state = LD;
+            cpu_pkg::LDR: state = LDR;
+            cpu_pkg::LDI: state = LDI;
+            cpu_pkg::ST: state = ST;
+            cpu_pkg::STR: state = STR;
+            cpu_pkg::PUSH: state = PUSH;
+            cpu_pkg::POP: state = POP;
+            cpu_pkg::MOV: state = MOV;
             default: ;
           endcase
         end
       end
-      STOP: state <= STOP;
-      default: state <= FETCH;
+      STOP: if (start) state <= FETCH;
+      default: state = FETCH;
     endcase
   end
 
@@ -184,6 +180,9 @@ module control (
 	  oe_alu,
 	  alu_op
   	} <= 0;
+
+    a_reg_mask <= 32'hffffffff;
+    b_reg_mask <= 32'hffffffff;
 
     case (state)
 
@@ -309,7 +308,7 @@ module control (
       // reg_a <- *address
       LD: begin
         oe_b_ir <= 1;
-        b_reg_mask <= 32'hff;
+        b_reg_mask <= 32'hffff;
         mem_rd <= 1;
         sel_in_reg_file <= ir.params.ld_params.reg_a;
         ld_reg_file <= 1;
@@ -327,8 +326,9 @@ module control (
       // reg_a <- immediate
       LDI: begin
         oe_a_ir <= 1;
-        b_reg_mask <= 32'hff;
+        a_reg_mask <= 32'hffff;
         alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
         sel_in_reg_file <= ir.params.ld_params.reg_a;
         ld_reg_file <= 1;
       end
@@ -338,7 +338,7 @@ module control (
         sel_a_reg_file <= ir.params.st_params.reg_a;
         oe_a_reg_file <= 1;
         oe_b_ir <= 1;
-        b_reg_mask <= 32'hff;
+        b_reg_mask <= 32'hffff;
         mem_wr <= 1;
       end
 
@@ -374,6 +374,7 @@ module control (
       MOV: begin
         sel_a_reg_file <= ir.params.mov_params.reg_b;
         alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
         sel_in_reg_file <= ir.params.mov_params.reg_a;
         ld_reg_file <= 1;
       end
@@ -390,6 +391,7 @@ module control (
       sel_b_reg_file <= reg_c;
       oe_b_reg_file <= 1;
       alu_op <= op;
+      oe_alu <= 1;
       sel_in_reg_file <= reg_a;
       ld_reg_file <= 1;
       ld_status <= set_status;
@@ -402,8 +404,9 @@ module control (
       sel_a_reg_file <= reg_b;
       oe_a_reg_file <= 1;
       oe_b_ir <= 1;
-      b_reg_mask <= 32'hf;
+      b_reg_mask <= 32'hff;
       alu_op <= op;
+      oe_alu <= 1;
       sel_in_reg_file <= reg_a;
       ld_reg_file <= 1;
       ld_status <= set_status;
@@ -414,10 +417,11 @@ module control (
                                             input reg_e reg_a, input reg_e reg_b);
     begin
       oe_a_ir <= 1;
-      a_reg_mask <= 32'hf;
+      a_reg_mask <= 32'hff;
       sel_b_reg_file <= reg_b;
       oe_b_reg_file <= 1;
       alu_op <= op;
+      oe_alu <= 1;
       sel_in_reg_file <= reg_a;
       ld_reg_file <= 1;
       ld_status <= set_status;
@@ -430,6 +434,7 @@ module control (
       sel_a_reg_file <= reg_b;
       oe_a_reg_file <= 1;
       alu_op <= op;
+      oe_alu <= 1;
       sel_in_reg_file <= reg_a;
       ld_reg_file <= 1;
       ld_status <= set_status;
@@ -439,8 +444,9 @@ module control (
   task static do_unary_operation_i(input alu_op_e op, input logic set_status, input reg_e reg_a);
     begin
       oe_a_ir <= 1;
-      a_reg_mask <= 32'hf;
+      a_reg_mask <= 32'hff;
       alu_op <= op;
+      oe_alu <= 1;
       sel_in_reg_file <= reg_a;
       ld_reg_file <= 1;
       ld_status <= set_status;

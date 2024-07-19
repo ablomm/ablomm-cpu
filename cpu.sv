@@ -48,6 +48,7 @@ module cpu (
 
   control control0 (
       .*,
+      .clk(~clk),
       .ir(ir_value),
       .status(status_value)
   );
@@ -95,10 +96,10 @@ module cpu (
       .sel_in(sel_in_reg_file),
       .count_a(count_a_reg_file),
       .count_b(count_b_reg_file),
-	  .pre_count_a(pre_count_a_reg_file),
-	  .pre_count_b(pre_count_b_reg_file),
-	  .post_count_a(post_count_a_reg_file),
-	  .post_count_b(post_count_b_reg_file)
+      .pre_count_a(pre_count_a_reg_file),
+      .pre_count_b(pre_count_b_reg_file),
+      .post_count_a(post_count_a_reg_file),
+      .post_count_b(post_count_b_reg_file)
   );
 
   // internal private registers
