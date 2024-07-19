@@ -12,11 +12,9 @@ module rom #(
     input en
 );
 
-  logic [WORD_SIZE-1:0] mem[DEPTH-1];
+  logic [WORD_SIZE-1:0] mem[DEPTH];
 
   assign out = (en && rd) ? mem[addr] : 'hz;
-
-  always @(posedge rd) if (en) #1 $display("reading %h: %h", addr, mem[addr]);
 
   always_ff @(posedge clk) begin
     if (en && wr) mem[addr] <= data;

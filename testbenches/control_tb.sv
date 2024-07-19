@@ -52,12 +52,18 @@ module control_tb;
   initial begin
     // STOP state
     clk   = 0;
-    start = 1;
     #1;
 
-    // FETCH state
+    start = 1;
     clk   = 1;
-    start = 0;
+	#1;
+
+	// FETCH state
+	clk = 0;
+	#1;
+
+	clk = 1;
+	start = 0;
     $display(
         "sel_b_reg_file: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, count_b_reg_file: %d, post_count_b_reg_file",
         sel_b_reg_file, oe_b_reg_file, mem_rd, ld_ir, count_b_reg_file, post_count_b_reg_file);
@@ -69,13 +75,12 @@ module control_tb;
     ir_value.params.and_params.reg_a = reg_pkg::R0;
     ir_value.params.and_params.reg_b = reg_pkg::R1;
     ir_value.params.and_params.reg_c = reg_pkg::R2;
-
     #1;
+
+    // AND state
     clk = 0;
     #1;
     clk = 1;
-
-    // AND state
     $display(
         "sel_a_reg_file: %d, oe_a_reg_file: %d, sel_b_reg_file: %d, oe_b_reg_file: %d, alu_op: %d, sel_ing_reg_file: %d, ld_reg_file: %d",
         sel_a_reg_file, oe_a_reg_file, sel_b_reg_file, oe_b_reg_file, alu_op, sel_in_reg_file,

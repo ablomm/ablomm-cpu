@@ -48,7 +48,7 @@ module cpu (
 
   control control0 (
       .*,
-      .clk(~clk),
+      .clk(~clk), // negative clk so that control signals are created before loads (fixes race conditions)
       .ir(ir_value),
       .status(status_value)
   );
