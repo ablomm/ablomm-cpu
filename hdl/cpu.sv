@@ -124,21 +124,4 @@ module cpu (
       .ld(ld_status),
       .value(status_value)
   );
-
-  cpu_reg mdr (
-      .clk(clk),
-      .a(a_reg_bus),
-      .in(result_bus),
-      .oe_a(oe_mdr),
-      .ld(ld_mdr)
-  );
-
-  cpu_reg mar (
-      .clk(clk),
-      .b(b_reg_bus),
-      .in(result_bus),
-      .oe_b(oe_mar),
-      .ld(ld_mar)
-  );
-
 endmodule
