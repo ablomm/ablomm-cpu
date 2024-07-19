@@ -4,7 +4,7 @@ hdl/packages/cpu_pkg.sv
 
 hdl/alu.sv
 hdl/mem.sv
-hdl/control.sv
+hdl/cu.sv
 hdl/cpu.sv
 hdl/cpu_reg.sv
 hdl/filter.sv

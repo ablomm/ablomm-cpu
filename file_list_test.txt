@@ -4,7 +4,7 @@ hdl/packages/cpu_pkg.sv
 
 hdl/alu.sv
 hdl/mem.sv
-hdl/control.sv
+hdl/cu.sv
 hdl/cpu.sv
 hdl/cpu_reg.sv
 hdl/filter.sv
@@ -12,7 +12,7 @@ hdl/register_file.sv
 
 testbenches/alu_tb.sv
 testbenches/mem_tb.sv
-testbenches/control_tb.sv
+testbenches/cu_tb.sv
 testbenches/cpu_reg_tb.sv
 testbenches/register_file_tb.sv
 testbenches/filter_tb.sv

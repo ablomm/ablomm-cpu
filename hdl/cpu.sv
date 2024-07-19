@@ -46,7 +46,7 @@ module cpu (
   wire oe_alu;
   wire alu_op_e alu_op;
 
-  control control0 (
+  cu cu0 (
       .*,
       .clk(~clk), // negative clk so that control signals are created before loads (fixes race conditions)
       .ir(ir_value),

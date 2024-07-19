@@ -1,4 +1,4 @@
-module control_tb;
+module cu_tb;
   import cpu_pkg::*;
   import reg_pkg::*;
 
@@ -42,7 +42,7 @@ module control_tb;
   logic oe_alu;
   logic [3:0] alu_op;
 
-  control control0 (
+  cu cu0 (
       .*,
       .ir(ir_value),
       .status(status_value)
@@ -51,19 +51,19 @@ module control_tb;
 
   initial begin
     // STOP state
-    clk   = 0;
+    clk = 0;
     #1;
 
     start = 1;
     clk   = 1;
-	#1;
+    #1;
 
-	// FETCH state
-	clk = 0;
-	#1;
+    // FETCH state
+    clk = 0;
+    #1;
 
-	clk = 1;
-	start = 0;
+    clk   = 1;
+    start = 0;
     $display(
         "sel_b_reg_file: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, count_b_reg_file: %d, post_count_b_reg_file",
         sel_b_reg_file, oe_b_reg_file, mem_rd, ld_ir, count_b_reg_file, post_count_b_reg_file);
