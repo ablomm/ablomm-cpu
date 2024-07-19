@@ -16,8 +16,3 @@ testbenches/control_tb.sv
 testbenches/cpu_reg_tb.sv
 testbenches/register_file_tb.sv
 testbenches/filter_tb.sv
-
-simulation/simulator.sv
-simulation/rom.sv
-simulation/tty.sv
-

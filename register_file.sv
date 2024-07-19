@@ -23,7 +23,7 @@ module register_file #(
     input post_count_b
 );
 
-  logic [WORD_SIZE-1:0] registers[DEPTH-1];
+  logic [WORD_SIZE-1:0] registers[DEPTH];
 
   initial begin
     int i;

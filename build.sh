@@ -1,2 +1,3 @@
 mkdir -p build
-iverilog -o build/out -c file_list.txt -g2012 
+file_list=${1:-"file_list.txt"}
+iverilog -o build/out -c ${file_list} -g2012 

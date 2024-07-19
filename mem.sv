@@ -12,7 +12,7 @@ module mem #(
     input en
 );
 
-  logic [WORD_SIZE-1:0] mem[DEPTH-1];
+  logic [WORD_SIZE-1:0] mem[DEPTH];
 
   assign out = (en && rd) ? mem[addr] : 'hz;
 
