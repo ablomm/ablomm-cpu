@@ -33,10 +33,13 @@ package cpu_pkg;
     RSUBI,
     SHR,
     SHRI,
+	RSHRI,
     ASHR,
     ASHRI,
+	RASHRI,
     SHL,
     SHLI,
+	RSHLI,
     LD,
     LDR,
     LDI,
@@ -44,9 +47,7 @@ package cpu_pkg;
     STR,
     PUSH,
     POP,
-    MOV,
-    JMP,
-    JMPR
+    MOV
   } instruction_e;
 
   typedef struct packed {
@@ -122,10 +123,13 @@ package cpu_pkg;
     binary_immediate_op_params_t rsubi_params;
     binary_op_params_t shr_params;
     binary_immediate_op_params_t shri_params;
+    binary_immediate_op_params_t rshri_params;
     binary_op_params_t ashr_params;
     binary_immediate_op_params_t ashri_params;
+    binary_immediate_op_params_t rashri_params;
     binary_op_params_t shl_params;
     binary_immediate_op_params_t shli_params;
+    binary_immediate_op_params_t rshli_params;
 
     register_address_params_t   ld_params;
     register_register_params_t  ldr_params;
