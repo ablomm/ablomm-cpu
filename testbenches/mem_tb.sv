@@ -3,11 +3,12 @@ module mem_tb;
   logic [31:0] data;
   logic [15:0] addr;
   tri [31:0] out;
-  logic rd, wr;
+  logic rd, wr, en;
 
   mem m0 (.*);
 
   initial begin
+    en = 1;
     test_rd_wr(15, 123);
     test_rd_wr(16, 223);
   end

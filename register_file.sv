@@ -25,6 +25,13 @@ module register_file #(
 
   logic [WORD_SIZE-1:0] registers[DEPTH-1];
 
+  initial begin
+    int i;
+    for (i = 0; i < DEPTH; i = i + 1) begin
+      registers[i] = 0;
+    end
+  end
+
   assign a = oe_a ? registers[sel_a] : 'hz;
   assign b = oe_b ? registers[sel_b] : 'hz;
 
