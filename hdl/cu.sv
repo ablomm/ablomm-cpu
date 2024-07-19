@@ -43,6 +43,9 @@ module cu (
     output logic oe_alu,
     output alu_op_e alu_op
 );
+
+  // internal states of the CU, one CPU instruction could have many internal
+  // CU states (multi-clock instructions)
   typedef enum {
     STOP,
     FETCH,
@@ -86,7 +89,7 @@ module cu (
     case (state)
       FETCH: begin
         if (satisfies_condition(ir.condition, status)) begin
-          case (ir.instruction)
+          unique case (ir.instruction)
             cpu_pkg::NOP: ;
             cpu_pkg::AND: state <= AND;
             cpu_pkg::ANDI: state <= ANDI;
@@ -118,7 +121,6 @@ module cu (
             cpu_pkg::PUSH: state <= PUSH;
             cpu_pkg::POP: state <= POP;
             cpu_pkg::MOV: state <= MOV;
-            default: ;
           endcase
         end
       end
