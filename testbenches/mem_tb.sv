@@ -40,7 +40,7 @@ module mem_tb;
       write(addr_in, data_in);
       read(addr_in);
       $display("data = %d", out);
-      if (out !== data_in) $finish(1);
+      assert (out === data_in);
     end
   endtask
 endmodule

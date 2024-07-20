@@ -10,26 +10,20 @@ module alu_tb;
   logic [31:0] c;
 
   alu alu0 (
-	  .*,
+      .*,
       .carry_in(1'b0)
   );
 
   initial begin
-    $display("testing addition:");
-
     test_sum(1, 1, 4'b0000);
     test_sum(2, 1, 4'b0000);
     test_sum(32'hffffffff, 2, 4'b0010);
     test_sum(32'h7fffffff, 1, 4'b1001);
 
-    $display("\ntesting subtraction:");
-
     test_sub(1, 1, 4'b0100);
     test_sub(2, 1, 4'b0000);
     test_sub(2, 3, 4'b1010);
     test_sub(-32'h80000000, 1, 4'b0001);
-
-    // $finish(0);
   end
 
   initial $monitor("a = %d, b = %d, out = %d, op = %h, status = %b", a, b, out, operation, status);
@@ -42,8 +36,8 @@ module alu_tb;
       b = b_in;
       oe = 1;
       #1;
-      if (out !== a_in + b_in) $finish(1);
-      if (status !== status_in) $finish(2);
+      assert (out === a_in + b_in);
+      assert (status === status_in);
       oe = 0;
     end
   endtask
@@ -56,8 +50,8 @@ module alu_tb;
       b = b_in;
       oe = 1;
       #1;
-      if (out !== a_in - b_in) $finish(1);
-      if (status !== status_in) $finish(2);
+      assert (out === a_in - b_in);
+      assert (status === status_in);
       oe = 0;
     end
   endtask

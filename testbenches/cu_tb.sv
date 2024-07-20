@@ -4,6 +4,7 @@ module cu_tb;
 
   logic clk;
   logic start;
+  logic rst = 0;
   ir_t ir_value;
   status_t status_value;
 
@@ -68,8 +69,7 @@ module cu_tb;
         "sel_b_reg_file: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, count_b_reg_file: %d, post_count_b_reg_file",
         sel_b_reg_file, oe_b_reg_file, mem_rd, ld_ir, count_b_reg_file, post_count_b_reg_file);
 
-    if (sel_b_reg_file !== reg_pkg::PC || oe_b_reg_file !== 1 || mem_rd !== 1 || count_b_reg_file !== 1 || post_count_b_reg_file !== 1)
-      $finish(1);
+    assert (sel_b_reg_file === reg_pkg::PC && oe_b_reg_file === 1 && mem_rd === 1 && count_b_reg_file === 1 && post_count_b_reg_file === 1);
     ir_value.condition = NONE;
     ir_value.instruction = cpu_pkg::AND;
     ir_value.params.and_params.reg_a = reg_pkg::R0;
@@ -86,8 +86,6 @@ module cu_tb;
         sel_a_reg_file, oe_a_reg_file, sel_b_reg_file, oe_b_reg_file, alu_op, sel_in_reg_file,
         ld_reg_file);
 
-    if (sel_a_reg_file !== reg_pkg::R1 || oe_a_reg_file !== 1 || sel_b_reg_file !== reg_pkg::R2 || oe_b_reg_file !== 1 || alu_op !== alu_pkg::AND || sel_in_reg_file !== reg_pkg::R0 || ld_reg_file !== 1)
-      $finish(1);
-
+    assert (sel_a_reg_file === reg_pkg::R1 && oe_a_reg_file === 1 && sel_b_reg_file === reg_pkg::R2 && oe_b_reg_file === 1 && alu_op === alu_pkg::AND && sel_in_reg_file === reg_pkg::R0 && ld_reg_file === 1);
   end
 endmodule

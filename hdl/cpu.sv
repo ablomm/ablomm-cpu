@@ -5,6 +5,7 @@ import reg_pkg::*;
 module cpu (
     input clk,
     input start,
+    input rst,
     output tri [31:0] a_bus,
     output tri [31:0] b_bus,
     output tri [31:0] result_bus,
@@ -85,6 +86,7 @@ module cpu (
       .SEL_WIDTH(4)
   ) reg_file (
       .clk(clk),
+      .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
@@ -106,6 +108,7 @@ module cpu (
   wire ir_t ir_value;
   cpu_reg ir (
       .clk(clk),
+      .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
@@ -120,6 +123,7 @@ module cpu (
       .SIZE(4)
   ) status (
       .clk(clk),
+      .rst(rst),
       .in(alu_status_out),
       .ld(ld_status),
       .value(status_value)
