@@ -10,7 +10,7 @@ module alu_tb;
   logic [31:0] c;
 
   alu alu0 (
-	  .*,
+      .*,
       .carry_in(1'b0)
   );
 

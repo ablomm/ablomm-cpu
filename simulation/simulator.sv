@@ -6,9 +6,7 @@ module simulator;
 
   initial forever #10 clk = ~clk;
 
-  cpu cpu0 (
-	  .*
-  );
+  cpu cpu0 (.*);
 
   mem #(
       .ADDR_WIDTH(15)

@@ -17,7 +17,7 @@ package cpu_pkg;
   } cond_e;
 
   typedef enum logic [7:0] {
-    NOP   = 8'h00,
+    NOP = 8'h00,
     AND,
     ANDI,
     OR,
@@ -33,13 +33,13 @@ package cpu_pkg;
     RSUBI,
     SHR,
     SHRI,
-	RSHRI,
+    RSHRI,
     ASHR,
     ASHRI,
-	RASHRI,
+    RASHRI,
     SHL,
     SHLI,
-	RSHLI,
+    RSHLI,
     LD,
     LDR,
     LDI,

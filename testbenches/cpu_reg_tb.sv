@@ -18,11 +18,11 @@ module cpu_reg_tb;
     test_ld_oe(123);
     test_ld_oe(321);
     do_post_count(4);
-	$display("a = %d", a);
+    $display("a = %d", a);
     assert (a === 321 + 4);
-	do_pre_count(-5);
-	$display("a = %d", a);
-	assert (a === 321 - 1);
+    do_pre_count(-5);
+    $display("a = %d", a);
+    assert (a === 321 - 1);
   end
 
   task static ld_a(input logic [31:0] data_in);

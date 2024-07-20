@@ -5,7 +5,7 @@ import reg_pkg::*;
 module cu (
     input clk,
     input wire start,
-	input wire rst,
+    input wire rst,
 
     input wire ir_t ir,
     input wire status_t status,
