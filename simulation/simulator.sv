@@ -18,9 +18,11 @@ module simulator;
       .mem_wr(mem_wr)
   );
 
-  mem mem0 (
+  mem #(
+      .ADDR_WIDTH(15)
+  ) mem0 (
       .clk (clk),
-      .addr(b_bus[15:0]),
+      .addr(b_bus[14:0]),
       .data(a_bus),
       .out (result_bus),
       .rd  (mem_rd),
@@ -29,9 +31,11 @@ module simulator;
   );
 
   // puts rom.txt and uses it as memory
-  rom rom0 (
+  rom #(
+      .ADDR_WIDTH(14)
+  ) rom0 (
       .clk (clk),
-      .addr(b_bus[15:0]),
+      .addr(b_bus[13:0]),
       .data(a_bus),
       .out (result_bus),
       .rd  (mem_rd),
@@ -42,7 +46,7 @@ module simulator;
   // memory mapped terminal for simulation
   tty tty0 (
       .clk (clk),
-      .data(a_bus),
+      .data(a_bus[7:0]),
       .wr  (mem_wr),
       .en  (b_bus === 16'h4000)
   );
