@@ -5,6 +5,7 @@ import reg_pkg::*;
 module cu (
     input clk,
     input wire start,
+	input wire rst,
 
     input wire ir_t ir,
     input wire status_t status,
@@ -83,6 +84,8 @@ module cu (
   } states_e;
 
   states_e state = STOP;
+
+  always @(posedge rst) state <= STOP;
 
   // state changes
   always_ff @(posedge clk) begin

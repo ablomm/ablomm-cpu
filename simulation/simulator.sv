@@ -1,21 +1,13 @@
 module simulator;
   logic clk = 0;
-  logic start;
+  logic start = 1, rst = 0;
   tri [31:0] a_bus, b_bus, result_bus;
   wire mem_rd, mem_wr;
 
   initial forever #10 clk = ~clk;
 
-  initial start = 1;
-
   cpu cpu0 (
-      .clk(clk),
-      .start(start),
-      .a_bus(a_bus),
-      .b_bus(b_bus),
-      .result_bus(result_bus),
-      .mem_rd(mem_rd),
-      .mem_wr(mem_wr)
+	  .*
   );
 
   mem #(
@@ -30,7 +22,6 @@ module simulator;
       .en  (b_bus[15] === 1'b1)
   );
 
-  // puts rom.txt and uses it as memory
   rom #(
       .ADDR_WIDTH(14)
   ) rom0 (

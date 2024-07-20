@@ -1,5 +1,6 @@
 module register_file_tb;
   logic clk;
+  logic rst = 0;
   tri [31:0] a;
   tri [31:0] b;
   logic [31:0] in;
@@ -26,13 +27,13 @@ module register_file_tb;
     post_count(2, 5);
     set_oe_a(2);
     $display("a = %d", a);
-    if (a !== 567 + 5) $finish(1);
+    assert (a === 567 + 5);
     post_count(2, -6);
     $display("a = %d", a);
-    if (a !== 567 - 1) $finish(1);
-	pre_count(3, 2);
+    assert (a === 567 - 1);
+    pre_count(3, 2);
     $display("a = %d", a);
-    if (a !== 321 + 2) $finish(1);
+    assert (a === 321 + 2);
   end
 
   task static ld_data(input logic [7:0] addr, input logic [31:0] data_in);
@@ -67,13 +68,13 @@ module register_file_tb;
   task static post_count(input logic [7:0] addr, input logic [7:0] count);
     begin
       clk = 0;
-      #1;
       sel_a = addr;
       count_a = count;
       post_count_a = 1;
-      clk = 1;
       #1;
+      clk = 1;
       post_count_a = 0;
+      #1;
     end
   endtask
 
@@ -85,7 +86,7 @@ module register_file_tb;
       count_a = count;
       pre_count_a = 1;
       post_count_a <= 0;
-	  #1;
+      #1;
     end
   endtask
 
@@ -94,11 +95,11 @@ module register_file_tb;
       ld_data(addr, data_in);
       set_oe_a(addr);
       $display("a = %d", a);
-      if (a !== data_in) $finish(1);
+      assert (a === data_in);
 
       set_oe_b(addr);
       $display("b = %d", b);
-      if (b !== data_in) $finish(1);
+      assert (b === data_in);
     end
   endtask
 endmodule
