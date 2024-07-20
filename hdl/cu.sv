@@ -137,17 +137,17 @@ module cu (
     begin
       unique case (condition)
         cpu_pkg::NONE: satisfies_condition = 1;
-        cpu_pkg::EQ:   satisfies_condition = status.zero;
-        cpu_pkg::NE:   satisfies_condition = !status.zero;
-        cpu_pkg::LTU:  satisfies_condition = !status.carry;
-        cpu_pkg::GTU:  satisfies_condition = status.carry && !status.zero;
-        cpu_pkg::LEU:  satisfies_condition = !status.carry || status.zero;
-        cpu_pkg::GEU:  satisfies_condition = status.carry;
-        cpu_pkg::LTS:  satisfies_condition = status.negative !== status.overflow;
-        cpu_pkg::GTS:  satisfies_condition = !status.zero && (status.negative === status.overflow);
-        cpu_pkg::LES:  satisfies_condition = status.zero || (status.negative !== status.overflow);
-        cpu_pkg::GES:  satisfies_condition = status.negative === status.overflow;
-		default: satisfies_condition = 1;
+        cpu_pkg::EQ: satisfies_condition = status.zero;
+        cpu_pkg::NE: satisfies_condition = !status.zero;
+        cpu_pkg::LTU: satisfies_condition = !status.carry;
+        cpu_pkg::GTU: satisfies_condition = status.carry && !status.zero;
+        cpu_pkg::LEU: satisfies_condition = !status.carry || status.zero;
+        cpu_pkg::GEU: satisfies_condition = status.carry;
+        cpu_pkg::LTS: satisfies_condition = status.negative !== status.overflow;
+        cpu_pkg::GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
+        cpu_pkg::LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
+        cpu_pkg::GES: satisfies_condition = status.negative === status.overflow;
+        default: satisfies_condition = 1;
       endcase
     end
 
@@ -202,7 +202,7 @@ module cu (
         post_count_b_reg_file <= 1;
       end
 
-	  // do nothing
+      // do nothing
       NOP: ;
 
       // reg_a <- reg_b & reb_c
