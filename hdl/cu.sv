@@ -156,36 +156,36 @@ module cu (
   // outputs
   always @(state) begin
     {
-	  mem_rd,
-	  mem_wr,
+      mem_rd,
+      mem_wr,
 
-	  oe_a_reg_file,
-	  oe_b_reg_file,
-	  ld_reg_file,
-	  sel_a_reg_file,
-	  sel_b_reg_file,
-	  count_a_reg_file,
-	  count_b_reg_file,
-	  pre_count_a_reg_file,
-	  pre_count_b_reg_file,
-	  post_count_a_reg_file,
-	  post_count_b_reg_file,
+      oe_a_reg_file,
+      oe_b_reg_file,
+      ld_reg_file,
+      sel_a_reg_file,
+      sel_b_reg_file,
+      count_a_reg_file,
+      count_b_reg_file,
+      pre_count_a_reg_file,
+      pre_count_b_reg_file,
+      post_count_a_reg_file,
+      post_count_b_reg_file,
 
-	  oe_a_ir,
-	  oe_b_ir,
-	  ld_ir,
+      oe_a_ir,
+      oe_b_ir,
+      ld_ir,
 
-	  ld_status,
+      ld_status,
 
-	  oe_mdr,
-	  ld_mdr,
+      oe_mdr,
+      ld_mdr,
 
-	  oe_mar,
-	  ld_mar,
+      oe_mar,
+      ld_mar,
 
-	  oe_alu,
-	  alu_op
-  	} <= 0;
+      oe_alu,
+      alu_op
+    } <= 0;
 
     a_reg_mask <= 32'hffffffff;
     b_reg_mask <= 32'hffffffff;
