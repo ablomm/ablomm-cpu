@@ -93,7 +93,7 @@ module cu (
       FETCH: begin
         if (satisfies_condition(ir.condition, status)) begin
           unique case (ir.instruction)
-            cpu_pkg::NOP: ;
+            cpu_pkg::NOP: state <= NOP;
             cpu_pkg::AND: state <= AND;
             cpu_pkg::ANDI: state <= ANDI;
             cpu_pkg::OR: state <= OR;
@@ -124,6 +124,7 @@ module cu (
             cpu_pkg::PUSH: state <= PUSH;
             cpu_pkg::POP: state <= POP;
             cpu_pkg::MOV: state <= MOV;
+            default: state <= NOP;
           endcase
         end
       end
@@ -134,18 +135,18 @@ module cu (
 
   function static logic satisfies_condition(input cond_e condition, input status_t status);
     begin
-      case (condition)
-        NONE: satisfies_condition = 1;
-        EQ: satisfies_condition = status.zero;
-        NE: satisfies_condition = !status.zero;
-        LTU: satisfies_condition = !status.carry;
-        GTU: satisfies_condition = status.carry && !status.zero;
-        LEU: satisfies_condition = !status.carry || status.zero;
-        GEU: satisfies_condition = status.carry;
-        LTS: satisfies_condition = status.negative !== status.overflow;
-        GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
-        LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
-        GES: satisfies_condition = status.negative === status.overflow;
+      unique case (condition)
+        cpu_pkg::NONE: satisfies_condition = 1;
+        cpu_pkg::EQ: satisfies_condition = status.zero;
+        cpu_pkg::NE: satisfies_condition = !status.zero;
+        cpu_pkg::LTU: satisfies_condition = !status.carry;
+        cpu_pkg::GTU: satisfies_condition = status.carry && !status.zero;
+        cpu_pkg::LEU: satisfies_condition = !status.carry || status.zero;
+        cpu_pkg::GEU: satisfies_condition = status.carry;
+        cpu_pkg::LTS: satisfies_condition = status.negative !== status.overflow;
+        cpu_pkg::GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
+        cpu_pkg::LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
+        cpu_pkg::GES: satisfies_condition = status.negative === status.overflow;
         default: satisfies_condition = 1;
       endcase
     end
@@ -155,36 +156,36 @@ module cu (
   // outputs
   always @(state) begin
     {
-	  mem_rd,
-	  mem_wr,
+      mem_rd,
+      mem_wr,
 
-	  oe_a_reg_file,
-	  oe_b_reg_file,
-	  ld_reg_file,
-	  sel_a_reg_file,
-	  sel_b_reg_file,
-	  count_a_reg_file,
-	  count_b_reg_file,
-	  pre_count_a_reg_file,
-	  pre_count_b_reg_file,
-	  post_count_a_reg_file,
-	  post_count_b_reg_file,
+      oe_a_reg_file,
+      oe_b_reg_file,
+      ld_reg_file,
+      sel_a_reg_file,
+      sel_b_reg_file,
+      count_a_reg_file,
+      count_b_reg_file,
+      pre_count_a_reg_file,
+      pre_count_b_reg_file,
+      post_count_a_reg_file,
+      post_count_b_reg_file,
 
-	  oe_a_ir,
-	  oe_b_ir,
-	  ld_ir,
+      oe_a_ir,
+      oe_b_ir,
+      ld_ir,
 
-	  ld_status,
+      ld_status,
 
-	  oe_mdr,
-	  ld_mdr,
+      oe_mdr,
+      ld_mdr,
 
-	  oe_mar,
-	  ld_mar,
+      oe_mar,
+      ld_mar,
 
-	  oe_alu,
-	  alu_op
-  	} <= 0;
+      oe_alu,
+      alu_op
+    } <= 0;
 
     a_reg_mask <= 32'hffffffff;
     b_reg_mask <= 32'hffffffff;
@@ -200,6 +201,9 @@ module cu (
         count_b_reg_file <= 8'h1;
         post_count_b_reg_file <= 1;
       end
+
+      // do nothing
+      NOP: ;
 
       // reg_a <- reg_b & reb_c
       AND:
