@@ -40,6 +40,10 @@ package cpu_pkg;
     SHL,
     SHLI,
     RSHLI,
+	CMP,
+	CMPI,
+	TST,
+	TSTI,
     LD,
     LDR,
     LDI,
@@ -130,6 +134,11 @@ package cpu_pkg;
     binary_op_params_t shl_params;
     binary_immediate_op_params_t shli_params;
     binary_immediate_op_params_t rshli_params;
+
+	register_register_params_t cmp_params;
+	register_immediate_params_t cmpi_params;
+	register_register_params_t tst_params;
+	register_immediate_params_t tsti_params;
 
     register_address_params_t   ld_params;
     register_register_params_t  ldr_params;

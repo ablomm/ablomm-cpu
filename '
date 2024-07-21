@@ -323,46 +323,27 @@ module cu (
       do_reverse_binary_operation_i(alu_pkg::SHR, ir.params.rshli_params.set_status,
                                     ir.params.rshli_params.reg_a, ir.params.rshli_params.reg_b);
 
-      // reg_a - reg_b (set status)
       CMP: begin
         sel_a_reg_file <= ir.params.cmp_params.reg_a;
         oe_a_reg_file <= 1;
         sel_b_reg_file <= ir.params.cmp_params.reg_b;
         oe_b_reg_file <= 1;
-        alu_op <= alu_pkg::SUB;
+        alu_op <= op;
+        oe_alu <= 1;
         ld_status <= 1;
       end
 
-      // reg_a - immediate (set status)
       CMPI: begin
-        sel_a_reg_file <= ir.params.cmpi_params.reg_a;
+        sel_a_reg_file <= reg_b;
         oe_a_reg_file <= 1;
         oe_b_ir <= 1;
         b_reg_mask <= 32'hff;
-        alu_op <= alu_pkg::SUB;
-        ld_status <= 1;
+        alu_op <= op;
+        oe_alu <= 1;
+        sel_in_reg_file <= reg_a;
+        ld_reg_file <= 1;
+        ld_status <= set_status;
       end
-
-      // reg_a & reg_b (set status)
-      TST: begin
-        sel_a_reg_file <= ir.params.cmp_params.reg_a;
-        oe_a_reg_file <= 1;
-        sel_b_reg_file <= ir.params.cmp_params.reg_b;
-        oe_b_reg_file <= 1;
-        alu_op <= alu_pkg::AND;
-        ld_status <= 1;
-      end
-
-      // reg_a & immediate (set status)
-      TSTI: begin
-        sel_a_reg_file <= ir.params.cmpi_params.reg_a;
-        oe_a_reg_file <= 1;
-        oe_b_ir <= 1;
-        b_reg_mask <= 32'hff;
-        alu_op <= alu_pkg::AND;
-        ld_status <= 1;
-      end
-
       // reg_a <- *address
       LD: begin
         oe_b_ir <= 1;
