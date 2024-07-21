@@ -1,11 +1,15 @@
 module simulator;
   logic clk = 0;
   logic start = 1, rst = 0;
+  logic hwint = 0;
   tri [31:0] a_bus, b_bus, result_bus;
   wire mem_rd, mem_wr;
 
   initial forever #10 clk = ~clk;
 
+  initial begin
+    #10 hwint = 1;
+  end
   cpu cpu0 (.*);
 
   mem #(

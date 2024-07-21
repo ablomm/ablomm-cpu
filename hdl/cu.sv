@@ -6,6 +6,9 @@ module cu (
     input clk,
     input wire start,
     input wire rst,
+    input wire hwint,
+    input wire mode,
+    input wire int_mask,
 
     input wire ir_t ir,
     input wire status_t status,
@@ -13,21 +16,27 @@ module cu (
     output logic mem_rd,
     output logic mem_wr,
 
+    output logic oe_alu,
+    output alu_op_e alu_op,
+
     output logic [31:0] a_reg_mask,
     output logic [31:0] b_reg_mask,
 
     output logic oe_a_reg_file,
     output logic oe_b_reg_file,
     output logic ld_reg_file,
-    output reg_e sel_a_reg_file,
-    output reg_e sel_b_reg_file,
-    output reg_e sel_in_reg_file,
-    output logic [7:0] count_a_reg_file,
-    output logic [7:0] count_b_reg_file,
+    output reg_e sel_a_reg,
+    output reg_e sel_b_reg,
+    output reg_e sel_in_reg,
+    output logic [7:0] count_a_reg,
+    output logic [7:0] count_b_reg,
     output logic pre_count_a_reg_file,
     output logic pre_count_b_reg_file,
     output logic post_count_a_reg_file,
     output logic post_count_b_reg_file,
+
+    output logic oe_a_consts,
+    output logic oe_b_consts,
 
     output logic oe_a_ir,
     output logic oe_b_ir,
@@ -35,20 +44,22 @@ module cu (
 
     output logic ld_status,
 
-    output logic oe_mdr,
-    output logic ld_mdr,
-
-    output logic oe_mar,
-    output logic ld_mar,
-
-    output logic oe_alu,
-    output alu_op_e alu_op
+    output cpu_mode_e mode_in,
+    output logic ld_mode,
+    output logic int_mask_in,
+    output logic ld_int_mask
 );
 
   // internal states of the CU, one CPU instruction could have many internal
   // CU states (multi-clock instructions)
   typedef enum {
     STOP,
+    HWINT1,
+    HWINT2,
+    SWINT1,
+    SWINT2,
+    CLRI,
+    SETI,
     FETCH,
     NOP,
     ALU,
@@ -67,9 +78,10 @@ module cu (
 
   // state changes
   always_ff @(posedge clk) begin
-    priority case (state)
+    case (state)
       FETCH: begin
-        if (satisfies_condition(ir.condition, status)) begin
+        if (hwint & int_mask) state <= HWINT1;
+        else if (satisfies_condition(ir.condition, status)) begin
           casez (ir.instruction)
             // all alu ops will have a 0 in first instruction nibble
             // the second nibble will be the alu_op
@@ -81,10 +93,15 @@ module cu (
             cpu_pkg::STR: state <= STR;
             cpu_pkg::PUSH: state <= PUSH;
             cpu_pkg::POP: state <= POP;
+            cpu_pkg::INT: state <= SWINT1;
+            cpu_pkg::CLRI: state <= CLRI;
+            cpu_pkg::SETI: state <= SETI;
             default: state <= NOP;
           endcase
         end
       end
+      SWINT1: state <= SWINT2;
+      HWINT1: state <= HWINT2;
       STOP: if (start) state <= FETCH;
       default: state <= FETCH;
     endcase
@@ -116,17 +133,23 @@ module cu (
       mem_rd,
       mem_wr,
 
+      oe_alu,
+      alu_op,
+
       oe_a_reg_file,
       oe_b_reg_file,
       ld_reg_file,
-      sel_a_reg_file,
-      sel_b_reg_file,
-      count_a_reg_file,
-      count_b_reg_file,
+      sel_a_reg,
+      sel_b_reg,
+      count_a_reg,
+      count_b_reg,
       pre_count_a_reg_file,
       pre_count_b_reg_file,
       post_count_a_reg_file,
       post_count_b_reg_file,
+
+	  oe_a_consts,
+	  oe_b_consts,
 
       oe_a_ir,
       oe_b_ir,
@@ -134,28 +157,24 @@ module cu (
 
       ld_status,
 
-      oe_mdr,
-      ld_mdr,
-
-      oe_mar,
-      ld_mar,
-
-      oe_alu,
-      alu_op
+      mode_in,
+      ld_mode,
+      int_mask_in,
+      ld_int_mask
     } <= 0;
 
     a_reg_mask <= 32'hffffffff;
     b_reg_mask <= 32'hffffffff;
 
-    unique case (state)
+    case (state)
 
       // ir <- *(pc++)
       FETCH: begin
-        sel_b_reg_file <= reg_pkg::PC;
+        sel_b_reg <= reg_pkg::PC;
         oe_b_reg_file <= 1;
         mem_rd <= 1;
         ld_ir <= 1;
-        count_b_reg_file <= 8'h1;
+        count_b_reg <= 8'h1;
         post_count_b_reg_file <= 1;
       end
 
@@ -164,10 +183,10 @@ module cu (
           if (ir.params.alu_op_i.flags.reverse) begin
             oe_a_ir <= 1;
             a_reg_mask <= 32'hff;
-            sel_b_reg_file <= ir.params.alu_op_i.reg_b;
+            sel_b_reg <= ir.params.alu_op_i.reg_b;
             oe_b_reg_file <= 1;
           end else begin
-            sel_a_reg_file <= ir.params.alu_op_i.reg_b;
+            sel_a_reg <= ir.params.alu_op_i.reg_b;
             oe_a_reg_file <= 1;
             oe_b_ir <= 1;
             b_reg_mask <= 32'hff;
@@ -175,11 +194,11 @@ module cu (
 
         end else begin
           if (ir.params.alu_op.flags.reverse) begin
-            sel_a_reg_file <= ir.params.alu_op.reg_c;
-            sel_b_reg_file <= ir.params.alu_op.reg_b;
+            sel_a_reg <= ir.params.alu_op.reg_c;
+            sel_b_reg <= ir.params.alu_op.reg_b;
           end else begin
-            sel_a_reg_file <= ir.params.alu_op.reg_b;
-            sel_b_reg_file <= ir.params.alu_op.reg_c;
+            sel_a_reg <= ir.params.alu_op.reg_b;
+            sel_b_reg <= ir.params.alu_op.reg_c;
           end
 
           oe_a_reg_file <= 1;
@@ -188,7 +207,7 @@ module cu (
 
         alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
         oe_alu <= ir.params.alu_op_i.flags.load;
-        sel_in_reg_file <= ir.params.alu_op_i.reg_a;
+        sel_in_reg <= ir.params.alu_op_i.reg_a;
         ld_reg_file <= ir.params.alu_op_i.flags.load;
         ld_status <= ir.params.alu_op_i.flags.set_status;
       end
@@ -198,16 +217,16 @@ module cu (
         oe_b_ir <= 1;
         b_reg_mask <= 32'hffff;
         mem_rd <= 1;
-        sel_in_reg_file <= ir.params.ld_params.reg_a;
+        sel_in_reg <= ir.params.ld_params.reg_a;
         ld_reg_file <= 1;
       end
 
       // reg_a <- *reg_b
       LDR: begin
-        sel_b_reg_file <= ir.params.ldr_params.reg_b;
+        sel_b_reg <= ir.params.ldr_params.reg_b;
         oe_b_reg_file <= 1;
         mem_rd <= 1;
-        sel_in_reg_file <= ir.params.ldr_params.reg_a;
+        sel_in_reg <= ir.params.ldr_params.reg_a;
         ld_reg_file <= 1;
       end
 
@@ -217,13 +236,13 @@ module cu (
         a_reg_mask <= 32'hffff;
         alu_op <= alu_pkg::PASSA;
         oe_alu <= 1;
-        sel_in_reg_file <= ir.params.ld_params.reg_a;
+        sel_in_reg <= ir.params.ld_params.reg_a;
         ld_reg_file <= 1;
       end
 
       // *address <- reg_a
       ST: begin
-        sel_a_reg_file <= ir.params.st_params.reg_a;
+        sel_a_reg <= ir.params.st_params.reg_a;
         oe_a_reg_file <= 1;
         oe_b_ir <= 1;
         b_reg_mask <= 32'hffff;
@@ -232,31 +251,74 @@ module cu (
 
       // *reg_b <- reg_a
       STR: begin
-        sel_a_reg_file <= ir.params.str_params.reg_a;
+        sel_a_reg <= ir.params.str_params.reg_a;
         oe_a_reg_file <= 1;
-        sel_b_reg_file <= ir.params.str_params.reg_b;
+        sel_b_reg <= ir.params.str_params.reg_b;
         oe_b_reg_file <= 1;
         mem_wr <= 1;
       end
 
       // *(--sp) <- reg_a
       PUSH: begin
-        sel_a_reg_file <= ir.params.push_params.reg_a;
-        sel_b_reg_file <= reg_pkg::SP;
-        count_b_reg_file <= -1;
+        sel_a_reg <= ir.params.push_params.reg_a;
+        sel_b_reg <= reg_pkg::SP;
+        count_b_reg <= -1;
         pre_count_b_reg_file <= 1;
         mem_wr <= 1;
       end
 
       // reg_a <- *(sp++)
+      // int_mask <- 0
       POP: begin
-        sel_b_reg_file <= reg_pkg::SP;
-        count_b_reg_file <= 1;
+        sel_b_reg <= reg_pkg::SP;
+        count_b_reg <= 1;
         post_count_b_reg_file <= 1;
         mem_rd <= 1;
-        sel_in_reg_file <= ir.params.pop_params.reg_a;
+        sel_in_reg <= ir.params.pop_params.reg_a;
         ld_reg_file <= 1;
       end
+
+      // push PC
+      SWINT1, HWINT1: begin
+        sel_a_reg <= reg_pkg::PC;
+        sel_b_reg <= reg_pkg::SP;
+        count_b_reg <= -1;
+        pre_count_b_reg_file <= 1;
+        mem_wr <= 1;
+        int_mask_in <= 0;
+        ld_int_mask <= 1;
+      end
+
+      // PC <- 00000001
+      HWINT2: begin
+        sel_a_reg <= 4'h1;
+        oe_a_consts <= 1;
+        alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
+        sel_in_reg <= reg_pkg::PC;
+        ld_reg_file <= 1;
+      end
+
+      // PC <- 00000002
+      SWINT2: begin
+        sel_a_reg <= 4'h2;
+        oe_a_consts <= 1;
+        alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
+        sel_in_reg <= reg_pkg::PC;
+        ld_reg_file <= 1;
+      end
+
+      CLRI: begin
+        int_mask_in <= 0;
+        ld_int_mask <= 1;
+      end
+
+      SETI: begin
+        int_mask_in <= 1;
+        ld_int_mask <= 1;
+      end
+
       default: ;
     endcase
   end
