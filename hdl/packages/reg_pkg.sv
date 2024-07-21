@@ -6,6 +6,11 @@ package reg_pkg;
     logic overflow;
   } status_t;
 
+  typedef enum logic {
+    kernel,
+    user
+  } cpu_mode_e;
+
   typedef enum logic [3:0] {
     R0  = 4'h0,
     R1,

@@ -23,7 +23,10 @@ package cpu_pkg;
     ST,
     STR,
     PUSH,
-    POP
+    POP,
+	INT,
+	CLRI,
+	SETI
   } instruction_e;
 
   typedef struct packed {
