@@ -338,7 +338,7 @@ module cu (
         sel_a_reg_file <= ir.params.cmpi_params.reg_a;
         oe_a_reg_file <= 1;
         oe_b_ir <= 1;
-        b_reg_mask <= 32'hff;
+        b_reg_mask <= 32'hffff;
         alu_op <= alu_pkg::SUB;
         ld_status <= 1;
       end
@@ -358,7 +358,7 @@ module cu (
         sel_a_reg_file <= ir.params.cmpi_params.reg_a;
         oe_a_reg_file <= 1;
         oe_b_ir <= 1;
-        b_reg_mask <= 32'hff;
+        b_reg_mask <= 32'hffff;
         alu_op <= alu_pkg::AND;
         ld_status <= 1;
       end
