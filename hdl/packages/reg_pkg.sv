@@ -20,8 +20,8 @@ package reg_pkg;
     R10,
     R11,
     R12,
-    PC,
+    FP,
     SP,
-    FP
+    PC
   } reg_e;
 endpackage
