@@ -17,72 +17,41 @@ package cpu_pkg;
   } cond_e;
 
   typedef enum logic [7:0] {
-    NOP = 8'h00,
-    AND,
-    ANDI,
-    OR,
-    ORI,
-    XOR,
-    XORI,
-    NOT,
-    NOTI,
-    ADD,
-    ADDI,
-    SUB,
-    SUBI,
-    RSUBI,
-    SHR,
-    SHRI,
-    RSHRI,
-    ASHR,
-    ASHRI,
-    RASHRI,
-    SHL,
-    SHLI,
-    RSHLI,
-	CMP,
-	CMPI,
-	TST,
-	TSTI,
-    LD,
+    LD   = 8'h10,
     LDR,
     LDI,
     ST,
     STR,
     PUSH,
-    POP,
-    MOV
+    POP
   } instruction_e;
 
   typedef struct packed {
-    logic [6:0] unused;
+    logic immediate;
+    logic reverse;
+    logic load;
     logic set_status;
+  } alu_op_flags_t;
+
+  typedef struct packed {
+    alu_op_flags_t flags;
+    logic [15:0]   unknown;
+  } unknown_alu_op_t;
+
+  typedef struct packed {
+    alu_op_flags_t flags;
+    logic [3:0] unused;
     reg_e reg_a;
     reg_e reg_b;
     reg_e reg_c;
-  } binary_op_params_t;
+  } alu_op_params_t;
 
   typedef struct packed {
-    logic [2:0] unused;
-    logic set_status;
+    alu_op_flags_t flags;
     reg_e reg_a;
     reg_e reg_b;
     logic [7:0] immediate;
-  } binary_immediate_op_params_t;
-
-  typedef struct packed {
-    logic [10:0] unused;
-    logic set_status;
-    reg_e reg_a;
-    reg_e reg_b;
-  } unary_op_params_t;
-
-  typedef struct packed {
-    logic [6:0] unused;
-    logic set_status;
-    reg_e reg_a;
-    logic [7:0] immediate;
-  } unary_immediate_op_params_t;
+  } immediate_alu_op_params_t;
 
   typedef struct packed {
     reg_e reg_a;
@@ -111,34 +80,9 @@ package cpu_pkg;
   } address_params_t;
 
   typedef union packed {
-    binary_op_params_t and_params;
-    binary_immediate_op_params_t andi_params;
-    binary_op_params_t or_params;
-    binary_immediate_op_params_t ori_params;
-    binary_op_params_t xor_params;
-    binary_immediate_op_params_t xori_params;
-    unary_op_params_t not_params;
-    unary_immediate_op_params_t noti_params;
-
-    binary_op_params_t add_params;
-    binary_immediate_op_params_t addi_params;
-    binary_op_params_t sub_params;
-    binary_immediate_op_params_t subi_params;
-    binary_immediate_op_params_t rsubi_params;
-    binary_op_params_t shr_params;
-    binary_immediate_op_params_t shri_params;
-    binary_immediate_op_params_t rshri_params;
-    binary_op_params_t ashr_params;
-    binary_immediate_op_params_t ashri_params;
-    binary_immediate_op_params_t rashri_params;
-    binary_op_params_t shl_params;
-    binary_immediate_op_params_t shli_params;
-    binary_immediate_op_params_t rshli_params;
-
-	register_register_params_t cmp_params;
-	register_immediate_params_t cmpi_params;
-	register_register_params_t tst_params;
-	register_immediate_params_t tsti_params;
+    unknown_alu_op_t unknown_alu_op;
+    alu_op_params_t alu_op;
+    immediate_alu_op_params_t alu_op_i;
 
     register_address_params_t   ld_params;
     register_register_params_t  ldr_params;
@@ -148,8 +92,6 @@ package cpu_pkg;
 
     register_params_t push_params;
     register_params_t pop_params;
-
-    register_register_params_t mov_params;
   } ir_params_t;
 
   typedef struct packed {
