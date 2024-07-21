@@ -72,7 +72,7 @@ module cu (
         if (satisfies_condition(ir.condition, status)) begin
           casez (ir.instruction)
             // all alu ops will have a 0 in first instruction nibble
-			// the second nibble will be the alu_op
+            // the second nibble will be the alu_op
             'h0?: state <= ALU;
             cpu_pkg::LD: state <= LD;
             cpu_pkg::LDR: state <= LDR;
@@ -159,9 +159,6 @@ module cu (
         post_count_b_reg_file <= 1;
       end
 
-      // do nothing
-      NOP: ;
-
       ALU: begin
         if (ir.params.unknown_alu_op.flags.immediate) begin
           if (ir.params.alu_op_i.flags.reverse) begin
@@ -169,7 +166,6 @@ module cu (
             a_reg_mask <= 32'hff;
             sel_b_reg_file <= ir.params.alu_op_i.reg_b;
             oe_b_reg_file <= 1;
-
           end else begin
             sel_a_reg_file <= ir.params.alu_op_i.reg_b;
             oe_a_reg_file <= 1;
@@ -177,17 +173,10 @@ module cu (
             b_reg_mask <= 32'hff;
           end
 
-          alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
-          oe_alu <= ir.params.alu_op_i.flags.load;
-          sel_in_reg_file <= ir.params.alu_op_i.reg_a;
-          ld_reg_file <= ir.params.alu_op_i.flags.load;
-          ld_status <= ir.params.alu_op_i.flags.set_status;
-
         end else begin
           if (ir.params.alu_op.flags.reverse) begin
             sel_a_reg_file <= ir.params.alu_op.reg_c;
             sel_b_reg_file <= ir.params.alu_op.reg_b;
-
           end else begin
             sel_a_reg_file <= ir.params.alu_op.reg_b;
             sel_b_reg_file <= ir.params.alu_op.reg_c;
@@ -195,12 +184,13 @@ module cu (
 
           oe_a_reg_file <= 1;
           oe_b_reg_file <= 1;
-          alu_op <= ir[23:20];
-          oe_alu <= ir.params.alu_op.flags.load;
-          sel_in_reg_file <= ir.params.alu_op.reg_a;
-          ld_reg_file <= ir.params.alu_op.flags.load;
-          ld_status <= ir.params.alu_op.flags.set_status;
         end
+
+        alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
+        oe_alu <= ir.params.alu_op_i.flags.load;
+        sel_in_reg_file <= ir.params.alu_op_i.reg_a;
+        ld_reg_file <= ir.params.alu_op_i.flags.load;
+        ld_status <= ir.params.alu_op_i.flags.set_status;
       end
 
       // reg_a <- *address
@@ -267,7 +257,6 @@ module cu (
         sel_in_reg_file <= ir.params.pop_params.reg_a;
         ld_reg_file <= 1;
       end
-      STOP: ;
       default: ;
     endcase
   end
