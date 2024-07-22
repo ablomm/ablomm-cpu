@@ -7,8 +7,6 @@ module cu (
     input wire start,
     input wire rst,
     input wire hwint,
-    input wire mode,
-    input wire int_mask,
 
     input wire ir_t ir,
     input wire status_t status,
@@ -28,12 +26,9 @@ module cu (
     output reg_e sel_a_reg,
     output reg_e sel_b_reg,
     output reg_e sel_in_reg,
-    output logic [7:0] count_a_reg,
-    output logic [7:0] count_b_reg,
-    output logic pre_count_a_reg_file,
-    output logic pre_count_b_reg_file,
-    output logic post_count_a_reg_file,
-    output logic post_count_b_reg_file,
+    output logic sp_post_inc,
+    output logic sp_pre_dec,
+    output logic pc_post_inc,
 
     output logic oe_a_consts,
     output logic oe_b_consts,
@@ -42,12 +37,11 @@ module cu (
     output logic oe_b_ir,
     output logic ld_ir,
 
-    output logic ld_status,
-
+    output logic ld_alu_status,
+    output logic imask_in,
+    output logic ld_imask,
     output cpu_mode_e mode_in,
-    output logic ld_mode,
-    output logic int_mask_in,
-    output logic ld_int_mask
+    output logic ld_mode
 );
 
   // internal states of the CU, one CPU instruction could have many internal
@@ -80,8 +74,8 @@ module cu (
   always_ff @(posedge clk) begin
     case (state)
       FETCH: begin
-        if (hwint & int_mask) state <= HWINT1;
-        else if (satisfies_condition(ir.condition, status)) begin
+        if (hwint & status.imask) state <= HWINT1;
+        else if (satisfies_condition(ir.condition, status.alu_status)) begin
           casez (ir.instruction)
             // all alu ops will have a 0 in first instruction nibble
             // the second nibble will be the alu_op
@@ -107,7 +101,7 @@ module cu (
     endcase
   end
 
-  function static logic satisfies_condition(input cond_e condition, input status_t status);
+  function static logic satisfies_condition(input cond_e condition, input alu_status_t status);
     begin
       unique case (condition)
         cpu_pkg::NONE: satisfies_condition = 1;
@@ -141,12 +135,10 @@ module cu (
       ld_reg_file,
       sel_a_reg,
       sel_b_reg,
-      count_a_reg,
-      count_b_reg,
-      pre_count_a_reg_file,
-      pre_count_b_reg_file,
-      post_count_a_reg_file,
-      post_count_b_reg_file,
+	  sel_in_reg,
+	  sp_post_inc,
+	  sp_pre_dec,
+	  pc_post_inc,
 
 	  oe_a_consts,
 	  oe_b_consts,
@@ -155,12 +147,11 @@ module cu (
       oe_b_ir,
       ld_ir,
 
-      ld_status,
-
+      ld_alu_status,
+      imask_in,
+      ld_imask,
       mode_in,
-      ld_mode,
-      int_mask_in,
-      ld_int_mask
+      ld_mode
     } <= 0;
 
     a_reg_mask <= 32'hffffffff;
@@ -174,9 +165,9 @@ module cu (
         oe_b_reg_file <= 1;
         mem_rd <= 1;
         ld_ir <= 1;
-        count_b_reg <= 8'h1;
-        post_count_b_reg_file <= 1;
+        pc_post_inc <= 1;
       end
+
 
       ALU: begin
         if (ir.params.unknown_alu_op.flags.immediate) begin
@@ -209,7 +200,7 @@ module cu (
         oe_alu <= ir.params.alu_op_i.flags.load;
         sel_in_reg <= ir.params.alu_op_i.reg_a;
         ld_reg_file <= ir.params.alu_op_i.flags.load;
-        ld_status <= ir.params.alu_op_i.flags.set_status;
+        ld_alu_status <= ir.params.alu_op_i.flags.set_status;
       end
 
       // reg_a <- *address
@@ -262,31 +253,28 @@ module cu (
       PUSH: begin
         sel_a_reg <= ir.params.push_params.reg_a;
         sel_b_reg <= reg_pkg::SP;
-        count_b_reg <= -1;
-        pre_count_b_reg_file <= 1;
+        sp_pre_dec <= 1;
         mem_wr <= 1;
       end
 
       // reg_a <- *(sp++)
       POP: begin
         sel_b_reg <= reg_pkg::SP;
-        count_b_reg <= 1;
-        post_count_b_reg_file <= 1;
+        sp_post_inc <= 1;
         mem_rd <= 1;
         sel_in_reg <= ir.params.pop_params.reg_a;
         ld_reg_file <= 1;
       end
 
       // push PC
-      // int_mask <- 0
+      // imask <- 0
       SWINT1, HWINT1: begin
         sel_a_reg <= reg_pkg::PC;
         sel_b_reg <= reg_pkg::SP;
-        count_b_reg <= -1;
-        pre_count_b_reg_file <= 1;
+        sp_pre_dec <= 1;
         mem_wr <= 1;
-        int_mask_in <= 0;
-        ld_int_mask <= 1;
+        imask_in <= 0;
+        ld_imask <= 1;
       end
 
       // PC <- 00000001
@@ -310,13 +298,13 @@ module cu (
       end
 
       CLRI: begin
-        int_mask_in <= 0;
-        ld_int_mask <= 1;
+        imask_in <= 0;
+        ld_imask <= 1;
       end
 
       SETI: begin
-        int_mask_in <= 1;
-        ld_int_mask <= 1;
+        imask_in <= 1;
+        ld_imask <= 1;
       end
 
       default: ;

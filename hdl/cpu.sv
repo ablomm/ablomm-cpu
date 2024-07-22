@@ -13,9 +13,6 @@ module cpu (
     output mem_rd,
     output mem_wr
 );
-  tri [31:0] a_reg_bus;
-  tri [31:0] b_reg_bus;
-
   // control signals
   wire oe_alu;
   wire alu_op_e alu_op;
@@ -29,12 +26,9 @@ module cpu (
   wire reg_e sel_a_reg;
   wire reg_e sel_b_reg;
   wire reg_e sel_in_reg;
-  wire [7:0] count_a_reg;
-  wire [7:0] count_b_reg;
-  wire pre_count_a_reg_file;
-  wire pre_count_b_reg_file;
-  wire post_count_a_reg_file;
-  wire post_count_b_reg_file;
+  wire sp_post_inc;
+  wire sp_pre_dec;
+  wire pc_post_inc;
 
   wire oe_a_consts;
   wire oe_b_consts;
@@ -43,40 +37,38 @@ module cpu (
   wire oe_b_ir;
   wire ld_ir;
 
-  wire ld_status;
-
+  wire ld_alu_status;
+  wire imask_in;
+  wire ld_imask;
   wire cpu_mode_e mode_in;
   wire ld_mode;
-
-  wire int_mask_in;
-  wire ld_int_mask;
 
   cu cu0 (
       .*,
       .clk(~clk), // negative clk so that control signals are created before loads (fixes race conditions)
       .ir(ir_value),
-      .status(status_value),
-      .mode(mode_value),
-      .int_mask(int_mask_value)
+      .status(status_value)
   );
 
-  wire status_t alu_status_out;
+  wire alu_status_t alu_status_in;
   alu alu0 (
       .oe(oe_alu),
       .operation(alu_op),
-      .carry_in(status_value[0]),
+      .carry_in(1'(status_value.alu_status.carry)),
       .a(a_bus),
       .b(b_bus),
       .out(result_bus),
-      .status(alu_status_out)
+      .status(alu_status_in)
   );
 
+  tri [31:0] a_reg_bus;
   filter filter_a (
       .out (a_bus),
       .in  (a_reg_bus),
       .mask(a_reg_mask)
   );
 
+  tri [31:0] b_reg_bus;
   filter filter_b (
       .out (b_bus),
       .in  (b_reg_bus),
@@ -88,9 +80,7 @@ module cpu (
   // 13 => pc
   // 14 => sp
   // 15 => fp
-  register_file #(
-      .SEL_WIDTH(4)
-  ) reg_file (
+  register_file reg_file (
       .clk(clk),
       .rst(rst),
       .a(a_reg_bus),
@@ -102,12 +92,9 @@ module cpu (
       .sel_a(sel_a_reg),
       .sel_b(sel_b_reg),
       .sel_in(sel_in_reg),
-      .count_a(count_a_reg),
-      .count_b(count_b_reg),
-      .pre_count_a(pre_count_a_reg_file),
-      .pre_count_b(pre_count_b_reg_file),
-      .post_count_a(post_count_a_reg_file),
-      .post_count_b(post_count_b_reg_file)
+      .sp_post_inc(sp_post_inc),
+      .sp_pre_dec(sp_pre_dec),
+      .pc_post_inc(pc_post_inc)
   );
 
   reg_constants reg_consts (
@@ -134,36 +121,10 @@ module cpu (
       .value(ir_value)
   );
 
+
   wire status_t status_value;
-  cpu_reg #(
-      .SIZE(4)
-  ) status (
-      .clk(clk),
-      .rst(rst),
-      .in(alu_status_out),
-      .ld(ld_status),
+  status_reg status (
+      .*,
       .value(status_value)
-  );
-
-  wire mode_value;
-  cpu_reg #(
-      .SIZE(1)
-  ) mode (
-      .clk(clk),
-      .rst(rst),
-      .in(mode_in),
-      .ld(ld_mode),
-      .value(mode_value)
-  );
-
-  wire int_mask_value;
-  cpu_reg #(
-      .SIZE(1)
-  ) int_mask (
-      .clk(clk),
-      .rst(rst),
-      .in(int_mask_in),
-      .ld(ld_int_mask),
-      .value(int_mask_value)
   );
 endmodule

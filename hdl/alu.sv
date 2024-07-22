@@ -8,7 +8,7 @@ module alu (
     input [31:0] a,  // data bus
     input [31:0] b,  // addr bus
     output tri [31:0] out,  // result bus
-    output status_t status  // NZCV
+    output alu_status_t status  // NZCV
 );
 
   logic [31:0] out_reg = 'hz;
