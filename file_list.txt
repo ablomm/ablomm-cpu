@@ -9,6 +9,9 @@ hdl/cpu_reg.sv
 hdl/filter.sv
 hdl/register_file.sv
 hdl/reg_constants.sv
+hdl/sp_reg.sv
+hdl/pc_reg.sv
+hdl/status_reg.sv
 
 simulation/simulator.sv
 simulation/mem.sv

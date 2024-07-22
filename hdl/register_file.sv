@@ -1,7 +1,6 @@
 module register_file #(
     parameter integer WORD_SIZE = 32,
-    parameter integer SEL_WIDTH = 8,
-    parameter integer COUNT_WIDTH = 8,
+    parameter integer SEL_WIDTH = 4,
     parameter integer DEPTH = 2 ** SEL_WIDTH
 
 ) (
@@ -16,30 +15,46 @@ module register_file #(
     input [SEL_WIDTH-1:0] sel_a,
     input [SEL_WIDTH-1:0] sel_b,
     input [SEL_WIDTH-1:0] sel_in,
-    input [COUNT_WIDTH-1:0] count_a,
-    input [COUNT_WIDTH-1:0] count_b,
-    input pre_count_a,
-    input pre_count_b,
-    input post_count_a,
-    input post_count_b
+    input sp_post_inc,
+    input sp_pre_dec,
+    input pc_post_inc
 );
-
   genvar i;
   generate
-    for (i = 0; i < DEPTH; i++) begin : g_registers
+    for (i = 0; i < DEPTH - 2; i++) begin : g_registers
       cpu_reg #(
-          .SIZE(WORD_SIZE),
-          .COUNT_WIDTH(COUNT_WIDTH)
+          .SIZE(WORD_SIZE)
       ) register (
           .*,
           .oe_a(sel_a === i && oe_a),
           .oe_b(sel_b === i && oe_b),
           .ld(sel_in === i && ld),
-          .count(sel_a === i ? count_a : count_b),
-          .pre_count((sel_a === i && pre_count_a) || (sel_b === i && pre_count_b)),
-          .post_count((sel_a === i && post_count_a) || (sel_b === i && post_count_b)),
           .value()
       );
     end
   endgenerate
+
+  sp_reg #(
+      .SIZE(WORD_SIZE)
+  ) sp (
+      .*,
+      .oe_a(sel_a === DEPTH - 2 && oe_a),
+      .oe_b(sel_b === DEPTH - 2 && oe_b),
+      .ld(sel_in === DEPTH - 2 && ld),
+      .post_inc(sp_post_inc),
+      .pre_dec(sp_pre_dec),
+      .value()
+  );
+
+  pc_reg #(
+      .SIZE(WORD_SIZE)
+  ) pc (
+      .*,
+      .oe_a(sel_a === DEPTH - 1 && oe_a),
+      .oe_b(sel_b === DEPTH - 1 && oe_b),
+      .ld(sel_in === DEPTH - 1 && ld),
+      .post_inc(pc_post_inc),
+      .value()
+  );
+
 endmodule

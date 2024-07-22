@@ -4,12 +4,19 @@ package reg_pkg;
     logic zero;
     logic carry;
     logic overflow;
-  } status_t;
+  } alu_status_t;
 
   typedef enum logic {
     kernel,
     user
   } cpu_mode_e;
+
+  typedef struct packed {
+    alu_status_t alu_status;
+    logic imask; // interrupt mask
+    cpu_mode_e mode;
+  } status_t;
+
 
   typedef enum logic [3:0] {
     R0  = 4'h0,

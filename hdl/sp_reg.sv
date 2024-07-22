@@ -1,4 +1,4 @@
-module cpu_reg #(
+module sp_reg #(
     parameter integer SIZE = 32,
     parameter logic [SIZE-1:0] INITIAL_VAL = 0
 ) (
@@ -10,6 +10,8 @@ module cpu_reg #(
     input oe_a,
     input oe_b,
     input ld,
+    input post_inc,
+    input pre_dec,
     output logic [SIZE-1:0] value = INITIAL_VAL  // only if you need to direclty access (not on the data/addr bus)
 );
 
@@ -18,7 +20,10 @@ module cpu_reg #(
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
 
-  always_ff @(posedge clk) begin
-    if (ld) value <= in;
+  always @(posedge pre_dec) value -= 1;
+
+  always @(posedge clk) begin
+    if (ld) value = in;
+    if (post_inc) value += 1;
   end
 endmodule
