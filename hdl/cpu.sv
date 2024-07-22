@@ -13,6 +13,7 @@ module cpu (
     output mem_rd,
     output mem_wr
 );
+
   // control signals
   wire oe_alu;
   wire alu_op_e alu_op;
@@ -20,12 +21,13 @@ module cpu (
   wire [31:0] a_reg_mask;
   wire [31:0] b_reg_mask;
 
-  wire oe_a_reg_file;
-  wire oe_b_reg_file;
-  wire ld_reg_file;
   wire reg_e sel_a_reg;
   wire reg_e sel_b_reg;
   wire reg_e sel_in_reg;
+
+  wire oe_a_reg_file;
+  wire oe_b_reg_file;
+  wire ld_reg_file;
   wire sp_post_inc;
   wire sp_pre_dec;
   wire pc_post_inc;
@@ -77,9 +79,9 @@ module cpu (
 
   // public registers
   // 0-12 => general registers
-  // 13 => pc
+  // 13 => fp
   // 14 => sp
-  // 15 => fp
+  // 15 => pc
   register_file reg_file (
       .clk(clk),
       .rst(rst),
@@ -120,7 +122,6 @@ module cpu (
       .ld(ld_ir),
       .value(ir_value)
   );
-
 
   wire status_t status_value;
   status_reg status (

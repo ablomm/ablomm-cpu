@@ -5,13 +5,13 @@ module alu (
     input oe,
     input alu_op_e operation,
     input carry_in,
-    input [31:0] a,  // data bus
-    input [31:0] b,  // addr bus
-    output tri [31:0] out,  // result bus
-    output alu_status_t status  // NZCV
+    input [31:0] a,
+    input [31:0] b,
+    output tri [31:0] out,
+    output alu_status_t status
 );
 
-  logic [31:0] out_reg = 'hz;
+  logic [31:0] out_reg;
 
   assign out = oe ? out_reg : 'hz;
 
@@ -29,22 +29,21 @@ module alu (
       alu_pkg::ADDC: {status.carry, out_reg} = a + b + carry_in;
       alu_pkg::SUB: {status.carry, out_reg} = a - b;
       alu_pkg::SUBB: {status.carry, out_reg} = a - b - ~carry_in;
-      alu_pkg::SHL: {status.carry, out_reg} = a << 1;
-      alu_pkg::SHR: out_reg = a >> 1;
-      alu_pkg::ASHR: out_reg = a >>> 1;
+      alu_pkg::SHL: {status.carry, out_reg} = a << b;
+      alu_pkg::SHR: out_reg = a >> b;
+      alu_pkg::ASHR: out_reg = a >>> b;
       default: out_reg = 0;
     endcase
   end
 
   always @(out_reg) begin
     // negative
-    status.negative = out_reg[31] == 1;
+    status.negative = out_reg[31];
 
     // zero
-    status.zero = out_reg == 0;
+    status.zero = out_reg === 0;
 
     // overflow
-    status.overflow = out_reg[31] ^ a[31] ^ b[31] ^ status[1];
-
+    status.overflow = out_reg[31] ^ a[31] ^ b[31] ^ status.carry;
   end
 endmodule

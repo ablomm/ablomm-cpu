@@ -21,5 +21,4 @@ module reg_constants #(
   assign a = oe_a ? constants[sel_a] : 'hz;
   assign b = oe_b ? constants[sel_b] : 'hz;
 
-
 endmodule
