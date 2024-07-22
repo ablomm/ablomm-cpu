@@ -268,7 +268,6 @@ module cu (
       end
 
       // reg_a <- *(sp++)
-      // int_mask <- 0
       POP: begin
         sel_b_reg <= reg_pkg::SP;
         count_b_reg <= 1;
@@ -279,6 +278,7 @@ module cu (
       end
 
       // push PC
+      // int_mask <- 0
       SWINT1, HWINT1: begin
         sel_a_reg <= reg_pkg::PC;
         sel_b_reg <= reg_pkg::SP;
