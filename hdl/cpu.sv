@@ -1,4 +1,4 @@
-import cpu_pkg::*;
+import cu_pkg::*;
 import alu_pkg::*;
 import reg_pkg::*;
 
@@ -13,6 +13,7 @@ module cpu (
     output mem_rd,
     output mem_wr
 );
+
   // control signals
   wire oe_alu;
   wire alu_op_e alu_op;
@@ -20,15 +21,16 @@ module cpu (
   wire [31:0] a_reg_mask;
   wire [31:0] b_reg_mask;
 
-  wire oe_a_reg_file;
-  wire oe_b_reg_file;
-  wire ld_reg_file;
   wire reg_e sel_a_reg;
   wire reg_e sel_b_reg;
   wire reg_e sel_in_reg;
-  wire sp_post_inc;
-  wire sp_pre_dec;
-  wire pc_post_inc;
+
+  wire oe_a_reg_file;
+  wire oe_b_reg_file;
+  wire ld_reg_file;
+  wire post_inc_sp;
+  wire pre_dec_sp;
+  wire post_inc_pc;
 
   wire oe_a_consts;
   wire oe_b_consts;
@@ -77,9 +79,9 @@ module cpu (
 
   // public registers
   // 0-12 => general registers
-  // 13 => pc
+  // 13 => fp
   // 14 => sp
-  // 15 => fp
+  // 15 => pc
   register_file reg_file (
       .clk(clk),
       .rst(rst),
@@ -92,9 +94,9 @@ module cpu (
       .sel_a(sel_a_reg),
       .sel_b(sel_b_reg),
       .sel_in(sel_in_reg),
-      .sp_post_inc(sp_post_inc),
-      .sp_pre_dec(sp_pre_dec),
-      .pc_post_inc(pc_post_inc)
+      .post_inc_sp(post_inc_sp),
+      .pre_dec_sp(pre_dec_sp),
+      .post_inc_pc(post_inc_pc)
   );
 
   reg_constants reg_consts (
@@ -120,7 +122,6 @@ module cpu (
       .ld(ld_ir),
       .value(ir_value)
   );
-
 
   wire status_t status_value;
   status_reg status (

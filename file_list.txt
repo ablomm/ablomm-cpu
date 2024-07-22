@@ -1,19 +1,19 @@
 hdl/packages/alu_pkg.sv
 hdl/packages/reg_pkg.sv
-hdl/packages/cpu_pkg.sv
+hdl/packages/cu_pkg.sv
 
 hdl/alu.sv
-hdl/cu.sv
 hdl/cpu.sv
 hdl/cpu_reg.sv
+hdl/cu.sv
 hdl/filter.sv
-hdl/register_file.sv
-hdl/reg_constants.sv
-hdl/sp_reg.sv
 hdl/pc_reg.sv
+hdl/reg_constants.sv
+hdl/register_file.sv
+hdl/sp_reg.sv
 hdl/status_reg.sv
 
-simulation/simulator.sv
 simulation/mem.sv
 simulation/rom.sv
+simulation/simulator.sv
 simulation/tty.sv

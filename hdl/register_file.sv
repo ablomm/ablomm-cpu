@@ -15,9 +15,9 @@ module register_file #(
     input [SEL_WIDTH-1:0] sel_a,
     input [SEL_WIDTH-1:0] sel_b,
     input [SEL_WIDTH-1:0] sel_in,
-    input sp_post_inc,
-    input sp_pre_dec,
-    input pc_post_inc
+    input post_inc_sp,
+    input pre_dec_sp,
+    input post_inc_pc
 );
   genvar i;
   generate
@@ -41,8 +41,8 @@ module register_file #(
       .oe_a(sel_a === DEPTH - 2 && oe_a),
       .oe_b(sel_b === DEPTH - 2 && oe_b),
       .ld(sel_in === DEPTH - 2 && ld),
-      .post_inc(sp_post_inc),
-      .pre_dec(sp_pre_dec),
+      .post_inc(post_inc_sp),
+      .pre_dec(pre_dec_sp),
       .value()
   );
 
@@ -53,7 +53,7 @@ module register_file #(
       .oe_a(sel_a === DEPTH - 1 && oe_a),
       .oe_b(sel_b === DEPTH - 1 && oe_b),
       .ld(sel_in === DEPTH - 1 && ld),
-      .post_inc(pc_post_inc),
+      .post_inc(post_inc_pc),
       .value()
   );
 

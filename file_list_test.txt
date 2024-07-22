@@ -1,21 +1,25 @@
 hdl/packages/alu_pkg.sv
 hdl/packages/reg_pkg.sv
-hdl/packages/cpu_pkg.sv
+hdl/packages/cu_pkg.sv
 
 hdl/alu.sv
-hdl/cu.sv
 hdl/cpu.sv
 hdl/cpu_reg.sv
+hdl/cu.sv
 hdl/filter.sv
+hdl/pc_reg.sv
+hdl/reg_constants.sv
 hdl/register_file.sv
+hdl/sp_reg.sv
+hdl/status_reg.sv
 
 simulation/mem.sv
 simulation/rom.sv
 simulation/tty.sv
 
 testbenches/alu_tb.sv
-testbenches/mem_tb.sv
-testbenches/cu_tb.sv
 testbenches/cpu_reg_tb.sv
-testbenches/register_file_tb.sv
+testbenches/cu_tb.sv
 testbenches/filter_tb.sv
+testbenches/mem_tb.sv
+testbenches/register_file_tb.sv

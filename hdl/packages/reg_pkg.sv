@@ -1,10 +1,5 @@
 package reg_pkg;
-  typedef struct packed {
-    logic negative;
-    logic zero;
-    logic carry;
-    logic overflow;
-  } alu_status_t;
+  import alu_pkg::*;
 
   typedef enum logic {
     kernel,
@@ -13,10 +8,9 @@ package reg_pkg;
 
   typedef struct packed {
     alu_status_t alu_status;
-    logic imask; // interrupt mask
+    logic imask;  // interrupt mask
     cpu_mode_e mode;
   } status_t;
-
 
   typedef enum logic [3:0] {
     R0  = 4'h0,

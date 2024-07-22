@@ -1,4 +1,4 @@
-package cpu_pkg;
+package cu_pkg;
   import alu_pkg::*;
   import reg_pkg::*;
 
@@ -24,9 +24,9 @@ package cpu_pkg;
     STR,
     PUSH,
     POP,
-	INT,
-	CLRI,
-	SETI
+    INT,
+    CLRI,
+    SETI
   } instruction_e;
 
   typedef struct packed {
@@ -38,15 +38,17 @@ package cpu_pkg;
 
   typedef struct packed {
     alu_op_flags_t flags;
-    logic [15:0]   unknown;
+    reg_e reg_a;
+    reg_e reg_b;
+    logic [7:0]   unknown;
   } unknown_alu_op_t;
 
   typedef struct packed {
     alu_op_flags_t flags;
-    logic [3:0] unused;
     reg_e reg_a;
     reg_e reg_b;
     reg_e reg_c;
+    logic [3:0] unused;
   } alu_op_params_t;
 
   typedef struct packed {
@@ -67,19 +69,19 @@ package cpu_pkg;
   } register_immediate_params_t;
 
   typedef struct packed {
-    logic [11:0] unused;
     reg_e reg_a;
     reg_e reg_b;
+    logic [11:0] unused;
   } register_register_params_t;
 
   typedef struct packed {
-    logic [15:0] unused;
     reg_e reg_a;
+    logic [15:0] unused;
   } register_params_t;
 
   typedef struct packed {
-    logic [3:0]  unused;
     logic [15:0] address;
+    logic [3:0]  unused;
   } address_params_t;
 
   typedef union packed {

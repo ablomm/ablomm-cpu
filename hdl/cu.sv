@@ -1,4 +1,4 @@
-import cpu_pkg::*;
+import cu_pkg::*;
 import alu_pkg::*;
 import reg_pkg::*;
 
@@ -20,15 +20,16 @@ module cu (
     output logic [31:0] a_reg_mask,
     output logic [31:0] b_reg_mask,
 
-    output logic oe_a_reg_file,
-    output logic oe_b_reg_file,
-    output logic ld_reg_file,
     output reg_e sel_a_reg,
     output reg_e sel_b_reg,
     output reg_e sel_in_reg,
-    output logic sp_post_inc,
-    output logic sp_pre_dec,
-    output logic pc_post_inc,
+
+    output logic oe_a_reg_file,
+    output logic oe_b_reg_file,
+    output logic ld_reg_file,
+    output logic post_inc_sp,
+    output logic pre_dec_sp,
+    output logic post_inc_pc,
 
     output logic oe_a_consts,
     output logic oe_b_consts,
@@ -72,24 +73,24 @@ module cu (
 
   // state changes
   always_ff @(posedge clk) begin
-    case (state)
+    unique case (state)
       FETCH: begin
         if (hwint & status.imask) state <= HWINT1;
         else if (satisfies_condition(ir.condition, status.alu_status)) begin
-          casez (ir.instruction)
+          unique casez (ir.instruction)
             // all alu ops will have a 0 in first instruction nibble
             // the second nibble will be the alu_op
             'h0?: state <= ALU;
-            cpu_pkg::LD: state <= LD;
-            cpu_pkg::LDR: state <= LDR;
-            cpu_pkg::LDI: state <= LDI;
-            cpu_pkg::ST: state <= ST;
-            cpu_pkg::STR: state <= STR;
-            cpu_pkg::PUSH: state <= PUSH;
-            cpu_pkg::POP: state <= POP;
-            cpu_pkg::INT: state <= SWINT1;
-            cpu_pkg::CLRI: state <= CLRI;
-            cpu_pkg::SETI: state <= SETI;
+            cu_pkg::LD: state <= LD;
+            cu_pkg::LDR: state <= LDR;
+            cu_pkg::LDI: state <= LDI;
+            cu_pkg::ST: state <= ST;
+            cu_pkg::STR: state <= STR;
+            cu_pkg::PUSH: state <= PUSH;
+            cu_pkg::POP: state <= POP;
+            cu_pkg::INT: state <= SWINT1;
+            cu_pkg::CLRI: state <= CLRI;
+            cu_pkg::SETI: state <= SETI;
             default: state <= NOP;
           endcase
         end
@@ -104,17 +105,17 @@ module cu (
   function static logic satisfies_condition(input cond_e condition, input alu_status_t status);
     begin
       unique case (condition)
-        cpu_pkg::NONE: satisfies_condition = 1;
-        cpu_pkg::EQ: satisfies_condition = status.zero;
-        cpu_pkg::NE: satisfies_condition = !status.zero;
-        cpu_pkg::LTU: satisfies_condition = !status.carry;
-        cpu_pkg::GTU: satisfies_condition = status.carry && !status.zero;
-        cpu_pkg::LEU: satisfies_condition = !status.carry || status.zero;
-        cpu_pkg::GEU: satisfies_condition = status.carry;
-        cpu_pkg::LTS: satisfies_condition = status.negative !== status.overflow;
-        cpu_pkg::GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
-        cpu_pkg::LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
-        cpu_pkg::GES: satisfies_condition = status.negative === status.overflow;
+        cu_pkg::NONE: satisfies_condition = 1;
+        cu_pkg::EQ: satisfies_condition = status.zero;
+        cu_pkg::NE: satisfies_condition = !status.zero;
+        cu_pkg::LTU: satisfies_condition = !status.carry;
+        cu_pkg::GTU: satisfies_condition = status.carry && !status.zero;
+        cu_pkg::LEU: satisfies_condition = !status.carry || status.zero;
+        cu_pkg::GEU: satisfies_condition = status.carry;
+        cu_pkg::LTS: satisfies_condition = status.negative !== status.overflow;
+        cu_pkg::GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
+        cu_pkg::LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
+        cu_pkg::GES: satisfies_condition = status.negative === status.overflow;
         default: satisfies_condition = 1;
       endcase
     end
@@ -130,18 +131,19 @@ module cu (
       oe_alu,
       alu_op,
 
+      sel_a_reg,
+      sel_b_reg,
+      sel_in_reg,
+
       oe_a_reg_file,
       oe_b_reg_file,
       ld_reg_file,
-      sel_a_reg,
-      sel_b_reg,
-	  sel_in_reg,
-	  sp_post_inc,
-	  sp_pre_dec,
-	  pc_post_inc,
+      post_inc_sp,
+      pre_dec_sp,
+      post_inc_pc,
 
-	  oe_a_consts,
-	  oe_b_consts,
+      oe_a_consts,
+      oe_b_consts,
 
       oe_a_ir,
       oe_b_ir,
@@ -157,7 +159,7 @@ module cu (
     a_reg_mask <= 32'hffffffff;
     b_reg_mask <= 32'hffffffff;
 
-    case (state)
+    unique case (state)
 
       // ir <- *(pc++)
       FETCH: begin
@@ -165,7 +167,7 @@ module cu (
         oe_b_reg_file <= 1;
         mem_rd <= 1;
         ld_ir <= 1;
-        pc_post_inc <= 1;
+        post_inc_pc <= 1;
       end
 
 
@@ -197,10 +199,10 @@ module cu (
         end
 
         alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
-        oe_alu <= ir.params.alu_op_i.flags.load;
-        sel_in_reg <= ir.params.alu_op_i.reg_a;
-        ld_reg_file <= ir.params.alu_op_i.flags.load;
-        ld_alu_status <= ir.params.alu_op_i.flags.set_status;
+        oe_alu <= ir.params.unknown_alu_op.flags.load;
+        sel_in_reg <= ir.params.unknown_alu_op.reg_a;
+        ld_reg_file <= ir.params.unknown_alu_op.flags.load;
+        ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
       end
 
       // reg_a <- *address
@@ -253,14 +255,14 @@ module cu (
       PUSH: begin
         sel_a_reg <= ir.params.push_params.reg_a;
         sel_b_reg <= reg_pkg::SP;
-        sp_pre_dec <= 1;
+        pre_dec_sp <= 1;
         mem_wr <= 1;
       end
 
       // reg_a <- *(sp++)
       POP: begin
         sel_b_reg <= reg_pkg::SP;
-        sp_post_inc <= 1;
+        post_inc_sp <= 1;
         mem_rd <= 1;
         sel_in_reg <= ir.params.pop_params.reg_a;
         ld_reg_file <= 1;
@@ -271,7 +273,7 @@ module cu (
       SWINT1, HWINT1: begin
         sel_a_reg <= reg_pkg::PC;
         sel_b_reg <= reg_pkg::SP;
-        sp_pre_dec <= 1;
+        pre_dec_sp <= 1;
         mem_wr <= 1;
         imask_in <= 0;
         ld_imask <= 1;

@@ -10,7 +10,7 @@ module pc_reg #(
     input oe_a,
     input oe_b,
     input ld,
-	input post_inc,
+    input post_inc,
     output logic [SIZE-1:0] value = INITIAL_VAL  // only if you need to direclty access (not on the data/addr bus)
 );
 
@@ -21,6 +21,6 @@ module pc_reg #(
 
   always @(posedge clk) begin
     if (ld) value = in;
-	if (post_inc) value += 1;
+    if (post_inc) value += 1;
   end
 endmodule
