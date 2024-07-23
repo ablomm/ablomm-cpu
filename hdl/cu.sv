@@ -27,9 +27,9 @@ module cu (
     output logic oe_a_reg_file,
     output logic oe_b_reg_file,
     output logic ld_reg_file,
-    output logic sp_post_inc,
-    output logic sp_pre_dec,
-    output logic pc_post_inc,
+    output logic post_inc_sp,
+    output logic pre_dec_sp,
+    output logic post_inc_pc,
 
     output logic oe_a_consts,
     output logic oe_b_consts,
@@ -138,9 +138,9 @@ module cu (
       oe_a_reg_file,
       oe_b_reg_file,
       ld_reg_file,
-      sp_post_inc,
-      sp_pre_dec,
-      pc_post_inc,
+      post_inc_sp,
+      pre_dec_sp,
+      post_inc_pc,
 
       oe_a_consts,
       oe_b_consts,
@@ -167,7 +167,7 @@ module cu (
         oe_b_reg_file <= 1;
         mem_rd <= 1;
         ld_ir <= 1;
-        pc_post_inc <= 1;
+        post_inc_pc <= 1;
       end
 
 
@@ -199,10 +199,10 @@ module cu (
         end
 
         alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
-        oe_alu <= ir.params.alu_op_i.flags.load;
-        sel_in_reg <= ir.params.alu_op_i.reg_a;
-        ld_reg_file <= ir.params.alu_op_i.flags.load;
-        ld_alu_status <= ir.params.alu_op_i.flags.set_status;
+        oe_alu <= ir.params.unknown_alu_op.flags.load;
+        sel_in_reg <= ir.params.unknown_alu_op.reg_a;
+        ld_reg_file <= ir.params.unknown_alu_op.flags.load;
+        ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
       end
 
       // reg_a <- *address
@@ -255,14 +255,14 @@ module cu (
       PUSH: begin
         sel_a_reg <= ir.params.push_params.reg_a;
         sel_b_reg <= reg_pkg::SP;
-        sp_pre_dec <= 1;
+        pre_dec_sp <= 1;
         mem_wr <= 1;
       end
 
       // reg_a <- *(sp++)
       POP: begin
         sel_b_reg <= reg_pkg::SP;
-        sp_post_inc <= 1;
+        post_inc_sp <= 1;
         mem_rd <= 1;
         sel_in_reg <= ir.params.pop_params.reg_a;
         ld_reg_file <= 1;
@@ -273,7 +273,7 @@ module cu (
       SWINT1, HWINT1: begin
         sel_a_reg <= reg_pkg::PC;
         sel_b_reg <= reg_pkg::SP;
-        sp_pre_dec <= 1;
+        pre_dec_sp <= 1;
         mem_wr <= 1;
         imask_in <= 0;
         ld_imask <= 1;

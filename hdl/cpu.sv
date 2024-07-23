@@ -28,9 +28,9 @@ module cpu (
   wire oe_a_reg_file;
   wire oe_b_reg_file;
   wire ld_reg_file;
-  wire sp_post_inc;
-  wire sp_pre_dec;
-  wire pc_post_inc;
+  wire post_inc_sp;
+  wire pre_dec_sp;
+  wire post_inc_pc;
 
   wire oe_a_consts;
   wire oe_b_consts;
@@ -94,9 +94,9 @@ module cpu (
       .sel_a(sel_a_reg),
       .sel_b(sel_b_reg),
       .sel_in(sel_in_reg),
-      .sp_post_inc(sp_post_inc),
-      .sp_pre_dec(sp_pre_dec),
-      .pc_post_inc(pc_post_inc)
+      .post_inc_sp(post_inc_sp),
+      .pre_dec_sp(pre_dec_sp),
+      .post_inc_pc(post_inc_pc)
   );
 
   reg_constants reg_consts (
