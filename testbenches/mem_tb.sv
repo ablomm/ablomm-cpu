@@ -8,12 +8,14 @@ module mem_tb;
   mem m0 (.*);
 
   initial begin
+    #500;
+	$display("\ntesting mem");
     en = 1;
     test_rd_wr(15, 123);
     test_rd_wr(16, 223);
   end
 
-  task static write(input logic [15:0] addr_in, input logic [32:0] data_in);
+  task static test_write(input logic [15:0] addr_in, input logic [32:0] data_in);
     begin
       clk = 0;
       #1;
@@ -26,7 +28,7 @@ module mem_tb;
     end
   endtask
 
-  task static read(input logic [15:0] addr_in);
+  task static test_read(input logic [15:0] addr_in);
     begin
       addr = addr_in;
       rd   = 1;
@@ -37,8 +39,8 @@ module mem_tb;
 
   task static test_rd_wr(input logic [15:0] addr_in, input logic [32:0] data_in);
     begin
-      write(addr_in, data_in);
-      read(addr_in);
+      test_write(addr_in, data_in);
+      test_read(addr_in);
       $display("data = %d", out);
       assert (out === data_in);
     end

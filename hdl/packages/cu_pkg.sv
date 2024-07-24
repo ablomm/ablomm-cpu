@@ -1,4 +1,4 @@
-package cpu_pkg;
+package cu_pkg;
   import alu_pkg::*;
   import reg_pkg::*;
 

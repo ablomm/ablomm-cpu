@@ -2,58 +2,44 @@ module alu_tb;
   import alu_pkg::*;
 
   logic oe;
-  logic [31:0] a, b;
-  wire [3:0] status;
   alu_op_e operation;
+  logic carry_in;
+  logic [31:0] a, b;
   wire [31:0] out;
+  wire [ 3:0] status;
 
-  logic [31:0] c;
-
-  alu alu0 (
-      .*,
-      .carry_in(1'b0)
-  );
+  alu alu0 (.*);
 
   initial begin
-    test_sum(1, 1, 4'b0000);
-    test_sum(2, 1, 4'b0000);
-    test_sum(32'hffffffff, 2, 4'b0010);
-    test_sum(32'h7fffffff, 1, 4'b1001);
+    #1;
+    $display("\ntesting alu");
+    test_alu(alu_pkg::ADD, 1, 1, 2, 4'b0000);
+    test_alu(alu_pkg::ADD, 2, 1, 3, 4'b0000);
+    test_alu(alu_pkg::ADD, 32'hffffffff, 2, 1, 4'b0010);
+    test_alu(alu_pkg::ADD, 32'h7fffffff, 1, 32'h80000000, 4'b1001);
 
-    test_sub(1, 1, 4'b0100);
-    test_sub(2, 1, 4'b0000);
-    test_sub(2, 3, 4'b1010);
-    test_sub(-32'h80000000, 1, 4'b0001);
+    test_alu(alu_pkg::SUB, 1, 1, 0, 4'b0100);
+    test_alu(alu_pkg::SUB, 2, 1, 1, 4'b0000);
+    test_alu(alu_pkg::SUB, 2, 3, -1, 4'b1010);
+    test_alu(alu_pkg::SUB, 32'h80000000, 1, 32'h7fffffff, 4'b0001);
   end
 
-  initial $monitor("a = %d, b = %d, out = %d, op = %h, status = %b", a, b, out, operation, status);
-
-  task static test_sum(input logic [31:0] a_in, input logic [31:0] b_in,
-                       input logic [3:0] status_in);
+  task static test_alu(input alu_op_e operation_in, input logic [31:0] a_in,
+                       input logic [31:0] b_in, input [31:0] expected_result_in,
+                       input alu_status_t expected_status_in);
     begin
-      operation = ADD;
+      operation = operation_in;
       a = a_in;
       b = b_in;
       oe = 1;
       #1;
-      assert (out === a_in + b_in);
-      assert (status === status_in);
-      oe = 0;
-    end
-  endtask
 
-  task static test_sub(input logic [31:0] a_in, input logic [31:0] b_in,
-                       input logic [3:0] status_in);
-    begin
-      operation = SUB;
-      a = a_in;
-      b = b_in;
-      oe = 1;
+      $display("a = %d, b = %d, out = %d, op = %h, status = %b", a, b, out, operation, status);
+      assert (out === expected_result_in);
+      assert (status === expected_status_in);
+
+      oe = 0;
       #1;
-      assert (out === a_in - b_in);
-      assert (status === status_in);
-      oe = 0;
     end
   endtask
-
 endmodule

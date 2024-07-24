@@ -5,6 +5,8 @@ module filter_tb;
 
   filter filter0 (.*);
   initial begin
+    #400;
+	$display("\ntesting filter");
     test_filter(32'hffffffff, 32'hf0f0f0f0);
     test_filter(32'h12312312, 32'h50f37431);
   end

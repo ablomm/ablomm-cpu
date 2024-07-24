@@ -12,11 +12,13 @@ module cpu_reg_tb;
   cpu_reg reg0 (.*);
 
   initial begin
+    #100;
+    $display("\ntesting cpu_reg");
     test_ld_oe(123);
     test_ld_oe(321);
   end
 
-  task static ld_a(input logic [31:0] data_in);
+  task static test_ld_a(input logic [31:0] data_in);
     begin
       clk  = 0;
       oe_a = 0;
@@ -30,14 +32,14 @@ module cpu_reg_tb;
     end
   endtask
 
-  task static set_oe_a();
+  task static test_oe_a;
     begin
       oe_a = 1;
       #1;
     end
   endtask
 
-  task static set_oe_b();
+  task static test_oe_b;
     begin
       oe_b = 1;
       #1;
@@ -46,12 +48,12 @@ module cpu_reg_tb;
 
   task static test_ld_oe(input logic [31:0] data_in);
     begin
-      ld_a(data_in);
-      set_oe_a();
+      test_ld_a(data_in);
+      test_oe_a;
       $display("a = %d", a);
       assert (a === data_in);
 
-      set_oe_b();
+      test_oe_b;
       $display("b_bus = %d", b);
       assert (b === data_in);
     end

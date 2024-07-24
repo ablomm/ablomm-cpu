@@ -1,4 +1,4 @@
-import cpu_pkg::*;
+import cu_pkg::*;
 import alu_pkg::*;
 import reg_pkg::*;
 
@@ -73,24 +73,24 @@ module cu (
 
   // state changes
   always_ff @(posedge clk) begin
-    case (state)
+    unique case (state)
       FETCH: begin
         if (hwint & status.imask) state <= HWINT1;
         else if (satisfies_condition(ir.condition, status.alu_status)) begin
-          casez (ir.instruction)
+          unique casez (ir.instruction)
             // all alu ops will have a 0 in first instruction nibble
             // the second nibble will be the alu_op
             'h0?: state <= ALU;
-            cpu_pkg::LD: state <= LD;
-            cpu_pkg::LDR: state <= LDR;
-            cpu_pkg::LDI: state <= LDI;
-            cpu_pkg::ST: state <= ST;
-            cpu_pkg::STR: state <= STR;
-            cpu_pkg::PUSH: state <= PUSH;
-            cpu_pkg::POP: state <= POP;
-            cpu_pkg::INT: state <= SWINT1;
-            cpu_pkg::CLRI: state <= CLRI;
-            cpu_pkg::SETI: state <= SETI;
+            cu_pkg::LD: state <= LD;
+            cu_pkg::LDR: state <= LDR;
+            cu_pkg::LDI: state <= LDI;
+            cu_pkg::ST: state <= ST;
+            cu_pkg::STR: state <= STR;
+            cu_pkg::PUSH: state <= PUSH;
+            cu_pkg::POP: state <= POP;
+            cu_pkg::INT: state <= SWINT1;
+            cu_pkg::CLRI: state <= CLRI;
+            cu_pkg::SETI: state <= SETI;
             default: state <= NOP;
           endcase
         end
@@ -105,17 +105,17 @@ module cu (
   function static logic satisfies_condition(input cond_e condition, input alu_status_t status);
     begin
       unique case (condition)
-        cpu_pkg::NONE: satisfies_condition = 1;
-        cpu_pkg::EQ: satisfies_condition = status.zero;
-        cpu_pkg::NE: satisfies_condition = !status.zero;
-        cpu_pkg::LTU: satisfies_condition = !status.carry;
-        cpu_pkg::GTU: satisfies_condition = status.carry && !status.zero;
-        cpu_pkg::LEU: satisfies_condition = !status.carry || status.zero;
-        cpu_pkg::GEU: satisfies_condition = status.carry;
-        cpu_pkg::LTS: satisfies_condition = status.negative !== status.overflow;
-        cpu_pkg::GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
-        cpu_pkg::LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
-        cpu_pkg::GES: satisfies_condition = status.negative === status.overflow;
+        cu_pkg::NONE: satisfies_condition = 1;
+        cu_pkg::EQ: satisfies_condition = status.zero;
+        cu_pkg::NE: satisfies_condition = !status.zero;
+        cu_pkg::LTU: satisfies_condition = !status.carry;
+        cu_pkg::GTU: satisfies_condition = status.carry && !status.zero;
+        cu_pkg::LEU: satisfies_condition = !status.carry || status.zero;
+        cu_pkg::GEU: satisfies_condition = status.carry;
+        cu_pkg::LTS: satisfies_condition = status.negative !== status.overflow;
+        cu_pkg::GTS: satisfies_condition = !status.zero && (status.negative === status.overflow);
+        cu_pkg::LES: satisfies_condition = status.zero || (status.negative !== status.overflow);
+        cu_pkg::GES: satisfies_condition = status.negative === status.overflow;
         default: satisfies_condition = 1;
       endcase
     end
@@ -159,7 +159,7 @@ module cu (
     a_reg_mask <= 32'hffffffff;
     b_reg_mask <= 32'hffffffff;
 
-    case (state)
+    unique case (state)
 
       // ir <- *(pc++)
       FETCH: begin
