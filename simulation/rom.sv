@@ -20,5 +20,5 @@ module rom #(
     if (en && wr) mem[addr] <= data;
   end
 
-  initial $readmemh("simulation/programs/counter.txt", mem);
+  initial $readmemh("simulation/programs/int_test.txt", mem);
 endmodule

@@ -37,6 +37,10 @@ module cu_tb;
   logic oe_b_ir;
   logic ld_ir;
 
+  logic ld_status;
+  logic oe_a_status;
+  logic oe_b_status;
+
   logic ld_alu_status;
   logic imask_in;
   logic ld_imask;

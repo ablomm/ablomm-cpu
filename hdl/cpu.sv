@@ -40,6 +40,10 @@ module cpu (
   wire ld_ir;
 
   wire ld_alu_status;
+  wire ld_status;
+  wire oe_a_status;
+  wire oe_b_status;
+
   wire imask_in;
   wire ld_imask;
   wire cpu_mode_e mode_in;
@@ -47,20 +51,18 @@ module cpu (
 
   cu cu0 (
       .*,
-      .clk(~clk), // negative clk so that control signals are created before loads (fixes race conditions)
-      .ir(ir_value),
-      .status(status_value)
+      .clk(~clk) // negative clk so that control signals are created before loads (fixes race conditions)
   );
 
-  wire alu_status_t alu_status_in;
+  wire alu_status_t alu_status;
   alu alu0 (
       .oe(oe_alu),
       .operation(alu_op),
-      .carry_in(1'(status_value.alu_status.carry)),
+      .carry_in(1'(status.alu_status.carry)),
       .a(a_bus),
       .b(b_bus),
       .out(result_bus),
-      .status(alu_status_in)
+      .status(alu_status)
   );
 
   tri [31:0] a_reg_bus;
@@ -110,8 +112,8 @@ module cpu (
   );
 
   // internal private registers
-  wire ir_t ir_value;
-  cpu_reg ir (
+  wire ir_t ir;
+  cpu_reg ir_reg (
       .clk(clk),
       .rst(rst),
       .a(a_reg_bus),
@@ -120,12 +122,21 @@ module cpu (
       .oe_a(oe_a_ir),
       .oe_b(oe_b_ir),
       .ld(ld_ir),
-      .value(ir_value)
+      .value(ir)
   );
 
-  wire status_t status_value;
-  status_reg status (
-      .*,
-      .value(status_value)
+  wire status_t status;
+  status_reg status_reg (
+      .clk(clk),
+      .rst(rst),
+      .a(a_reg_bus[5:0]),
+      .b(b_reg_bus[5:0]),
+      .in(result_bus[5:0]),
+      .oe_a(oe_a_status),
+      .oe_b(oe_b_status),
+      .ld(ld_status),
+      .alu_status_in(alu_status),
+      .ld_alu_status(ld_alu_status),
+      .value(status)
   );
 endmodule
