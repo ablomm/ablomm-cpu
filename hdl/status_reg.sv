@@ -29,6 +29,6 @@ module status_reg #(
     if (ld) value <= in;
     if (ld_alu_status) value.alu_status <= alu_status_in;
     if (ld_imask) value.imask <= imask_in;
-    if (ld_mode) value.imask <= mode_in;
+    if (ld_mode) value.mode <= mode_in;
   end
 endmodule

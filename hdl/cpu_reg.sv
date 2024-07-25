@@ -10,7 +10,7 @@ module cpu_reg #(
     input oe_a,
     input oe_b,
     input ld,
-    output logic [SIZE-1:0] value = INITIAL_VAL  // only if you need to direclty access (not on the data/addr bus)
+    output logic [SIZE-1:0] value = INITIAL_VAL // only if you need to direclty access (not on the data/addr bus)
 );
 
   assign a = oe_a ? value : 'hz;

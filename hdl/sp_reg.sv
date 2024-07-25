@@ -12,7 +12,7 @@ module sp_reg #(
     input ld,
     input post_inc,
     input pre_dec,
-    output logic [SIZE-1:0] value = INITIAL_VAL  // only if you need to direclty access (not on the data/addr bus)
+    output logic [SIZE-1:0] value = INITIAL_VAL // only if you need to direclty access (not on the data/addr bus)
 );
 
   assign a = oe_a ? value : 'hz;
