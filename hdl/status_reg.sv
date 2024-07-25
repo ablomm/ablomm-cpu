@@ -5,6 +5,12 @@ module status_reg #(
 ) (
     input clk,
     input rst,
+    output tri [5:0] a,
+    output tri [5:0] b,
+    input [5:0] in,
+    input oe_a,
+    input oe_b,
+    input ld,
     input alu_status_t alu_status_in,
     input ld_alu_status,
     input imask_in,
@@ -14,9 +20,13 @@ module status_reg #(
     output status_t value = INITIAL_VAL
 );
 
+  assign a = oe_a ? value : 'hz;
+  assign b = oe_b ? value : 'hz;
+
   always @(posedge rst) value <= INITIAL_VAL;
 
   always_ff @(posedge clk) begin
+    if (ld) value <= in;
     if (ld_alu_status) value.alu_status <= alu_status_in;
     if (ld_imask) value.imask <= imask_in;
     if (ld_mode) value.mode <= mode_in;

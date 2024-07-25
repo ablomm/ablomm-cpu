@@ -17,7 +17,7 @@ package cu_pkg;
   } cond_e;
 
   typedef enum logic [7:0] {
-    LD   = 8'h10,
+    LD = 8'h10,
     LDR,
     LDI,
     ST,
@@ -25,8 +25,8 @@ package cu_pkg;
     PUSH,
     POP,
     INT,
-    CLRI,
-    SETI
+    MOVSR,
+    MOVRS
   } instruction_e;
 
   typedef struct packed {
@@ -40,7 +40,7 @@ package cu_pkg;
     alu_op_flags_t flags;
     reg_e reg_a;
     reg_e reg_b;
-    logic [7:0]   unknown;
+    logic [7:0] unknown;
   } unknown_alu_op_t;
 
   typedef struct packed {
@@ -97,6 +97,9 @@ package cu_pkg;
 
     register_params_t push_params;
     register_params_t pop_params;
+
+    register_params_t movrs_params;
+    register_params_t movsr_params;
   } ir_params_t;
 
   typedef struct packed {

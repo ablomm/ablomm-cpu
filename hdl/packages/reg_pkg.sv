@@ -2,8 +2,8 @@ package reg_pkg;
   import alu_pkg::*;
 
   typedef enum logic {
-    kernel,
-    user
+    SUPERVISOR,
+    USER
   } cpu_mode_e;
 
   typedef struct packed {

@@ -38,6 +38,10 @@ module cu (
     output logic oe_b_ir,
     output logic ld_ir,
 
+    output logic ld_status,
+    output logic oe_a_status,
+    output logic oe_b_status,
+
     output logic ld_alu_status,
     output logic imask_in,
     output logic ld_imask,
@@ -53,10 +57,9 @@ module cu (
     HWINT2,
     SWINT1,
     SWINT2,
-    CLRI,
-    SETI,
+    EXCEPT1,
+    EXCEPT2,
     FETCH,
-    NOP,
     ALU,
     LD,
     LDR,
@@ -64,7 +67,9 @@ module cu (
     ST,
     STR,
     PUSH,
-    POP
+    POP,
+    MOVRS,
+    MOVSR
   } states_e;
 
   states_e state = STOP;
@@ -89,14 +94,15 @@ module cu (
             cu_pkg::PUSH: state <= PUSH;
             cu_pkg::POP: state <= POP;
             cu_pkg::INT: state <= SWINT1;
-            cu_pkg::CLRI: state <= CLRI;
-            cu_pkg::SETI: state <= SETI;
-            default: state <= NOP;
+            cu_pkg::MOVRS: state <= status.mode ? EXCEPT1 : MOVRS;
+            cu_pkg::MOVSR: state <= status.mode ? EXCEPT1 : MOVSR;
+            default: state <= EXCEPT1;
           endcase
         end
       end
       SWINT1: state <= SWINT2;
       HWINT1: state <= HWINT2;
+      EXCEPT1: state <= EXCEPT2;
       STOP: if (start) state <= FETCH;
       default: state <= FETCH;
     endcase
@@ -148,6 +154,10 @@ module cu (
       oe_a_ir,
       oe_b_ir,
       ld_ir,
+
+      ld_status,
+      oe_a_status,
+      oe_b_status,
 
       ld_alu_status,
       imask_in,
@@ -253,33 +263,33 @@ module cu (
 
       // *(--sp) <- reg_a
       PUSH: begin
+        pre_dec_sp <= 1;
         sel_a_reg <= ir.params.push_params.reg_a;
         sel_b_reg <= reg_pkg::SP;
-        pre_dec_sp <= 1;
         mem_wr <= 1;
       end
 
       // reg_a <- *(sp++)
       POP: begin
         sel_b_reg <= reg_pkg::SP;
-        post_inc_sp <= 1;
         mem_rd <= 1;
         sel_in_reg <= ir.params.pop_params.reg_a;
         ld_reg_file <= 1;
+        post_inc_sp <= 1;
       end
 
+
       // push PC
-      // imask <- 0
-      SWINT1, HWINT1: begin
+      SWINT1, HWINT1, EXCEPT1: begin
+        pre_dec_sp <= 1;
         sel_a_reg <= reg_pkg::PC;
         sel_b_reg <= reg_pkg::SP;
-        pre_dec_sp <= 1;
         mem_wr <= 1;
-        imask_in <= 0;
-        ld_imask <= 1;
       end
 
       // PC <- 00000001
+      // imask <- 0
+      // mode <- SUPERVISOR
       HWINT2: begin
         sel_a_reg <= 4'h1;
         oe_a_consts <= 1;
@@ -287,9 +297,15 @@ module cu (
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
         ld_reg_file <= 1;
+        imask_in <= 0;
+        ld_imask <= 1;
+        mode_in <= reg_pkg::SUPERVISOR;
+        ld_mode <= 1;
       end
 
       // PC <- 00000002
+      // imask <- 0
+      // mode <- SUPERVISOR
       SWINT2: begin
         sel_a_reg <= 4'h2;
         oe_a_consts <= 1;
@@ -299,14 +315,35 @@ module cu (
         ld_reg_file <= 1;
       end
 
-      CLRI: begin
-        imask_in <= 0;
-        ld_imask <= 1;
+      // pc <- 00000003
+      // mode <- SUPERVISOR
+      EXCEPT2: begin
+        sel_a_reg <= 4'h3;
+        oe_a_consts <= 1;
+        alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
+        sel_in_reg <= reg_pkg::PC;
+        ld_reg_file <= 1;
+        mode_in <= reg_pkg::SUPERVISOR;
+        ld_mode <= 1;
       end
 
-      SETI: begin
-        imask_in <= 1;
-        ld_imask <= 1;
+      // reg_a <- status
+      MOVRS: begin
+        oe_a_status <= 1;
+        alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
+        sel_in_reg <= ir.params.movrs_params.reg_a;
+        ld_reg_file <= 1;
+      end
+
+      // status <- reg_a
+      MOVSR: begin
+        sel_a_reg <= ir.params.movsr_params.reg_a;
+        oe_a_reg_file <= 1;
+        alu_op <= alu_pkg::PASSA;
+        oe_alu <= 1;
+        ld_status <= 1;
       end
 
       default: ;

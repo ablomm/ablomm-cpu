@@ -11,13 +11,13 @@ module pc_reg #(
     input oe_b,
     input ld,
     input post_inc,
-    output logic [SIZE-1:0] value = INITIAL_VAL  // only if you need to direclty access (not on the data/addr bus)
+    output logic [SIZE-1:0] value = INITIAL_VAL // only if you need to direclty access (not on the data/addr bus)
 );
-
-  always @(posedge rst) value <= INITIAL_VAL;
 
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
+
+  always @(posedge rst) value <= INITIAL_VAL;
 
   always @(posedge clk) begin
     if (ld) value = in;
