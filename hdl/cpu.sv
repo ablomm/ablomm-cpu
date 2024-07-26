@@ -25,9 +25,10 @@ module cpu (
   wire reg_e sel_b_reg;
   wire reg_e sel_in_reg;
 
-  wire oe_a_reg_file;
-  wire oe_b_reg_file;
-  wire ld_reg_file;
+  wire oe_a_reg;
+  wire oe_b_reg;
+  wire ld_reg;
+
   wire post_inc_sp;
   wire pre_dec_sp;
   wire post_inc_pc;
@@ -40,10 +41,6 @@ module cpu (
   wire ld_ir;
 
   wire ld_alu_status;
-  wire ld_status;
-  wire oe_a_status;
-  wire oe_b_status;
-
   wire imask_in;
   wire ld_imask;
   wire cpu_mode_e mode_in;
@@ -80,25 +77,61 @@ module cpu (
   );
 
   // public registers
-  // 0-12 => general registers
-  // 13 => fp
-  // 14 => sp
-  // 15 => pc
-  register_file reg_file (
+  // 0-12 => general registers (including fp)
+  register_file #(
+      .DEPTH(13)
+  ) reg_file (
       .clk(clk),
       .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
-      .oe_a(oe_a_reg_file),
-      .oe_b(oe_b_reg_file),
-      .ld(ld_reg_file),
+      .oe_a(oe_a_reg),
+      .oe_b(oe_b_reg),
+      .ld(ld_reg),
       .sel_a(sel_a_reg),
       .sel_b(sel_b_reg),
-      .sel_in(sel_in_reg),
-      .post_inc_sp(post_inc_sp),
-      .pre_dec_sp(pre_dec_sp),
-      .post_inc_pc(post_inc_pc)
+      .sel_in(sel_in_reg)
+  );
+
+  wire status_t status;
+  status_reg status_reg (
+      .clk(clk),
+      .rst(rst),
+      .a(a_reg_bus[5:0]),
+      .b(b_reg_bus[5:0]),
+      .in(result_bus[5:0]),
+      .oe_a(sel_a_reg === reg_pkg::STATUS && oe_a_reg),
+      .oe_b(sel_b_reg === reg_pkg::STATUS && oe_b_reg),
+      .ld(sel_in_reg === reg_pkg::STATUS && ld_reg),
+      .alu_status_in(alu_status),
+      .ld_alu_status(ld_alu_status),
+      .value(status)
+  );
+
+  sp_reg sp (
+      .clk(clk),
+      .a(a_reg_bus),
+      .b(b_reg_bus),
+      .in(result_bus),
+      .oe_a(sel_a_reg === reg_pkg::SP && oe_a_reg),
+      .oe_b(sel_b_reg === reg_pkg::SP && oe_b_reg),
+      .ld(sel_in_reg === reg_pkg::SP && ld_reg),
+      .post_inc(post_inc_sp),
+      .pre_dec(pre_dec_sp),
+      .value()
+  );
+
+  pc_reg pc (
+      .clk(clk),
+      .a(a_reg_bus),
+      .b(b_reg_bus),
+      .in(result_bus),
+      .oe_a(sel_a_reg === reg_pkg::PC && oe_a_reg),
+      .oe_b(sel_b_reg === reg_pkg::PC && oe_b_reg),
+      .ld(sel_in_reg === reg_pkg::PC && ld_reg),
+      .post_inc(post_inc_pc),
+      .value()
   );
 
   reg_constants reg_consts (
@@ -123,20 +156,5 @@ module cpu (
       .oe_b(oe_b_ir),
       .ld(ld_ir),
       .value(ir)
-  );
-
-  wire status_t status;
-  status_reg status_reg (
-      .clk(clk),
-      .rst(rst),
-      .a(a_reg_bus[5:0]),
-      .b(b_reg_bus[5:0]),
-      .in(result_bus[5:0]),
-      .oe_a(oe_a_status),
-      .oe_b(oe_b_status),
-      .ld(ld_status),
-      .alu_status_in(alu_status),
-      .ld_alu_status(ld_alu_status),
-      .value(status)
   );
 endmodule

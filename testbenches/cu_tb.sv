@@ -23,9 +23,10 @@ module cu_tb;
   reg_e sel_b_reg;
   reg_e sel_in_reg;
 
-  logic oe_a_reg_file;
-  logic oe_b_reg_file;
-  logic ld_reg_file;
+  logic oe_a_reg;
+  logic oe_b_reg;
+  logic ld_reg;
+
   logic post_inc_sp;
   logic pre_dec_sp;
   logic post_inc_pc;
@@ -36,10 +37,6 @@ module cu_tb;
   logic oe_a_ir;
   logic oe_b_ir;
   logic ld_ir;
-
-  logic ld_status;
-  logic oe_a_status;
-  logic oe_b_status;
 
   logic ld_alu_status;
   logic imask_in;
@@ -85,9 +82,9 @@ module cu_tb;
       #1;
 
       $display("sel_b_reg: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, post_inc_pc: %d",
-               sel_b_reg, oe_b_reg_file, mem_rd, ld_ir, post_inc_pc);
+               sel_b_reg, oe_b_reg, mem_rd, ld_ir, post_inc_pc);
 
-      assert (sel_b_reg === reg_pkg::PC && oe_b_reg_file === 1 && mem_rd === 1 && post_inc_pc === 1);
+      assert (sel_b_reg === reg_pkg::PC && oe_b_reg === 1 && mem_rd === 1 && post_inc_pc === 1);
     end
   endtask
 
@@ -114,9 +111,9 @@ module cu_tb;
 
       $display(
           "sel_a_reg: %d, oe_a_reg_file: %d, sel_b_reg: %d, oe_b_reg_file: %d, alu_op: %d, sel_in_reg: %d, ld_reg_file: %d",
-          sel_a_reg, oe_a_reg_file, sel_b_reg, oe_b_reg_file, alu_op, sel_in_reg, ld_reg_file);
+          sel_a_reg, oe_a_reg, sel_b_reg, oe_b_reg, alu_op, sel_in_reg, ld_reg);
 
-      assert (sel_a_reg === reg_b_in && oe_a_reg_file === 1 && sel_b_reg === reg_c_in && oe_b_reg_file === 1 && alu_op === op_in && sel_in_reg === reg_a_in && ld_reg_file === 1);
+      assert (sel_a_reg === reg_b_in && oe_a_reg === 1 && sel_b_reg === reg_c_in && oe_b_reg === 1 && alu_op === op_in && sel_in_reg === reg_a_in && ld_reg === 1);
 
       clk = 1;
       #1;

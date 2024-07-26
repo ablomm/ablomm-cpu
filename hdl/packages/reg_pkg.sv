@@ -25,8 +25,8 @@ package reg_pkg;
     R9,
     R10,
     R11,
-    R12,
     FP,
+    STATUS,
     SP,
     PC
   } reg_e;

@@ -14,14 +14,11 @@ module register_file #(
     input ld,
     input [SEL_WIDTH-1:0] sel_a,
     input [SEL_WIDTH-1:0] sel_b,
-    input [SEL_WIDTH-1:0] sel_in,
-    input post_inc_sp,
-    input pre_dec_sp,
-    input post_inc_pc
+    input [SEL_WIDTH-1:0] sel_in
 );
   genvar i;
   generate
-    for (i = 0; i < DEPTH - 2; i++) begin : g_registers
+    for (i = 0; i < DEPTH; i++) begin : g_registers
       cpu_reg #(
           .SIZE(WORD_SIZE)
       ) register (
@@ -33,28 +30,4 @@ module register_file #(
       );
     end
   endgenerate
-
-  sp_reg #(
-      .SIZE(WORD_SIZE)
-  ) sp (
-      .*,
-      .oe_a(sel_a === DEPTH - 2 && oe_a),
-      .oe_b(sel_b === DEPTH - 2 && oe_b),
-      .ld(sel_in === DEPTH - 2 && ld),
-      .post_inc(post_inc_sp),
-      .pre_dec(pre_dec_sp),
-      .value()
-  );
-
-  pc_reg #(
-      .SIZE(WORD_SIZE)
-  ) pc (
-      .*,
-      .oe_a(sel_a === DEPTH - 1 && oe_a),
-      .oe_b(sel_b === DEPTH - 1 && oe_b),
-      .ld(sel_in === DEPTH - 1 && ld),
-      .post_inc(post_inc_pc),
-      .value()
-  );
-
 endmodule
