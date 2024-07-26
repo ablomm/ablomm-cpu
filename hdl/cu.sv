@@ -24,9 +24,10 @@ module cu (
     output reg_e sel_b_reg,
     output reg_e sel_in_reg,
 
-    output logic oe_a_reg_file,
-    output logic oe_b_reg_file,
-    output logic ld_reg_file,
+    output logic oe_a_reg,
+    output logic oe_b_reg,
+    output logic ld_reg,
+
     output logic post_inc_sp,
     output logic pre_dec_sp,
     output logic post_inc_pc,
@@ -37,10 +38,6 @@ module cu (
     output logic oe_a_ir,
     output logic oe_b_ir,
     output logic ld_ir,
-
-    output logic ld_status,
-    output logic oe_a_status,
-    output logic oe_b_status,
 
     output logic ld_alu_status,
     output logic imask_in,
@@ -67,9 +64,7 @@ module cu (
     ST,
     STR,
     PUSH,
-    POP,
-    MOVRS,
-    MOVSR
+    POP
   } states_e;
 
   states_e state = STOP;
@@ -85,17 +80,36 @@ module cu (
           unique casez (ir.instruction)
             // all alu ops will have a 0 in first instruction nibble
             // the second nibble will be the alu_op
-            'h0?: state <= ALU;
-            cu_pkg::LD: state <= LD;
-            cu_pkg::LDR: state <= LDR;
-            cu_pkg::LDI: state <= LDI;
+            'h0?: begin
+              // exception if try to load status when not in supervisor mode
+              if (ir.params.unknown_alu_op.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                state <= EXCEPT1;
+              else state <= ALU;
+            end
+            cu_pkg::LD: begin
+              if (ir.params.ld_params.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                state <= EXCEPT1;
+              else state <= LD;
+            end
+            cu_pkg::LDR: begin
+              if (ir.params.ldr_params.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                state <= EXCEPT1;
+              else state <= LDR;
+            end
+            cu_pkg::LDI: begin
+              if (ir.params.ldi_params.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                state <= EXCEPT1;
+              else state <= LDI;
+            end
             cu_pkg::ST: state <= ST;
             cu_pkg::STR: state <= STR;
             cu_pkg::PUSH: state <= PUSH;
-            cu_pkg::POP: state <= POP;
+            cu_pkg::POP: begin
+              if (ir.params.pop_params.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                state <= EXCEPT1;
+              else state <= POP;
+            end
             cu_pkg::INT: state <= SWINT1;
-            cu_pkg::MOVRS: state <= status.mode ? EXCEPT1 : MOVRS;
-            cu_pkg::MOVSR: state <= status.mode ? EXCEPT1 : MOVSR;
             default: state <= EXCEPT1;
           endcase
         end
@@ -141,9 +155,10 @@ module cu (
       sel_b_reg,
       sel_in_reg,
 
-      oe_a_reg_file,
-      oe_b_reg_file,
-      ld_reg_file,
+      oe_a_reg,
+      oe_b_reg,
+      ld_reg,
+
       post_inc_sp,
       pre_dec_sp,
       post_inc_pc,
@@ -154,10 +169,6 @@ module cu (
       oe_a_ir,
       oe_b_ir,
       ld_ir,
-
-      ld_status,
-      oe_a_status,
-      oe_b_status,
 
       ld_alu_status,
       imask_in,
@@ -174,7 +185,7 @@ module cu (
       // ir <- *(pc++)
       FETCH: begin
         sel_b_reg <= reg_pkg::PC;
-        oe_b_reg_file <= 1;
+        oe_b_reg <= 1;
         mem_rd <= 1;
         ld_ir <= 1;
         post_inc_pc <= 1;
@@ -187,10 +198,10 @@ module cu (
             oe_a_ir <= 1;
             a_reg_mask <= 32'hff;
             sel_b_reg <= ir.params.alu_op_i.reg_b;
-            oe_b_reg_file <= 1;
+            oe_b_reg <= 1;
           end else begin
             sel_a_reg <= ir.params.alu_op_i.reg_b;
-            oe_a_reg_file <= 1;
+            oe_a_reg <= 1;
             oe_b_ir <= 1;
             b_reg_mask <= 32'hff;
           end
@@ -204,14 +215,14 @@ module cu (
             sel_b_reg <= ir.params.alu_op.reg_c;
           end
 
-          oe_a_reg_file <= 1;
-          oe_b_reg_file <= 1;
+          oe_a_reg <= 1;
+          oe_b_reg <= 1;
         end
 
         alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
         oe_alu <= ir.params.unknown_alu_op.flags.load;
         sel_in_reg <= ir.params.unknown_alu_op.reg_a;
-        ld_reg_file <= ir.params.unknown_alu_op.flags.load;
+        ld_reg <= ir.params.unknown_alu_op.flags.load;
         ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
       end
 
@@ -221,16 +232,16 @@ module cu (
         b_reg_mask <= 32'hffff;
         mem_rd <= 1;
         sel_in_reg <= ir.params.ld_params.reg_a;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
       end
 
       // reg_a <- *reg_b
       LDR: begin
         sel_b_reg <= ir.params.ldr_params.reg_b;
-        oe_b_reg_file <= 1;
+        oe_b_reg <= 1;
         mem_rd <= 1;
         sel_in_reg <= ir.params.ldr_params.reg_a;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
       end
 
       // reg_a <- immediate
@@ -240,13 +251,13 @@ module cu (
         alu_op <= alu_pkg::PASSA;
         oe_alu <= 1;
         sel_in_reg <= ir.params.ld_params.reg_a;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
       end
 
       // *address <- reg_a
       ST: begin
         sel_a_reg <= ir.params.st_params.reg_a;
-        oe_a_reg_file <= 1;
+        oe_a_reg <= 1;
         oe_b_ir <= 1;
         b_reg_mask <= 32'hffff;
         mem_wr <= 1;
@@ -255,9 +266,9 @@ module cu (
       // *reg_b <- reg_a
       STR: begin
         sel_a_reg <= ir.params.str_params.reg_a;
-        oe_a_reg_file <= 1;
+        oe_a_reg <= 1;
         sel_b_reg <= ir.params.str_params.reg_b;
-        oe_b_reg_file <= 1;
+        oe_b_reg <= 1;
         mem_wr <= 1;
       end
 
@@ -274,7 +285,7 @@ module cu (
         sel_b_reg <= reg_pkg::SP;
         mem_rd <= 1;
         sel_in_reg <= ir.params.pop_params.reg_a;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
         post_inc_sp <= 1;
       end
 
@@ -296,7 +307,7 @@ module cu (
         alu_op <= alu_pkg::PASSA;
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
         imask_in <= 0;
         ld_imask <= 1;
         mode_in <= reg_pkg::SUPERVISOR;
@@ -312,7 +323,11 @@ module cu (
         alu_op <= alu_pkg::PASSA;
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
+        imask_in <= 0;
+        ld_imask <= 1;
+        mode_in <= reg_pkg::SUPERVISOR;
+        ld_mode <= 1;
       end
 
       // pc <- 00000003
@@ -323,29 +338,10 @@ module cu (
         alu_op <= alu_pkg::PASSA;
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
-        ld_reg_file <= 1;
+        ld_reg <= 1;
         mode_in <= reg_pkg::SUPERVISOR;
         ld_mode <= 1;
       end
-
-      // reg_a <- status
-      MOVRS: begin
-        oe_a_status <= 1;
-        alu_op <= alu_pkg::PASSA;
-        oe_alu <= 1;
-        sel_in_reg <= ir.params.movrs_params.reg_a;
-        ld_reg_file <= 1;
-      end
-
-      // status <- reg_a
-      MOVSR: begin
-        sel_a_reg <= ir.params.movsr_params.reg_a;
-        oe_a_reg_file <= 1;
-        alu_op <= alu_pkg::PASSA;
-        oe_alu <= 1;
-        ld_status <= 1;
-      end
-
       default: ;
     endcase
   end

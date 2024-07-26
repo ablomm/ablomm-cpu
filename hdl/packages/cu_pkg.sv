@@ -24,9 +24,7 @@ package cu_pkg;
     STR,
     PUSH,
     POP,
-    INT,
-    MOVSR,
-    MOVRS
+    INT
   } instruction_e;
 
   typedef struct packed {
