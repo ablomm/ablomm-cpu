@@ -1,5 +1,5 @@
-label:
-	ld.eq r1, #123;
-	ld.eq r2, #0x123;
-	and.s r1, r2;
-
+test:
+	ld.eq #123, r2;
+	ld.eq #123, r2;
+again: 
+	int;
