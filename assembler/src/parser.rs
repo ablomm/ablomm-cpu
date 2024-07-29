@@ -1,4 +1,5 @@
-use chumsky::prelude::*;
+use ariadne::{Color, ColorGenerator, Fmt, Label, Report, ReportKind, Source};
+use chumsky::{prelude::*, primitive::Custom};
 use std::char;
 
 #[derive(Debug, Clone)]
@@ -23,36 +24,36 @@ pub enum Register {
 
 #[derive(Debug, Clone)]
 pub enum Mnemonic {
-    And,
-    Or,
-    Xor,
-    Not,
-    Add,
-    Addc,
-    Sub,
-    Subb,
-    Shl,
-    Shr,
-    Ashr,
-    Ld,
-    St,
-    Push,
-    Pop,
-    Int,
+    AND,
+    OR,
+    XOR,
+    NOT,
+    ADD,
+    ADDC,
+    SUB,
+    SUBB,
+    SHL,
+    SHR,
+    ASHR,
+    LD,
+    ST,
+    PUSH,
+    POP,
+    INT,
 }
 
 #[derive(Debug, Clone)]
 pub enum Condition {
-    Eq,
-    Ne,
-    Ltu,
-    Gtu,
-    Leu,
-    Geu,
-    Lts,
-    Gts,
-    Les,
-    Ges,
+    EQ,
+    NE,
+    LTU,
+    GTU,
+    LEU,
+    GEU,
+    LTS,
+    GTS,
+    LES,
+    GES,
 }
 
 #[derive(Debug, Clone)]
@@ -72,54 +73,39 @@ pub enum Parameter {
     Label(String),
     Number(u32),
     Register(Register),
+    Indirect(Box<Parameter>),
 }
 
 #[derive(Debug)]
 pub struct FullMnemonic {
-    mnemonic: Box<Mnemonic>,
+    mnemonic: Mnemonic,
     modifiers: Vec<Modifier>,
 }
 
 #[derive(Debug)]
 pub struct Operation {
-    full_mnemonic: Box<FullMnemonic>,
+    full_mnemonic: FullMnemonic,
     parameters: Vec<Parameter>,
 }
 
 #[derive(Debug)]
 pub enum Statement {
-    Operation(Box<Operation>),
+    Operation(Operation),
     Label(String),
 }
 
 pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Simple<char>> {
     let label = text::ident();
 
-    let hex_num = just("#0x")
-        .ignore_then(text::int(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
-    let dec_num =
-        just("#").ignore_then(text::int(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap()));
+    let bin_num =
+        just("0b").ignore_then(text::int(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
+    let oct_num =
+        just("0o").ignore_then(text::int(8).map(|s: String| u32::from_str_radix(&s, 8).unwrap()));
+    let hex_num =
+        just("0x").ignore_then(text::int(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
+    let dec_num = text::int(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
-    let number = hex_num.clone().or(dec_num.clone());
-
-    let mnemonic = choice((
-        text::keyword("and").to(Mnemonic::And),
-        text::keyword("or").to(Mnemonic::Or),
-        text::keyword("xor").to(Mnemonic::Xor),
-        text::keyword("not").to(Mnemonic::Not),
-        text::keyword("add").to(Mnemonic::Add),
-        text::keyword("addc").to(Mnemonic::Addc),
-        text::keyword("sub").to(Mnemonic::Sub),
-        text::keyword("subb").to(Mnemonic::Subb),
-        text::keyword("shl").to(Mnemonic::Shl),
-        text::keyword("shr").to(Mnemonic::Shr),
-        text::keyword("ashr").to(Mnemonic::Ashr),
-        text::keyword("ld").to(Mnemonic::Ld),
-        text::keyword("st").to(Mnemonic::St),
-        text::keyword("push").to(Mnemonic::Push),
-        text::keyword("pop").to(Mnemonic::Pop),
-        text::keyword("int").to(Mnemonic::Int),
-    ));
+    let number = choice((bin_num, oct_num, hex_num, dec_num));
 
     let register = choice((
         text::keyword("r0").to(Register::R0),
@@ -140,63 +126,131 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Simple<char>> {
         text::keyword("pc").to(Register::PC),
     ));
 
+    let parameter = recursive(|parameter| {
+        let indirect = parameter.delimited_by(just('['), just(']'));
+        return choice((
+            number.map(Parameter::Number),
+            register.map(Parameter::Register),
+            label.map(Parameter::Label),
+            indirect.map(|i| Parameter::Indirect(Box::new(i))),
+        ));
+    });
+
     let alu_modifier = choice((
         text::keyword("s").to(AluModifier::S),
-        text::keyword("T").to(AluModifier::T),
+        text::keyword("t").to(AluModifier::T),
     ));
 
     let condition = choice((
-        text::keyword("eq").to(Condition::Eq),
-        text::keyword("ne").to(Condition::Ne),
-        text::keyword("ltu").to(Condition::Ltu),
-        text::keyword("gtu").to(Condition::Gtu),
-        text::keyword("leu").to(Condition::Leu),
-        text::keyword("geu").to(Condition::Geu),
-        text::keyword("lts").to(Condition::Lts),
-        text::keyword("gts").to(Condition::Gts),
-        text::keyword("les").to(Condition::Les),
-        text::keyword("ges").to(Condition::Ges),
+        text::keyword("eq").to(Condition::EQ),
+        text::keyword("ne").to(Condition::NE),
+        text::keyword("ltu").to(Condition::LTU),
+        text::keyword("gtu").to(Condition::GTU),
+        text::keyword("leu").to(Condition::LEU),
+        text::keyword("geu").to(Condition::GEU),
+        text::keyword("lts").to(Condition::LTS),
+        text::keyword("gts").to(Condition::GTS),
+        text::keyword("les").to(Condition::LES),
+        text::keyword("ges").to(Condition::GES),
     ));
 
-    let modifier = just('.').ignore_then(
-        alu_modifier
-            .clone()
-            .map(|am| Modifier::AluModifier(am))
-            .or(condition.clone().map(|c| Modifier::Condition(c))),
-    );
+    let modifier = just('.').ignore_then(choice((
+        alu_modifier.map(Modifier::AluModifier),
+        condition.map(Modifier::Condition),
+    )));
 
-    let full_mnemonic =
-        mnemonic
-            .clone()
-            .then(modifier.clone().repeated())
-            .map(|(mnemonic, modifiers)| FullMnemonic {
-                mnemonic: Box::new(mnemonic),
-                modifiers,
-            });
+    let mnemonic = choice((
+        text::keyword("and").to(Mnemonic::AND),
+        text::keyword("or").to(Mnemonic::OR),
+        text::keyword("xor").to(Mnemonic::XOR),
+        text::keyword("not").to(Mnemonic::NOT),
+        text::keyword("add").to(Mnemonic::ADD),
+        text::keyword("addc").to(Mnemonic::ADDC),
+        text::keyword("sub").to(Mnemonic::SUB),
+        text::keyword("subb").to(Mnemonic::SUBB),
+        text::keyword("shl").to(Mnemonic::SHL),
+        text::keyword("shr").to(Mnemonic::SHR),
+        text::keyword("ashr").to(Mnemonic::ASHR),
+        text::keyword("ld").to(Mnemonic::LD),
+        text::keyword("st").to(Mnemonic::ST),
+        text::keyword("push").to(Mnemonic::PUSH),
+        text::keyword("pop").to(Mnemonic::POP),
+        text::keyword("int").to(Mnemonic::INT),
+    ));
 
-    let parameter = number
-        .clone()
-        .map(|n| Parameter::Number(n))
-        .or(register.clone().map(|r| Parameter::Register(r)));
+    let full_mnemonic = mnemonic
+        .then(modifier.repeated())
+        .map(|(mnemonic, modifiers)| FullMnemonic {
+            mnemonic,
+            modifiers,
+        });
 
     let operation = full_mnemonic
-        .clone()
         .padded()
-        .then(parameter.clone().padded().separated_by(just(',')))
+        .then(parameter.padded().separated_by(just(',')))
         .map(|(full_mnemonic, parameters)| Operation {
-            full_mnemonic: Box::new(full_mnemonic),
+            full_mnemonic,
             parameters,
         });
 
-    let statement = operation
-        .clone()
-        .then_ignore(just(';'))
-        .map(|o| Statement::Operation(Box::new(o)))
-        .or(label
-            .clone()
-            .then_ignore(just(':'))
-            .map(|l| Statement::Label(l)))
-        .padded();
+    let statement = choice((
+        operation.then_ignore(just(';')).map(Statement::Operation),
+        label.then_ignore(just(':')).map(Statement::Label),
+    ))
+    .padded();
 
     return statement.repeated().then_ignore(end());
+}
+
+pub fn print_syntax_error(errors: &Vec<Simple<char>>) {
+    Report::build(ReportKind::Error, "program.asm", 12)
+        .with_code(1)
+        .with_message("Parse error")
+        .with_labels(errors.iter().map(error_label).flatten())
+        .finish()
+        .print(("program.asm", Source::from(include_str!("../program.asm"))))
+        .unwrap();
+}
+
+fn error_label(error: &Simple<char>) -> Vec<Label<(&str, std::ops::Range<usize>)>> {
+    match error.reason() {
+        chumsky::error::SimpleReason::Unexpected => {
+            return vec![Label::new(("program.asm", error.span())).with_message(error_msg(error))]
+        }
+        chumsky::error::SimpleReason::Unclosed { span, delimiter } => {
+            return vec![
+                Label::new(("program.asm", error.span())).with_message(error_msg(error)),
+                Label::new(("program.asm", span.clone()))
+                    .with_message(format!("unclosed {delimiter}")),
+            ]
+        }
+        _ => return vec![Label::new(("program.asm", error.span())).with_message(error_msg(error))],
+    }
+}
+
+fn error_msg(error: &Simple<char>) -> String {
+    match error.reason() {
+        chumsky::error::SimpleReason::Unexpected => {
+            // all of this just to get expected characters...
+            let mut expected_values = Vec::new();
+            for exp in error.expected() {
+                if let Some(value) = exp {
+                    expected_values.push(format!("'{}'", value.to_string()));
+                }
+            }
+
+            let mut found_value = String::new();
+            if let Some(value) = error.found() {
+                found_value = value.to_string();
+            }
+
+            return format!(
+                "Expected: {} but Found: '{}'",
+                expected_values.join(" or "),
+                found_value
+            );
+        }
+        chumsky::error::SimpleReason::Unclosed { span, delimiter } => return "test2".to_string(),
+        Custom => return "test3".to_string(),
+    }
 }
