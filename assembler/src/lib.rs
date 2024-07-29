@@ -4,10 +4,19 @@ use chumsky::prelude::*;
 use parser::*;
 
 pub mod parser;
+pub mod error;
 
 pub fn assemble(assembly: &str) -> String {
     println!("{assembly}");
-    println!("{:?}", parser().parse(assembly));
+    match parser().parse(assembly){
+        Ok(ast) => println!("{:?}", ast),
+        Err(e) => {
+println!("{:?}", e);
+
+
+            print_syntax_error(&e);
+        }
+    }
 
 
 
