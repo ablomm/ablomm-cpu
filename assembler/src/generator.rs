@@ -1,13 +1,13 @@
+use crate::generator::ld_st::*;
+use crate::generator::alu_op::*;
 use crate::parser::*;
 use std::collections::HashMap;
 
+mod ld_st;
+mod alu_op;
+
 pub trait Generatable {
     fn generate(&self) -> u32;
-}
-
-// generatable with a symbol table
-pub trait GeneratableSym {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> u32;
 }
 
 impl Generatable for Register {
@@ -24,15 +24,15 @@ impl Generatable for Condition {
 
 impl Generatable for AluOpFlags {
     fn generate(&self) -> u32 {
-        return (*self as u32) << 20;
+        return (*self as u32) << 16;
     }
 }
 
 impl Generatable for AluModifier {
     fn generate(&self) -> u32 {
         match self {
-            AluModifier::S => AluOpFlags::Load.generate() | AluOpFlags::SetStatus.generate(),
-            AluModifier::T => AluOpFlags::SetStatus.generate(),
+            AluModifier::S => AluOpFlags::SetStatus.generate(),
+            AluModifier::T => AluOpFlags::Loadn.generate() | AluOpFlags::SetStatus.generate(),
         }
     }
 }
@@ -58,18 +58,21 @@ impl Generatable for Vec<Modifier> {
 
 impl Generatable for Mnemonic {
     fn generate(&self) -> u32 {
-        return (*self as u32) << 24;
+        return (*self as u32) << 20;
     }
 }
 
-pub fn generate(ast: Vec<Statement>) -> String {
+pub fn generate(ast: Vec<Statement>) -> Result<String, &'static str> {
     let mut machine_code: String = "".to_owned();
     let (symbol_table, operations) = pre_process(ast);
 
     for operation in operations {
-        machine_code.push_str(&format!("{:x}\n", operation.generate(&symbol_table)).to_owned());
+        match operation.generate(&symbol_table) {
+            Ok(opcode) => machine_code.push_str(&format!("{:x}\n", opcode).to_owned()),
+            Err(error) => return Err(error),
+        }
     }
-    return machine_code;
+    return Ok(machine_code);
 }
 
 // symbol table just has the label and the line associated with that label
@@ -87,261 +90,58 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Operation>) {
                 operations.push(operation);
                 line_number += 1;
             }
+            _ => (),
         }
     }
 
     return (symbol_table, operations);
 }
 
-impl GeneratableSym for Operation {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> u32 {
+impl Operation {
+    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, &'static str> {
         let mut opcode: u32 = 0;
 
         match self.full_mnemonic.mnemonic {
-            Mnemonic::LD => {
-                assert!(self.parameters.len() == 2, "Expected LD with 2 parameters");
-                opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
-
-                if let Parameter::Register(register) = self.parameters[0] {
-                    if let Parameter::Indirect(parameter) = &self.parameters[1] {
-                        if let Parameter::Number(number) = **parameter {
-                            //LD
-                            opcode |= Mnemonic::LD.generate();
-                            opcode |= register.generate() << 16;
-                            opcode |= number & 0xffff;
-                            return opcode;
-                        } else if let Parameter::Register(register2) = **parameter {
-                            //LDR
-                            opcode |= Mnemonic::LDR.generate();
-                            opcode |= register.generate() << 16;
-                            opcode |= register2.generate() << 12;
-                            return opcode;
-                        } else if let Parameter::Label(label) = &**parameter {
-                            //LD
-                            opcode |= Mnemonic::LD.generate();
-                            opcode |= register.generate() << 16;
-                            if let Some(label_line) = symbol_table.get(&*label) {
-                                opcode |= label_line & 0xffff;
-                                return opcode;
-                            }
-                            panic!("Could not find label in LD");
-                        }
-                        panic!("LD only supports indirect constants, registers, and labels");
-                    } else if let Parameter::Register(register2) = self.parameters[1] {
-                        //MOV
-                        opcode |= Mnemonic::PASSA.generate();
-                        opcode |= register.generate() << 16;
-                        opcode |= register2.generate() << 8;
-                        return opcode;
-                    } else if let Parameter::Number(number) = self.parameters[1] {
-                        //LDI
-                        opcode |= Mnemonic::LDI.generate();
-                        opcode |= register.generate() << 16;
-                        opcode |= number & 0xffff;
-                        return opcode;
-                    } else if let Parameter::Label(label) = &self.parameters[1] {
-                        //LDI
-                        opcode |= Mnemonic::LDI.generate();
-                        opcode |= register.generate() << 16;
-                        if let Some(label_line) = symbol_table.get(&*label) {
-                            opcode |= label_line & 0xffff;
-                            return opcode;
-                        }
-                        panic!("Could not find label in LD");
-                    }
-                    panic!(
-                        "Expected second LD parameter to be either indirect, register, or number"
-                    );
-                }
-
-                panic!("expected first LD parameter to be a register");
-            }
-            Mnemonic::ST => {
-                assert!(self.parameters.len() == 2, "Expected ST with 2 parameters");
-                opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
-
-                if let Parameter::Register(register) = self.parameters[0] {
-                    if let Parameter::Indirect(parameter) = &self.parameters[1] {
-                        if let Parameter::Number(number) = **parameter {
-                            //ST
-                            opcode |= Mnemonic::ST.generate();
-                            opcode |= 0x13 << 20;
-                            opcode |= register.generate() << 16;
-                            opcode |= number & 0xffff;
-                            return opcode;
-                        } else if let Parameter::Register(register2) = **parameter {
-                            //STR
-                            opcode |= Mnemonic::STR.generate();
-                            opcode |= register.generate() << 16;
-                            opcode |= register2.generate() << 12;
-                            return opcode;
-                        } else if let Parameter::Label(label) = &**parameter {
-                            //ST
-                            opcode |= Mnemonic::ST.generate();
-                            opcode |= register.generate() << 16;
-                            if let Some(label_line) = symbol_table.get(&*label) {
-                                opcode |= label_line & 0xffff;
-                                return opcode;
-                            }
-                            panic!("Could not find label in ST");
-                        }
-                        panic!("ST only supports indirect constants, registers, and labels");
-                    } else if let Parameter::Register(register2) = self.parameters[1] {
-                        //MOVR
-                        opcode |= Mnemonic::PASSA.generate();
-                        opcode |= register2.generate() << 16;
-                        opcode |= register.generate() << 8;
-                        return opcode;
-                    } else if let Parameter::Number(number) = self.parameters[1] {
-                        //STI
-                        opcode |= Mnemonic::STI.generate();
-                        opcode |= register.generate() << 16;
-                        opcode |= number & 0xffff;
-                        return opcode;
-                    } else if let Parameter::Label(label) = &self.parameters[1] {
-                        //STI
-                        opcode |= Mnemonic::STI.generate();
-                        opcode |= register.generate() << 16;
-                        if let Some(label_line) = symbol_table.get(&*label) {
-                            opcode |= label_line & 0xffff;
-                            return opcode;
-                        }
-                        panic!("Could not find label in LD");
-                    }
-                    panic!(
-                        "Expected second LD parameter to be either indirect, register, or number"
-                    );
-                }
-
-                panic!("expected first LD parameter to be a register");
-            }
+            Mnemonic::LD | Mnemonic::ST => generate_ld_st(self, symbol_table),
             Mnemonic::PUSH => {
-                assert!(self.parameters.len() == 1, "Expected PUSH with 1 parameter");
+                if self.parameters.len() != 1 {
+                    return Err("Expected PUSH with 1 parameter");
+                }
                 opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
                 if let Parameter::Register(register) = self.parameters[0] {
                     opcode |= Mnemonic::PUSH.generate();
                     opcode |= register.generate() << 16;
-                    return opcode;
+                    return Ok(opcode);
                 } else {
-                    panic!("Expected PUSH parameter to be a register");
+                    return Err("Expected PUSH parameter to be a register");
                 }
             }
             Mnemonic::POP => {
-                assert!(self.parameters.len() == 1, "Expected POP with 1 parameter");
+                if self.parameters.len() != 1 {
+                    return Err("Expected POP with 1 parameter");
+                }
                 opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
                 if let Parameter::Register(register) = self.parameters[0] {
                     opcode |= Mnemonic::POP.generate();
                     opcode |= register.generate() << 20;
-                    return opcode;
+                    return Ok(opcode);
                 } else {
-                    panic!("Expected POP parameter to be a register");
+                    return Err("Expected POP parameter to be a register");
                 }
             }
             Mnemonic::INT => {
-                assert!(self.parameters.len() == 0, "Expected INT with 0 parameter");
+                if self.parameters.len() != 0 {
+                    return Err("Expected INT with 0 parameters");
+                }
                 opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
                 opcode |= Mnemonic::INT.generate();
-                return opcode;
+                return Ok(opcode);
             }
             // alu ops
-            _ => {
-                assert!(
-                    self.parameters.len() == 2 || self.parameters.len() == 3,
-                    "Expected ALU op with 2 or 3 parameter"
-                );
-
-                opcode |= self.full_mnemonic.modifiers.generate();
-                opcode |= self.full_mnemonic.mnemonic.generate();
-
-                if let Parameter::Register(register) = self.parameters[0] {
-                    if self.parameters.len() == 2 {
-                        if let Parameter::Register(register2) = self.parameters[1] {
-                            opcode |= register.generate() << 12;
-                            opcode |= register.generate() << 8;
-                            opcode |= register2.generate() << 4;
-                            return opcode;
-                        } else if let Parameter::Number(number) = self.parameters[1] {
-                            opcode |= register.generate() << 12;
-                            opcode |= register.generate() << 8;
-                            opcode |= number & 0xff;
-                            return opcode;
-                        } else if let Parameter::Label(label) = &self.parameters[1] {
-                            opcode |= register.generate() << 12;
-                            opcode |= register.generate() << 8;
-                            if let Some(label_line) = symbol_table.get(&*label) {
-                                opcode |= label_line & 0xff;
-                                return opcode;
-                            } else {
-                                panic!("Could not find label in LD");
-                            }
-                        } else {
-                            panic!("Expected ALU op to have second parameters of either register, number, or label");
-                        }
-                    } else if self.parameters.len() == 3 {
-                        if let Parameter::Register(register2) = self.parameters[1] {
-                            if let Parameter::Register(register3) = self.parameters[2] {
-                                opcode |= register.generate() << 12;
-                                opcode |= register2.generate() << 8;
-                                opcode |= register3.generate() << 4;
-                                return opcode;
-                            } else if let Parameter::Number(number) = self.parameters[2] {
-                                opcode |= register.generate() << 12;
-                                opcode |= register2.generate() << 8;
-                                opcode |= AluOpFlags::Immediate.generate();
-                                opcode |= number & 0xff;
-                                return opcode;
-                            } else if let Parameter::Label(label) = &self.parameters[2] {
-                                opcode |= register.generate() << 12;
-                                opcode |= register2.generate() << 8;
-                                opcode |= AluOpFlags::Immediate.generate();
-                                if let Some(label_line) = symbol_table.get(&*label) {
-                                    opcode |= label_line & 0xff;
-                                    return opcode;
-                                } else {
-                                    panic!("Could not find label in LD");
-                                }
-                            } else {
-                                panic!("Expected ALU op to have third parameters of either register, number, or label");
-                            }
-                        } else if let Parameter::Number(number) = self.parameters[1] {
-                            opcode |= AluOpFlags::Reverse.generate();
-                            opcode |= AluOpFlags::Immediate.generate();
-
-                            if let Parameter::Register(register2) = self.parameters[2] {
-                                opcode |= register.generate() << 12;
-                                opcode |= register2.generate() << 8;
-                                opcode |= number & 0xff;
-                                return opcode;
-                            } else {
-                                panic!("Expected ALU op to have third parameter of register");
-                            }
-                        } else if let Parameter::Label(label) = &self.parameters[1] {
-                            if let Parameter::Register(register2) = self.parameters[2] {
-                                if let Some(label_line) = symbol_table.get(&*label) {
-                                    opcode |= register.generate() << 12;
-                                    opcode |= register2.generate() << 8;
-                                    opcode |= label_line & 0xff;
-                                    return opcode;
-                                } else {
-                                    panic!("Could not find label in LD");
-                                }
-                            } else {
-                                panic!("Expected ALU op to have third parameter of register");
-                            }
-                        } else {
-                            panic!("Expected ALU op to have third parameters of either register or immediate or label");
-                        }
-                    } else {
-                        // will never reach here
-                        panic!("Expected first ALU op with 2 or 3 parameters");
-                    }
-                } else {
-                    panic!("Expected first ALU op parameter to be a register");
-                }
-            }
+            _ => generate_alu_op(self, symbol_table),
         }
     }
 }

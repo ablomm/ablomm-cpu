@@ -220,9 +220,9 @@ module cu (
         end
 
         alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
-        oe_alu <= ir.params.unknown_alu_op.flags.load;
+        oe_alu <= ~ir.params.unknown_alu_op.flags.loadn;
         sel_in_reg <= ir.params.unknown_alu_op.reg_a;
-        ld_reg <= ir.params.unknown_alu_op.flags.load;
+        ld_reg <= ~ir.params.unknown_alu_op.flags.loadn;
         ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
       end
 

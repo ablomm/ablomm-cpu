@@ -30,7 +30,7 @@ package cu_pkg;
   typedef struct packed {
     logic immediate;
     logic reverse;
-    logic load;
+    logic loadn;
     logic set_status;
   } alu_op_flags_t;
 

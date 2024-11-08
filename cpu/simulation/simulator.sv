@@ -7,9 +7,6 @@ module simulator;
 
   initial forever #10 clk = ~clk;
 
-  initial begin
-    #10 hwint = 1;
-  end
   cpu cpu0 (.*);
 
   mem #(
