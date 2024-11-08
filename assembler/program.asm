@@ -1,6 +1,8 @@
-test:
-	ld.eq 123, r2;
-	ld.eq [0b101], r2;
-again: 
-int;
+main:
+st.eq r1, other;
+ld.ne r2, main;
+	push r1;
+	int;
+	pop r2;
+other:
 
