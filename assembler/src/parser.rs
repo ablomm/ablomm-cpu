@@ -2,9 +2,9 @@ use ariadne::{Color, ColorGenerator, Fmt, Label, Report, ReportKind, Source};
 use chumsky::{prelude::*, primitive::Custom};
 use std::char;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Register {
-    R0,
+    R0 = 0,
     R1,
     R2,
     R3,
@@ -22,8 +22,11 @@ pub enum Register {
     PC,
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Copy, Clone)]
 pub enum Mnemonic {
+    PASSA = 0, 
+    PASSB,
     AND,
     OR,
     XOR,
@@ -35,15 +38,21 @@ pub enum Mnemonic {
     SHL,
     SHR,
     ASHR,
-    LD,
+    LD = 0x10,
+    LDI,
+    LDR,
     ST,
+    STI,
+    STR,
     PUSH,
     POP,
     INT,
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Copy, Clone)]
 pub enum Condition {
+    NONE = 0,
     EQ,
     NE,
     LTU,
@@ -56,7 +65,15 @@ pub enum Condition {
     GES,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
+pub enum AluOpFlags {
+    Immediate = 0,
+    Reverse,
+    Load,
+    SetStatus,
+}
+
+#[derive(Debug, Copy, Clone)]
 pub enum AluModifier {
     S,
     T,
@@ -78,14 +95,14 @@ pub enum Parameter {
 
 #[derive(Debug)]
 pub struct FullMnemonic {
-    mnemonic: Mnemonic,
-    modifiers: Vec<Modifier>,
+    pub mnemonic: Mnemonic,
+    pub modifiers: Vec<Modifier>,
 }
 
 #[derive(Debug)]
 pub struct Operation {
-    full_mnemonic: FullMnemonic,
-    parameters: Vec<Parameter>,
+    pub full_mnemonic: FullMnemonic,
+    pub parameters: Vec<Parameter>,
 }
 
 #[derive(Debug)]
