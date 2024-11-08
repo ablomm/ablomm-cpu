@@ -1,12 +1,10 @@
-main:
-st.eq r1, other;
-ld.ne r2, [main];
-st.ne r2, [other];
-	push r1;
-	int;
-	pop r2;
-	add r1, r2;
-	sub r1, 123, r1;
-	sub r1, r1;
-other:
-
+	ld r1, 48; // '0'
+	ld r2, 10; // '\n'
+loop:
+	st r1, [0x4000]; // write r1
+	add r1, 1;
+	sub.t r1, 58;
+	ld.ne pc, loop;
+	st r2, [0x4000]; // new line
+end:
+	ld pc, end;

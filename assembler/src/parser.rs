@@ -1,6 +1,6 @@
-use ariadne::{Color, ColorGenerator, Fmt, Label, Report, ReportKind, Source};
-use chumsky::{prelude::*, primitive::Custom};
+use chumsky::prelude::*;
 use std::char;
+use text::TextParser;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Register {
@@ -22,10 +22,9 @@ pub enum Register {
     PC,
 }
 
-
 #[derive(Debug, Copy, Clone)]
 pub enum Mnemonic {
-    PASSA = 0, 
+    PASSA = 0,
     PASSB,
     AND,
     OR,
@@ -39,16 +38,15 @@ pub enum Mnemonic {
     SHR,
     ASHR,
     LD = 0x10,
-    LDI,
     LDR,
+    LDI,
     ST,
-    STI,
     STR,
+    STI,
     PUSH,
     POP,
     INT,
 }
-
 
 #[derive(Debug, Copy, Clone)]
 pub enum Condition {
@@ -67,10 +65,10 @@ pub enum Condition {
 
 #[derive(Debug, Copy, Clone)]
 pub enum AluOpFlags {
-    Immediate = 0,
-    Reverse,
-    Load,
-    SetStatus,
+    Immediate = 8,
+    Reverse = 4,
+    Loadn = 2,
+    SetStatus = 1,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -79,13 +77,13 @@ pub enum AluModifier {
     T,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Modifier {
     Condition(Condition),
     AluModifier(AluModifier),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Parameter {
     Label(String),
     Number(u32),
@@ -93,22 +91,23 @@ pub enum Parameter {
     Indirect(Box<Parameter>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FullMnemonic {
     pub mnemonic: Mnemonic,
     pub modifiers: Vec<Modifier>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Operation {
     pub full_mnemonic: FullMnemonic,
     pub parameters: Vec<Parameter>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Operation(Operation),
     Label(String),
+    Comment(String), // added because maybe it will be useful some day 
 }
 
 pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Simple<char>> {
@@ -210,64 +209,14 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Simple<char>> {
             parameters,
         });
 
+    let comment = just("//").ignore_then(take_until(just("\n")).padded());
+
     let statement = choice((
         operation.then_ignore(just(';')).map(Statement::Operation),
         label.then_ignore(just(':')).map(Statement::Label),
+        comment.map(|(_, comment)| Statement::Comment(comment.to_owned())),
     ))
     .padded();
 
     return statement.repeated().then_ignore(end());
-}
-
-pub fn print_syntax_error(errors: &Vec<Simple<char>>) {
-    Report::build(ReportKind::Error, "program.asm", 12)
-        .with_code(1)
-        .with_message("Parse error")
-        .with_labels(errors.iter().map(error_label).flatten())
-        .finish()
-        .print(("program.asm", Source::from(include_str!("../program.asm"))))
-        .unwrap();
-}
-
-fn error_label(error: &Simple<char>) -> Vec<Label<(&str, std::ops::Range<usize>)>> {
-    match error.reason() {
-        chumsky::error::SimpleReason::Unexpected => {
-            return vec![Label::new(("program.asm", error.span())).with_message(error_msg(error))]
-        }
-        chumsky::error::SimpleReason::Unclosed { span, delimiter } => {
-            return vec![
-                Label::new(("program.asm", error.span())).with_message(error_msg(error)),
-                Label::new(("program.asm", span.clone()))
-                    .with_message(format!("unclosed {delimiter}")),
-            ]
-        }
-        _ => return vec![Label::new(("program.asm", error.span())).with_message(error_msg(error))],
-    }
-}
-
-fn error_msg(error: &Simple<char>) -> String {
-    match error.reason() {
-        chumsky::error::SimpleReason::Unexpected => {
-            // all of this just to get expected characters...
-            let mut expected_values = Vec::new();
-            for exp in error.expected() {
-                if let Some(value) = exp {
-                    expected_values.push(format!("'{}'", value.to_string()));
-                }
-            }
-
-            let mut found_value = String::new();
-            if let Some(value) = error.found() {
-                found_value = value.to_string();
-            }
-
-            return format!(
-                "Expected: {} but Found: '{}'",
-                expected_values.join(" or "),
-                found_value
-            );
-        }
-        chumsky::error::SimpleReason::Unclosed { span, delimiter } => return "test2".to_string(),
-        Custom => return "test3".to_string(),
-    }
 }
