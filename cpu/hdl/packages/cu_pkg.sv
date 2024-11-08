@@ -17,7 +17,7 @@ package cu_pkg;
   } cond_e;
 
   typedef enum logic [7:0] {
-    LD = 8'h10,
+    LD   = 8'h10,
     LDR,
     LDI,
     ST,
@@ -95,9 +95,6 @@ package cu_pkg;
 
     register_params_t push_params;
     register_params_t pop_params;
-
-    register_params_t movrs_params;
-    register_params_t movsr_params;
   } ir_params_t;
 
   typedef struct packed {

@@ -7,7 +7,7 @@ pub fn generate_ld_st(
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, &'static str> {
     if operation.parameters.len() != 2 {
-        return Err("Expected LD with 2 parameters");
+        return Err("Expected LD/ST with 2 parameters");
     }
     let mut opcode: u32 = 0;
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);
@@ -49,10 +49,10 @@ pub fn generate_ld_st(
                     opcode |= label_line & 0xffff;
                     return Ok(opcode);
                 } else {
-                    return Err("Could not find label in LD");
+                    return Err("Could not find label in LD/ST");
                 }
             } else {
-                return Err("LD only supports indirect constants, registers, and labels");
+                return Err("LD/ST only supports indirect constants, registers, and labels");
             }
         } else if let Parameter::Register(register2) = operation.parameters[1] {
             //MOV / MOVR
@@ -66,30 +66,30 @@ pub fn generate_ld_st(
             }
             return Ok(opcode);
         } else if let Parameter::Number(number) = operation.parameters[1] {
-            //LDI / STI
+            //LDI
             if matches!(operation.full_mnemonic.mnemonic, Mnemonic::LD) {
                 opcode |= Mnemonic::LDI.generate();
-            } else {
-                // only other choice is ST
-                opcode |= Mnemonic::STI.generate();
-            }
-            opcode |= register.generate() << 16;
-            opcode |= number & 0xffff;
-            return Ok(opcode);
-        } else if let Parameter::Label(label) = &operation.parameters[1] {
-            //LDI / STI
-            if matches!(operation.full_mnemonic.mnemonic, Mnemonic::LD) {
-                opcode |= Mnemonic::LDI.generate();
-            } else {
-                // only other choice is ST
-                opcode |= Mnemonic::STI.generate();
-            }
-            opcode |= register.generate() << 16;
-            if let Some(label_line) = symbol_table.get(&*label) {
-                opcode |= label_line & 0xffff;
+                opcode |= register.generate() << 16;
+                opcode |= number & 0xffff;
                 return Ok(opcode);
             } else {
-                return Err("Could not find label in LD");
+                // only other choice is ST
+                return Err("ST cannot have a number as the second parameter");
+            }
+        } else if let Parameter::Label(label) = &operation.parameters[1] {
+            //LDI
+            if matches!(operation.full_mnemonic.mnemonic, Mnemonic::LD) {
+                opcode |= Mnemonic::LDI.generate();
+                opcode |= register.generate() << 16;
+                if let Some(label_line) = symbol_table.get(&*label) {
+                    opcode |= label_line & 0xffff;
+                    return Ok(opcode);
+                } else {
+                    return Err("Could not find label in LD");
+                }
+            } else {
+                // only other choice is ST
+                return Err("ST cannot have a label as the second parameter");
             }
         } else {
             return Err(
