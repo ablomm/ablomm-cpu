@@ -22,16 +22,12 @@ pub enum Register {
     PC,
 }
 
-impl Register {
-    pub fn generate(&self) -> u32 {
-        return *self as u32;
-    }
-}
 
 #[derive(Debug, Copy, Clone)]
 pub enum Mnemonic {
-    // PASSA = 0, PASSB = 1
-    AND = 2,
+    PASSA = 0, 
+    PASSB,
+    AND,
     OR,
     XOR,
     NOT,
@@ -42,23 +38,22 @@ pub enum Mnemonic {
     SHL,
     SHR,
     ASHR,
-    LD, // instruction depends on operands 0x10 to 0x12
-    ST, // instruction depends on operands 0x13 to 0x15
-    PUSH = 0x16,
+    LD = 0x10,
+    LDI,
+    LDR,
+    ST,
+    STI,
+    STR,
+    PUSH,
     POP,
     INT,
 }
 
-impl Mnemonic {
-    pub fn generate(&self) -> u32 {
-        return *self as u32;
-    }
-}
 
 #[derive(Debug, Copy, Clone)]
 pub enum Condition {
-    // 0 is NONE, but no need for the assembler
-    EQ = 1,
+    NONE = 0,
+    EQ,
     NE,
     LTU,
     GTU,
@@ -70,13 +65,15 @@ pub enum Condition {
     GES,
 }
 
-impl Condition {
-    pub fn generate(&self) -> u32 {
-        return *self as u32;
-    }
+#[derive(Debug, Copy, Clone)]
+pub enum AluOpFlags {
+    Immediate = 0,
+    Reverse,
+    Load,
+    SetStatus,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum AluModifier {
     S,
     T,
