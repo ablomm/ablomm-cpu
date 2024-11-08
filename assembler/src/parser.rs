@@ -42,7 +42,6 @@ pub enum Mnemonic {
     LDI,
     ST,
     STR,
-    STI,
     PUSH,
     POP,
     INT,
@@ -107,7 +106,7 @@ pub struct Operation {
 pub enum Statement {
     Operation(Operation),
     Label(String),
-    Comment(String), // added because maybe it will be useful some day 
+    Comment(String), // added because maybe it will be useful some day
 }
 
 pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Simple<char>> {
