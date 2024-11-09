@@ -1,10 +1,18 @@
-use crate::generator::ld_st::*;
 use crate::generator::alu_op::*;
+use crate::generator::int::*;
+use crate::generator::ld::*;
+use crate::generator::pop::*;
+use crate::generator::push::*;
+use crate::generator::st::*;
 use crate::parser::*;
 use std::collections::HashMap;
 
-mod ld_st;
 mod alu_op;
+mod int;
+mod ld;
+mod pop;
+mod push;
+mod st;
 
 pub trait Generatable {
     fn generate(&self) -> u32;
@@ -99,47 +107,12 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Operation>) {
 
 impl Operation {
     fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, &'static str> {
-        let mut opcode: u32 = 0;
-
         match self.full_mnemonic.mnemonic {
-            Mnemonic::LD | Mnemonic::ST => generate_ld_st(self, symbol_table),
-            Mnemonic::PUSH => {
-                if self.parameters.len() != 1 {
-                    return Err("Expected PUSH with 1 parameter");
-                }
-                opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
-
-                if let Parameter::Register(register) = self.parameters[0] {
-                    opcode |= Mnemonic::PUSH.generate();
-                    opcode |= register.generate() << 16;
-                    return Ok(opcode);
-                } else {
-                    return Err("Expected PUSH parameter to be a register");
-                }
-            }
-            Mnemonic::POP => {
-                if self.parameters.len() != 1 {
-                    return Err("Expected POP with 1 parameter");
-                }
-                opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
-
-                if let Parameter::Register(register) = self.parameters[0] {
-                    opcode |= Mnemonic::POP.generate();
-                    opcode |= register.generate() << 20;
-                    return Ok(opcode);
-                } else {
-                    return Err("Expected POP parameter to be a register");
-                }
-            }
-            Mnemonic::INT => {
-                if self.parameters.len() != 0 {
-                    return Err("Expected INT with 0 parameters");
-                }
-                opcode |= self.full_mnemonic.modifiers.generate() & (0b1111 << 28);
-
-                opcode |= Mnemonic::INT.generate();
-                return Ok(opcode);
-            }
+            Mnemonic::LD => generate_ld(self, symbol_table),
+            Mnemonic::ST => generate_st(self, symbol_table),
+            Mnemonic::PUSH => generate_push(self, symbol_table),
+            Mnemonic::POP => generate_pop(self, symbol_table),
+            Mnemonic::INT => generate_int(self, symbol_table),
             // alu ops
             _ => generate_alu_op(self, symbol_table),
         }
