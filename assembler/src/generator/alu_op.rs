@@ -23,21 +23,19 @@ pub fn generate_alu_op_2(
     let mut opcode: u32 = 0;
     opcode |= operation.full_mnemonic.modifiers.generate();
     opcode |= operation.full_mnemonic.mnemonic.generate();
+
     if let Parameter::Register(register) = operation.parameters[0] {
+        opcode |= register.generate() << 12;
+        opcode |= register.generate() << 8;
+
         if let Parameter::Register(register2) = operation.parameters[1] {
-            opcode |= register.generate() << 12;
-            opcode |= register.generate() << 8;
             opcode |= register2.generate() << 4;
             return Ok(opcode);
         } else if let Parameter::Number(number) = operation.parameters[1] {
-            opcode |= register.generate() << 12;
-            opcode |= register.generate() << 8;
             opcode |= AluOpFlags::Immediate.generate();
             opcode |= number & 0xff;
             return Ok(opcode);
         } else if let Parameter::Label(label) = &operation.parameters[1] {
-            opcode |= register.generate() << 12;
-            opcode |= register.generate() << 8;
             opcode |= AluOpFlags::Immediate.generate();
             if let Some(label_line) = symbol_table.get(&*label) {
                 opcode |= label_line & 0xff;
@@ -50,11 +48,24 @@ pub fn generate_alu_op_2(
                 "Expected ALU op to have second parameters of either register, number, or label",
             );
         }
+    } else if let Parameter::Number(number) = operation.parameters[0] {
+        opcode |= AluOpFlags::Reverse.generate();
+        opcode |= AluOpFlags::Immediate.generate();
+
+        if let Parameter::Register(register) = operation.parameters[1] {
+            opcode |= register.generate() << 12;
+            opcode |= register.generate() << 8;
+            opcode |= number & 0xff;
+            return Ok(opcode);
+        } else {
+            return Err("Expected ALU Op to have second parameter of register");
+        }
     } else {
-        return Err("Expected ALU Op to have first parameter of register");
+        return Err("Expected ALU Op to have a first parameter of either register or number");
     }
 }
 
+// parameter length 3
 pub fn generate_alu_op_3(
     operation: &Operation,
     symbol_table: &HashMap<String, u32>,
@@ -62,22 +73,20 @@ pub fn generate_alu_op_3(
     let mut opcode: u32 = 0;
     opcode |= operation.full_mnemonic.modifiers.generate();
     opcode |= operation.full_mnemonic.mnemonic.generate();
+
     if let Parameter::Register(register) = operation.parameters[0] {
         if let Parameter::Register(register2) = operation.parameters[1] {
+            opcode |= register.generate() << 12;
+            opcode |= register2.generate() << 8;
+
             if let Parameter::Register(register3) = operation.parameters[2] {
-                opcode |= register.generate() << 12;
-                opcode |= register2.generate() << 8;
                 opcode |= register3.generate() << 4;
                 return Ok(opcode);
             } else if let Parameter::Number(number) = operation.parameters[2] {
-                opcode |= register.generate() << 12;
-                opcode |= register2.generate() << 8;
                 opcode |= AluOpFlags::Immediate.generate();
                 opcode |= number & 0xff;
                 return Ok(opcode);
             } else if let Parameter::Label(label) = &operation.parameters[2] {
-                opcode |= register.generate() << 12;
-                opcode |= register2.generate() << 8;
                 opcode |= AluOpFlags::Immediate.generate();
                 if let Some(label_line) = symbol_table.get(&*label) {
                     opcode |= label_line & 0xff;
