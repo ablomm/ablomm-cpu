@@ -1,7 +1,7 @@
+use crate::{error::*, Span};
 use chumsky::prelude::*;
 use std::char;
 use text::TextParser;
-use crate::error::*;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Register {
@@ -65,10 +65,10 @@ pub enum Condition {
 
 #[derive(Debug, Copy, Clone)]
 pub enum AluOpFlags {
-    Immediate = 8,
-    Reverse = 4,
-    Loadn = 2,
-    SetStatus = 1,
+    Immediate = 1 << 3,
+    Reverse = 1 << 2,
+    Loadn = 1 << 1,
+    SetStatus = 1 << 0,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -79,16 +79,16 @@ pub enum AluModifier {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Modifier {
-    Condition(Condition),
-    AluModifier(AluModifier),
+    Condition(Condition, Span),
+    AluModifier(AluModifier, Span),
 }
 
 #[derive(Debug, Clone)]
 pub enum Parameter {
-    Label(String),
-    Number(u32),
-    Register(Register),
-    Indirect(Box<Parameter>),
+    Label(String, Span),
+    Number(u32, Span),
+    Register(Register, Span),
+    Indirect(Box<Parameter>, Span),
 }
 
 #[derive(Debug, Clone)]
@@ -145,10 +145,10 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     let parameter = recursive(|parameter| {
         let indirect = parameter.delimited_by(just('['), just(']'));
         return choice((
-            number.map(Parameter::Number),
-            register.map(Parameter::Register),
-            label.map(Parameter::Label),
-            indirect.map(|i| Parameter::Indirect(Box::new(i))),
+            number.map_with_span(Parameter::Number),
+            register.map_with_span(Parameter::Register),
+            label.map_with_span(Parameter::Label),
+            indirect.map_with_span(|i, span| Parameter::Indirect(Box::new(i), span)),
         ));
     });
 
@@ -171,8 +171,8 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     ));
 
     let modifier = just('.').ignore_then(choice((
-        alu_modifier.map(Modifier::AluModifier),
-        condition.map(Modifier::Condition),
+        alu_modifier.map_with_span(Modifier::AluModifier),
+        condition.map_with_span(Modifier::Condition),
     )));
 
     let mnemonic = choice((

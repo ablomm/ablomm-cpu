@@ -12,7 +12,7 @@ pub fn generate_pop(
     }
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
-    if let Parameter::Register(register) = operation.parameters[0] {
+    if let Parameter::Register(register, _) = operation.parameters[0] {
         opcode |= Mnemonic::POP.generate();
         opcode |= register.generate() << 20;
         return Ok(opcode);

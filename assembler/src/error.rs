@@ -6,8 +6,8 @@ use internment::Intern;
 #[derive(Debug)]
 pub enum ErrorType {
     ExpectedFound {
-        expected: Vec<Option<char>>,
-        found: Option<char>,
+        expected: Vec<String>,
+        found: Option<String>,
         span: Span,
     },
 }
@@ -19,7 +19,11 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn write(&self, cache: impl ariadne::Cache<Intern<String>>, writer: impl Write) -> Result<(), std::io::Error> {
+    pub fn write(
+        &self,
+        cache: impl ariadne::Cache<Intern<String>>,
+        writer: impl Write,
+    ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
         match &self.r#type {
             ErrorType::ExpectedFound {
@@ -55,17 +59,21 @@ impl chumsky::Error<char> for Error {
         expected: Iter,
         found: Option<char>,
     ) -> Self {
-        let expected: Vec<_> = expected.into_iter().collect();
+        let expected: Vec<_> = expected
+            .into_iter()
+            .filter_map(|e| e)
+            .map(|e| e.to_string())
+            .collect();
+        let found = found.map(|e| e.to_string());
         let message: String = format!(
             "Expected one of {}, but found {}",
             expected
-                .clone()
-                .into_iter()
-                .filter_map(|e| e)
+                .iter()
                 .map(|e| format!("'{}'", e))
                 .collect::<Vec<_>>()
                 .join("or "),
             found
+                .clone()
                 .map(|e| format!("'{}'", e))
                 .unwrap_or("nothing".to_string())
         );
