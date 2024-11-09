@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::fs;
 use ablomm_asm::*;
+use internment::Intern;
+use ariadne::sources;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -15,9 +17,12 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let assembly_input = fs::read_to_string(args.input).expect("Error reading file");
+    let assembly_input = fs::read_to_string(&args.input).expect("Error reading file");
+    let input = Intern::new(args.input);
 
-    match assemble(&assembly_input) {
+    let mut cache = sources(std::iter::once((input, &assembly_input)));
+
+    match assemble(&assembly_input, input) {
         Ok(machine_code) => match args.output {
             Some(output_file) => {
                 fs::write(output_file, machine_code).expect("Error writing file");
@@ -26,6 +31,6 @@ fn main() {
                 print!("{}", machine_code);
             }
         },
-        Err(error) => panic!("{}", error),
+        Err(errors) => errors.iter().for_each(|error| error.print(&mut cache)),
     }
 }
