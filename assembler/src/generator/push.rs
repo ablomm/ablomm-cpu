@@ -12,7 +12,7 @@ pub fn generate_push(
     }
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
-    if let Parameter::Register(register) = operation.parameters[0] {
+    if let Parameter::Register(register, _) = operation.parameters[0] {
         opcode |= Mnemonic::PUSH.generate();
         opcode |= register.generate() << 16;
         return Ok(opcode);

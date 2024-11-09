@@ -48,8 +48,8 @@ impl Generatable for AluModifier {
 impl Generatable for Modifier {
     fn generate(&self) -> u32 {
         match self {
-            Modifier::Condition(condition) => condition.generate(),
-            Modifier::AluModifier(alu_modifier) => alu_modifier.generate(),
+            Modifier::Condition(condition, _) => condition.generate(),
+            Modifier::AluModifier(alu_modifier, _) => alu_modifier.generate(),
         }
     }
 }
