@@ -1,6 +1,7 @@
 use chumsky::prelude::*;
 use std::char;
 use text::TextParser;
+use crate::error::*;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Register {
@@ -109,7 +110,7 @@ pub enum Statement {
     Comment(String), // added because maybe it will be useful some day
 }
 
-pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Simple<char>> {
+pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     let label = text::ident();
 
     let bin_num =
