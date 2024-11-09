@@ -1,8 +1,8 @@
-use clap::Parser;
-use std::fs;
 use ablomm_asm::*;
-use internment::Intern;
 use ariadne::sources;
+use clap::Parser;
+use internment::Intern;
+use std::fs;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -31,6 +31,8 @@ fn main() {
                 print!("{}", machine_code);
             }
         },
-        Err(errors) => errors.iter().for_each(|error| error.print(&mut cache)),
+        Err(errors) => errors.iter().for_each(|error| {
+            error.eprint(&mut cache).ok();
+        }),
     }
 }

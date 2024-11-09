@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use crate::Span;
 use internment::Intern;
 
@@ -6,42 +8,41 @@ pub enum ErrorType {
     ExpectedFound {
         expected: Vec<Option<char>>,
         found: Option<char>,
+        span: Span,
     },
 }
 
 #[derive(Debug)]
 pub struct Error {
     r#type: ErrorType,
-    span: Span,
+    message: String,
 }
 
 impl Error {
-    pub fn print(&self, cache: impl ariadne::Cache<Intern<String>>) {
+    pub fn write(&self, cache: impl ariadne::Cache<Intern<String>>, writer: impl Write) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
         match &self.r#type {
-            ErrorType::ExpectedFound { expected, found } => {
-                let message: String = format!(
-                    "Expected one of: {} but found: {}",
-                    expected
-                        .into_iter()
-                        .filter_map(|e| e.as_ref())
-                        .map(|e| e.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", "),
-                    found.unwrap_or_default()
-                );
-
-                Report::build(ReportKind::Error, self.span.src(), self.span.start())
+            ErrorType::ExpectedFound {
+                expected: _expected,
+                found: _found,
+                span,
+            } => {
+                return Report::build(ReportKind::Error, span.src(), span.start())
                     .with_code(1)
                     .with_message("Unexpected Input")
-                    .with_label(
-                        Label::new((self.span.src(), self.span.range())).with_message(message),
-                    )
+                    .with_label(Label::new((span.src(), span.range())).with_message(&self.message))
                     .finish()
-                    .print(cache)
-                    .unwrap(); // todo: error handling
+                    .write(cache, writer)
             }
         }
+    }
+
+    pub fn eprint(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
+        return self.write(cache, std::io::stderr());
+    }
+
+    pub fn print(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
+        return self.write(cache, std::io::stdout());
     }
 }
 
@@ -54,12 +55,27 @@ impl chumsky::Error<char> for Error {
         expected: Iter,
         found: Option<char>,
     ) -> Self {
+        let expected: Vec<_> = expected.into_iter().collect();
+        let message: String = format!(
+            "Expected one of {}, but found {}",
+            expected
+                .clone()
+                .into_iter()
+                .filter_map(|e| e)
+                .map(|e| format!("'{}'", e))
+                .collect::<Vec<_>>()
+                .join("or "),
+            found
+                .map(|e| format!("'{}'", e))
+                .unwrap_or("nothing".to_string())
+        );
         Self {
             r#type: ErrorType::ExpectedFound {
-                expected: expected.into_iter().collect(),
+                expected,
                 found,
+                span,
             },
-            span,
+            message,
         }
     }
     fn with_label(self, _label: Self::Label) -> Self {
