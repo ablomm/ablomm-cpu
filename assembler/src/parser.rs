@@ -15,15 +15,14 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     let dec_num = text::int(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
     let escape_char = just('\\').ignore_then(choice((
-        just('\\'),
         just('n').to('\n'),
         just('r').to('\r'),
         just('t').to('\t'),
         just('0').to('\0'),
     )));
 
-    let char_num = filter(|c| *c != '\\')
-        .or(escape_char)
+    let char_num = escape_char
+        .or(any())
         .delimited_by(just('\''), just('\''))
         .map(|c| c as u32);
 
