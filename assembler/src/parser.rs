@@ -79,16 +79,22 @@ pub enum AluModifier {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Modifier {
-    Condition(Condition, Span),
-    AluModifier(AluModifier, Span),
+    Condition(Condition),
+    AluModifier(AluModifier),
 }
 
 #[derive(Debug, Clone)]
 pub enum Parameter {
-    Label(String, Span),
-    Number(u32, Span),
-    Register(Register, Span),
-    Indirect(Box<Parameter>, Span),
+    Label(String),
+    Number(u32),
+    Register(Register),
+    Indirect(Box<Parameter>),
+}
+
+#[derive(Debug, Clone)]
+pub struct ParameterSpan {
+    pub val: Parameter,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -100,7 +106,8 @@ pub struct FullMnemonic {
 #[derive(Debug, Clone)]
 pub struct Operation {
     pub full_mnemonic: FullMnemonic,
-    pub parameters: Vec<Parameter>,
+    pub parameters: Vec<ParameterSpan>,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -145,11 +152,16 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     let parameter = recursive(|parameter| {
         let indirect = parameter.delimited_by(just('['), just(']'));
         return choice((
-            number.map_with_span(Parameter::Number),
-            register.map_with_span(Parameter::Register),
-            label.map_with_span(Parameter::Label),
-            indirect.map_with_span(|i, span| Parameter::Indirect(Box::new(i), span)),
+            number.map(Parameter::Number),
+            register.map(Parameter::Register),
+            label.map(Parameter::Label),
+            indirect.map(|i| Parameter::Indirect(Box::new(i))),
         ));
+    });
+
+    let parameter_span = parameter.map_with_span(|parameter, span| ParameterSpan {
+        val: parameter,
+        span,
     });
 
     let alu_modifier = choice((
@@ -171,8 +183,8 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     ));
 
     let modifier = just('.').ignore_then(choice((
-        alu_modifier.map_with_span(Modifier::AluModifier),
-        condition.map_with_span(Modifier::Condition),
+        alu_modifier.map(Modifier::AluModifier),
+        condition.map(Modifier::Condition),
     )));
 
     let mnemonic = choice((
@@ -203,10 +215,11 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
 
     let operation = full_mnemonic
         .padded()
-        .then(parameter.padded().separated_by(just(',')))
-        .map(|(full_mnemonic, parameters)| Operation {
+        .then(parameter_span.padded().separated_by(just(',')))
+        .map_with_span(|(full_mnemonic, parameters), span| Operation {
             full_mnemonic,
             parameters,
+            span,
         });
 
     let comment = just("//").ignore_then(take_until(just("\n")).padded());

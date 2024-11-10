@@ -4,41 +4,33 @@ use crate::Span;
 use internment::Intern;
 
 #[derive(Debug)]
-pub enum ErrorType {
-    ExpectedFound {
-        expected: Vec<String>,
-        found: Option<String>,
-        span: Span,
-    },
-}
-
-#[derive(Debug)]
 pub struct Error {
-    r#type: ErrorType,
     message: String,
+    span: Span,
 }
 
 impl Error {
+    pub fn new(message: impl Into<String>, span: Span) -> Self {
+        Self {
+            message: message.into(),
+            span,
+        }
+    }
+
     pub fn write(
         &self,
         cache: impl ariadne::Cache<Intern<String>>,
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
-        match &self.r#type {
-            ErrorType::ExpectedFound {
-                expected: _expected,
-                found: _found,
-                span,
-            } => {
-                return Report::build(ReportKind::Error, span.src(), span.start())
-                    .with_code(1)
-                    .with_message("Unexpected Input")
-                    .with_label(Label::new((span.src(), span.range())).with_message(&self.message))
-                    .finish()
-                    .write(cache, writer)
-            }
-        }
+        return Report::build(ReportKind::Error, self.span.src(), self.span.start())
+            .with_code(1)
+            .with_message("Assembler Error")
+            .with_label(
+                Label::new((self.span.src(), self.span.range())).with_message(&self.message),
+            )
+            .finish()
+            .write(cache, writer);
     }
 
     pub fn eprint(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
@@ -59,32 +51,19 @@ impl chumsky::Error<char> for Error {
         expected: Iter,
         found: Option<char>,
     ) -> Self {
-        let expected: Vec<_> = expected
-            .into_iter()
-            .filter_map(|e| e)
-            .map(|e| e.to_string())
-            .collect();
-        let found = found.map(|e| e.to_string());
         let message: String = format!(
             "Expected one of {}, but found {}",
             expected
-                .iter()
+                .into_iter()
+                .filter_map(|e| e)
                 .map(|e| format!("'{}'", e))
                 .collect::<Vec<_>>()
                 .join("or "),
             found
-                .clone()
                 .map(|e| format!("'{}'", e))
                 .unwrap_or("nothing".to_string())
         );
-        Self {
-            r#type: ErrorType::ExpectedFound {
-                expected,
-                found,
-                span,
-            },
-            message,
-        }
+        Self { message, span }
     }
     fn with_label(self, _label: Self::Label) -> Self {
         return self;
