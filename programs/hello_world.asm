@@ -1,27 +1,27 @@
-	ld r1, 0x68; // 'h'
+	ld r1, 'h';
 	st r0, [0x4000];
-	ld r0, 0x65; // 'e'
+	ld r0, 'e';
 	st r0, [0x4000];
-	ld r0, 0x6c; // 'l'
+	ld r0, 'l';
 	st r0, [0x4000];
 	st r0, [0x4000];
-	ld r0, 0x6f; // 'o'
+	ld r0, 'o';
 	st r0, [0x4000];
-	ld r0, 0x20; // ' '
+	ld r0, ' ';
 	st r0, [0x4000];
-	ld r0, 0x77; // 'w'
+	ld r0, 'w';
 	st r0, [0x4000];
-	ld r0, 0x6f; // 'o'
+	ld r0, 'o';
 	st r0, [0x4000];
-	ld r0, 0x72; // 'r'
+	ld r0, 'r';
 	st r0, [0x4000];
-	ld r0, 0x6c; // 'l'
+	ld r0, 'l';
 	st r0, [0x4000];
-	ld r0, 0x64; // 'd'
+	ld r0, 'd';
 	st r0, [0x4000];
-	ld r0, 0x21; // '!'
+	ld r0, '!';
 	st r0, [0x4000];
-	ld r0, 0xa; // '\n'
+	ld r0, '\n';
 	st r0, [0x4000];
 end:
 	ld pc, end;
