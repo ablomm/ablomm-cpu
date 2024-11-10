@@ -3,120 +3,6 @@ use chumsky::prelude::*;
 use std::char;
 use text::TextParser;
 
-#[derive(Debug, Copy, Clone)]
-pub enum Register {
-    R0 = 0,
-    R1,
-    R2,
-    R3,
-    R4,
-    R5,
-    R6,
-    R7,
-    R8,
-    R9,
-    R10,
-    R11,
-    FP,
-    STATUS,
-    SP,
-    PC,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum Mnemonic {
-    PASSA = 0,
-    PASSB,
-    AND,
-    OR,
-    XOR,
-    NOT,
-    ADD,
-    ADDC,
-    SUB,
-    SUBB,
-    SHL,
-    SHR,
-    ASHR,
-    LD = 0x10,
-    LDR,
-    LDI,
-    ST,
-    STR,
-    PUSH,
-    POP,
-    INT,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum Condition {
-    NONE = 0,
-    EQ,
-    NE,
-    LTU,
-    GTU,
-    LEU,
-    GEU,
-    LTS,
-    GTS,
-    LES,
-    GES,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum AluOpFlags {
-    Immediate = 1 << 3,
-    Reverse = 1 << 2,
-    Loadn = 1 << 1,
-    SetStatus = 1 << 0,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum AluModifier {
-    S,
-    T,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum Modifier {
-    Condition(Condition),
-    AluModifier(AluModifier),
-}
-
-#[derive(Debug, Clone)]
-pub enum Parameter {
-    Label(String),
-    Number(u32),
-    Register(Register),
-    Indirect(Box<Parameter>),
-}
-
-#[derive(Debug, Clone)]
-pub struct ParameterSpan {
-    pub val: Parameter,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone)]
-pub struct FullMnemonic {
-    pub mnemonic: Mnemonic,
-    pub modifiers: Vec<Modifier>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Operation {
-    pub full_mnemonic: FullMnemonic,
-    pub parameters: Vec<ParameterSpan>,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone)]
-pub enum Statement {
-    Operation(Operation),
-    Label(String),
-    Comment(String), // added because maybe it will be useful some day
-}
-
 pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     let label = text::ident();
 
@@ -128,7 +14,19 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
         just("0x").ignore_then(text::int(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
     let dec_num = text::int(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
-    let number = choice((bin_num, oct_num, hex_num, dec_num));
+    let escape_char = just('\\').ignore_then(choice((
+        just('n').to('\n'),
+        just('r').to('\r'),
+        just('t').to('\t'),
+        just('0').to('\0'),
+    )));
+
+    let char_num = escape_char
+        .or(any())
+        .delimited_by(just('\''), just('\''))
+        .map(|c| c as u32);
+
+    let number = choice((bin_num, oct_num, hex_num, dec_num, char_num));
 
     let register = choice((
         text::keyword("r0").to(Register::R0),
@@ -232,4 +130,118 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     .padded();
 
     return statement.repeated().then_ignore(end());
+}
+
+#[derive(Debug, Clone)]
+pub enum Statement {
+    Operation(Operation),
+    Label(String),
+    Comment(String), // added because maybe it will be useful some day
+}
+
+#[derive(Debug, Clone)]
+pub struct Operation {
+    pub full_mnemonic: FullMnemonic,
+    pub parameters: Vec<ParameterSpan>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub struct FullMnemonic {
+    pub mnemonic: Mnemonic,
+    pub modifiers: Vec<Modifier>,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Mnemonic {
+    PASSA = 0,
+    PASSB,
+    AND,
+    OR,
+    XOR,
+    NOT,
+    ADD,
+    ADDC,
+    SUB,
+    SUBB,
+    SHL,
+    SHR,
+    ASHR,
+    LD = 0x10,
+    LDR,
+    LDI,
+    ST,
+    STR,
+    PUSH,
+    POP,
+    INT,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Modifier {
+    Condition(Condition),
+    AluModifier(AluModifier),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Condition {
+    NONE = 0,
+    EQ,
+    NE,
+    LTU,
+    GTU,
+    LEU,
+    GEU,
+    LTS,
+    GTS,
+    LES,
+    GES,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum AluModifier {
+    S,
+    T,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum AluOpFlags {
+    Immediate = 1 << 3,
+    Reverse = 1 << 2,
+    Loadn = 1 << 1,
+    SetStatus = 1 << 0,
+}
+
+#[derive(Debug, Clone)]
+pub struct ParameterSpan {
+    pub val: Parameter,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub enum Parameter {
+    Label(String),
+    Number(u32),
+    Register(Register),
+    Indirect(Box<Parameter>),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Register {
+    R0 = 0,
+    R1,
+    R2,
+    R3,
+    R4,
+    R5,
+    R6,
+    R7,
+    R8,
+    R9,
+    R10,
+    R11,
+    FP,
+    STATUS,
+    SP,
+    PC,
 }

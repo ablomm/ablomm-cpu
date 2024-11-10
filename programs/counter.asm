@@ -1,5 +1,5 @@
-	ld r1, 48; // '0'
-	ld r2, 10; // '\n'
+	ld r1, '0';
+	ld r2, '\n';
 loop:
 	st r1, [0x4000]; // write r1
 	add r1, 1;
