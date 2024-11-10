@@ -1,8 +1,0 @@
-should be able to do
-ld r1, [lable]
-ld r1, label
-
-add r1, label
-
-needs cpu changes:
-push immediate 
