@@ -1,3 +1,4 @@
+use crate::error::*;
 use crate::generator::alu_op::*;
 use crate::generator::int::*;
 use crate::generator::ld::*;
@@ -48,8 +49,8 @@ impl Generatable for AluModifier {
 impl Generatable for Modifier {
     fn generate(&self) -> u32 {
         match self {
-            Modifier::Condition(condition, _) => condition.generate(),
-            Modifier::AluModifier(alu_modifier, _) => alu_modifier.generate(),
+            Modifier::Condition(condition) => condition.generate(),
+            Modifier::AluModifier(alu_modifier) => alu_modifier.generate(),
         }
     }
 }
@@ -70,13 +71,13 @@ impl Generatable for Mnemonic {
     }
 }
 
-pub fn generate(ast: Vec<Statement>) -> Result<String, &'static str> {
+pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
     let (symbol_table, operations) = pre_process(ast);
 
     for operation in operations {
         match operation.generate(&symbol_table) {
-            Ok(opcode) => machine_code.push_str(&format!("{:x}\n", opcode).to_owned()),
+            Ok(opcode) => machine_code.push_str(&format!("{:x}\n", opcode).to_string()),
             Err(error) => return Err(error),
         }
     }
@@ -106,13 +107,13 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Operation>) {
 }
 
 impl Operation {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, &'static str> {
+    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
         match self.full_mnemonic.mnemonic {
             Mnemonic::LD => generate_ld(self, symbol_table),
             Mnemonic::ST => generate_st(self, symbol_table),
-            Mnemonic::PUSH => generate_push(self, symbol_table),
-            Mnemonic::POP => generate_pop(self, symbol_table),
-            Mnemonic::INT => generate_int(self, symbol_table),
+            Mnemonic::PUSH => generate_push(self),
+            Mnemonic::POP => generate_pop(self),
+            Mnemonic::INT => generate_int(self),
             // alu ops
             _ => generate_alu_op(self, symbol_table),
         }

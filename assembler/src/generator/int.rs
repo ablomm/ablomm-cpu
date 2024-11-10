@@ -1,15 +1,11 @@
 use crate::generator::Generatable;
-use crate::parser::*;
-use std::collections::HashMap;
+use crate::{parser::*, Error};
 
-pub fn generate_int(
-    operation: &Operation,
-    _symbol_table: &HashMap<String, u32>,
-) -> Result<u32, &'static str> {
+pub fn generate_int(operation: &Operation) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
 
     if operation.parameters.len() != 0 {
-        return Err("Expected INT with 0 parameters");
+        return Err(Error::new("Expected 0 parameters", operation.span));
     }
 
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);

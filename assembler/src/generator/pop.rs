@@ -1,22 +1,27 @@
+use crate::error::*;
 use crate::generator::Generatable;
 use crate::parser::*;
-use std::collections::HashMap;
 
-pub fn generate_pop(
-    operation: &Operation,
-    _symbol_table: &HashMap<String, u32>,
-) -> Result<u32, &'static str> {
+pub fn generate_pop(operation: &Operation) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     if operation.parameters.len() != 1 {
-        return Err("Expected POP with 1 parameter");
+        return Err(Error::new("Expected 1 parameter", operation.span));
     }
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
-    if let Parameter::Register(register, _) = operation.parameters[0] {
-        opcode |= Mnemonic::POP.generate();
-        opcode |= register.generate() << 20;
-        return Ok(opcode);
-    } else {
-        return Err("Expected POP parameter to be a register");
+    match &operation.parameters[0].val {
+        Parameter::Register(register) => generate_pop_reg(&register, opcode),
+        _ => {
+            return Err(Error::new(
+                "Expected a register",
+                operation.parameters[0].span,
+            ))
+        }
     }
+}
+
+fn generate_pop_reg(register: &Register, mut opcode: u32) -> Result<u32, Error> {
+    opcode |= Mnemonic::POP.generate();
+    opcode |= register.generate() << 20;
+    return Ok(opcode);
 }
