@@ -29,15 +29,15 @@ pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
 }
 
 // symbol table just has the label and the line associated with that label
-fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Operation>) {
+fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Spanned<Operation>>) {
     let mut symbol_table = HashMap::new();
     let mut line_number: u32 = 0;
-    let mut operations: Vec<Operation> = Vec::new();
+    let mut operations: Vec<Spanned<Operation>> = Vec::new();
 
     for statement in ast {
         match statement {
             Statement::Label(label) => {
-                symbol_table.insert(label, line_number as u32);
+                symbol_table.insert(label.val, line_number as u32);
             }
             Statement::Operation(operation) => {
                 operations.push(operation);
@@ -50,9 +50,9 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Operation>) {
     return (symbol_table, operations);
 }
 
-impl Operation {
+impl Spanned<Operation> {
     fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
-        match self.full_mnemonic.mnemonic {
+        match self.full_mnemonic.mnemonic.val {
             Mnemonic::LD => generate_ld(self, symbol_table),
             Mnemonic::ST => generate_st(self, symbol_table),
             Mnemonic::PUSH => generate_push(self),
@@ -104,7 +104,7 @@ impl Generatable for Modifier {
     }
 }
 
-impl Generatable for Vec<Modifier> {
+impl Generatable for Vec<Spanned<Modifier>> {
     fn generate(&self) -> u32 {
         let mut opcode = 0;
         for modifier in self {

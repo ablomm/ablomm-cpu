@@ -5,11 +5,14 @@ use crate::span::*;
 use std::collections::HashMap;
 
 pub fn generate_ld(
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     if operation.parameters.len() != 2 {
-        return Err(Error::new("Expected 2 parameters", operation.span));
+        return Err(Error::new(
+            "Expected 2 parameters",
+            operation.parameters.span,
+        ));
     }
     let mut opcode: u32 = 0;
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);
@@ -31,7 +34,7 @@ pub fn generate_ld(
 fn generate_ld_reg(
     register: &Register,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     opcode |= register.generate() << 16;

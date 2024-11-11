@@ -2,10 +2,13 @@ use crate::error::*;
 use crate::generator::Generatable;
 use crate::parser::*;
 
-pub fn generate_push(operation: &Operation) -> Result<u32, Error> {
+pub fn generate_push(operation: &Spanned<Operation>) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     if operation.parameters.len() != 1 {
-        return Err(Error::new("Expected 1 parameter", operation.span));
+        return Err(Error::new(
+            "Expected 1 parameter",
+            operation.parameters.span,
+        ));
     }
     opcode |= operation.full_mnemonic.modifiers.generate() & (0b1111 << 28);
 
