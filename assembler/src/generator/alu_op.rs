@@ -5,7 +5,7 @@ use crate::span::*;
 use std::collections::HashMap;
 
 pub fn generate_alu_op(
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     if operation.parameters.len() == 2 {
@@ -13,13 +13,16 @@ pub fn generate_alu_op(
     } else if operation.parameters.len() == 3 {
         return generate_alu_op_3(operation, symbol_table);
     } else {
-        return Err(Error::new("Expected 2 or 3 parameters", operation.span));
+        return Err(Error::new(
+            "Expected 2 or 3 parameters",
+            operation.parameters.span,
+        ));
     }
 }
 
 // parameter length 2
 pub fn generate_alu_op_2(
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
@@ -44,7 +47,7 @@ pub fn generate_alu_op_2(
 fn generate_alu_op_2_reg(
     register: &Register,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     opcode |= register.generate() << 12;
@@ -99,7 +102,7 @@ fn generate_alu_op_2_reg_label(
 fn generate_alu_op_2_num(
     number: u32,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
 ) -> Result<u32, Error> {
     opcode |= AluOpFlags::Reverse.generate();
     opcode |= AluOpFlags::Immediate.generate();
@@ -124,7 +127,7 @@ fn generate_alu_op_2_num_reg(register: &Register, mut opcode: u32) -> Result<u32
 
 // parameter length 3
 pub fn generate_alu_op_3(
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
@@ -147,7 +150,7 @@ pub fn generate_alu_op_3(
 fn generate_alu_op_3_reg(
     register: &Register,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     opcode |= register.generate() << 12;
@@ -178,7 +181,7 @@ fn generate_alu_op_3_reg(
 fn generate_alu_op_3_reg_reg(
     register2: &Register,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     opcode |= register2.generate() << 8;
@@ -232,7 +235,7 @@ fn generate_alu_op_3_reg_reg_label(
 fn generate_alu_op_3_reg_num(
     number: u32,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
 ) -> Result<u32, Error> {
     opcode |= AluOpFlags::Reverse.generate();
     opcode |= AluOpFlags::Immediate.generate();
@@ -258,7 +261,7 @@ fn generate_alu_op_3_reg_label(
     label: &str,
     span: Span,
     mut opcode: u32,
-    operation: &Operation,
+    operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     opcode |= AluOpFlags::Reverse.generate();

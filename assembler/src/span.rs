@@ -1,10 +1,10 @@
-use std::ops::Range;
 use internment::Intern;
+use std::ops::Range;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Span {
     src: Intern<String>,
-    range: (usize, usize) 
+    range: (usize, usize),
 }
 
 impl Span {
@@ -16,8 +16,12 @@ impl Span {
         return self.range.0..self.range.1;
     }
 
-    pub fn start(&self) -> usize { self.range.0 }
-    pub fn end(&self) -> usize { self.range.1 }
+    pub fn start(&self) -> usize {
+        self.range.0
+    }
+    pub fn end(&self) -> usize {
+        self.range.1
+    }
 }
 
 impl chumsky::Span for Span {
@@ -26,10 +30,19 @@ impl chumsky::Span for Span {
 
     fn new(src: Intern<String>, range: Range<usize>) -> Self {
         assert!(range.start <= range.end);
-        Self { src, range: (range.start, range.end) }
+        Self {
+            src,
+            range: (range.start, range.end),
+        }
     }
 
-    fn context(&self) -> Intern<String> { self.src }
-    fn start(&self) -> Self::Offset { self.range.0 }
-    fn end(&self) -> Self::Offset { self.range.1 }
+    fn context(&self) -> Intern<String> {
+        self.src
+    }
+    fn start(&self) -> Self::Offset {
+        self.range.0
+    }
+    fn end(&self) -> Self::Offset {
+        self.range.1
+    }
 }

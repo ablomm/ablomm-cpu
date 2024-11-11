@@ -1,6 +1,6 @@
 use crate::{error::*, Span};
 use chumsky::prelude::*;
-use std::char;
+use std::{char, ops::Deref};
 use text::TextParser;
 
 pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
@@ -66,11 +66,6 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
         ));
     });
 
-    let parameter_span = parameter.map_with_span(|parameter, span| ParameterSpan {
-        val: parameter,
-        span,
-    });
-
     let alu_modifier = choice((
         text::keyword("s").to(AluModifier::S),
         text::keyword("t").to(AluModifier::T),
@@ -114,51 +109,91 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     ));
 
     let full_mnemonic = mnemonic
-        .then(modifier.repeated())
+        .map_with_span(Spanned::new)
+        .then(
+            modifier
+                .map_with_span(Spanned::new)
+                .repeated()
+                .map_with_span(Spanned::new),
+        )
         .map(|(mnemonic, modifiers)| FullMnemonic {
             mnemonic,
             modifiers,
         });
 
     let operation = full_mnemonic
+        .map_with_span(Spanned::new)
         .padded()
-        .then(parameter_span.padded().separated_by(just(',')))
-        .map_with_span(|(full_mnemonic, parameters), span| Operation {
+        .then(
+            parameter
+                .map_with_span(Spanned::new)
+                .padded()
+                .separated_by(just(','))
+                .map_with_span(Spanned::new),
+        )
+        .map(|(full_mnemonic, parameters)| Operation {
             full_mnemonic,
             parameters,
-            span,
         });
 
     let comment = just("//").ignore_then(take_until(just("\n")).padded());
 
     let statement = choice((
-        operation.then_ignore(just(';')).map(Statement::Operation),
-        label.then_ignore(just(':')).map(Statement::Label),
-        comment.map(|(_, comment)| Statement::Comment(comment.into())),
+        operation
+            .then_ignore(just(';'))
+            .map_with_span(Spanned::new)
+            .map(Statement::Operation),
+        label
+            .then_ignore(just(':'))
+            .map_with_span(Spanned::new)
+            .map(Statement::Label),
+        comment
+            .map_with_span(|(_, comment), span| Spanned::new(comment.into(), span))
+            .map(Statement::Comment),
     ))
     .padded();
 
     return statement.repeated().then_ignore(end());
 }
 
+// just a struct to hold a span for error messages
+#[derive(Debug, Clone)]
+pub struct Spanned<T> {
+    pub val: T,
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    pub fn new(val: T, span: Span) -> Self {
+        Self { val, span }
+    }
+}
+
+// just for simplicity (i.e. removes ".val" everywhere)
+impl<T> Deref for Spanned<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        return &self.val;
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Statement {
-    Operation(Operation),
-    Label(String),
-    Comment(String), // added because maybe it will be useful some day
+    Operation(Spanned<Operation>),
+    Label(Spanned<String>),
+    Comment(Spanned<String>), // added because maybe it will be useful some day
 }
 
 #[derive(Debug, Clone)]
 pub struct Operation {
-    pub full_mnemonic: FullMnemonic,
-    pub parameters: Vec<ParameterSpan>,
-    pub span: Span,
+    pub full_mnemonic: Spanned<FullMnemonic>,
+    pub parameters: Spanned<Vec<Spanned<Parameter>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FullMnemonic {
-    pub mnemonic: Mnemonic,
-    pub modifiers: Vec<Modifier>,
+    pub mnemonic: Spanned<Mnemonic>,
+    pub modifiers: Spanned<Vec<Spanned<Modifier>>>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -219,12 +254,6 @@ pub enum AluOpFlags {
     Reverse = 1 << 2,
     Loadn = 1 << 1,
     SetStatus = 1 << 0,
-}
-
-#[derive(Debug, Clone)]
-pub struct ParameterSpan {
-    pub val: Parameter,
-    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
