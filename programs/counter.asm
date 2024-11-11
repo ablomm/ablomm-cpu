@@ -1,4 +1,3 @@
-	int 123;
 	ld r1, '0';
 	ld r2, '\n';
 loop:
