@@ -13,7 +13,7 @@ pub fn generate_push(operation: &Spanned<Operation>) -> Result<u32, Error> {
     if conditions.len() > 1 {
         return Err(Error::new(
             "Multiple conditions is not supported",
-            operation.full_mnemonic.modifiers.span,
+            conditions[1].span,
         ));
     }
     if alu_modifiers.len() > 0 {

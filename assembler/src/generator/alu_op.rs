@@ -14,13 +14,13 @@ pub fn generate_alu_op(
     if conditions.len() > 1 {
         return Err(Error::new(
             "Multiple conditions is not supported",
-            operation.full_mnemonic.modifiers.span,
+            conditions[1].span,
         ));
     }
     if alu_modifiers.len() > 1 {
         return Err(Error::new(
             "Multiple alu modifiers is not supported",
-            operation.full_mnemonic.modifiers.span,
+            alu_modifiers[1].span,
         ));
     }
 
