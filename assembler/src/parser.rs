@@ -136,7 +136,9 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
             parameters,
         });
 
-    let comment = just("//").ignore_then(take_until(just("\n")).padded());
+    let line_comment = just("//").ignore_then(take_until(just("\n")).padded());
+    let multiline_comment = just("/*").ignore_then(take_until(just("*/")).padded()); 
+    let comment = line_comment.or(multiline_comment);
 
     let statement = choice((
         operation
