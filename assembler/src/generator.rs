@@ -17,7 +17,10 @@ mod st;
 
 pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
-    let (symbol_table, operations) = pre_process(ast);
+    let (symbol_table, operations) = match pre_process(ast) {
+        Ok(result) => result,
+        Err(error) => return Err(error),
+    };
 
     for operation in operations {
         match operation.generate(&symbol_table) {
@@ -29,7 +32,9 @@ pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
 }
 
 // symbol table just has the label and the line associated with that label
-fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Spanned<Operation>>) {
+fn pre_process(
+    ast: Vec<Statement>,
+) -> Result<(HashMap<String, u32>, Vec<Spanned<Operation>>), Error> {
     let mut symbol_table = HashMap::new();
     let mut line_number: u32 = 0;
     let mut operations: Vec<Spanned<Operation>> = Vec::new();
@@ -37,6 +42,9 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Spanned<Operat
     for statement in ast {
         match statement {
             Statement::Label(label) => {
+                if symbol_table.contains_key(&label.val) {
+                    return Err(Error::new("Label already defined", label.span));
+                }
                 symbol_table.insert(label.val, line_number as u32);
             }
             Statement::Operation(operation) => {
@@ -47,7 +55,7 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Spanned<Operat
         }
     }
 
-    return (symbol_table, operations);
+    return Ok((symbol_table, operations));
 }
 
 fn seperate_modifiers(
