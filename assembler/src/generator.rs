@@ -50,6 +50,26 @@ fn pre_process(ast: Vec<Statement>) -> (HashMap<String, u32>, Vec<Spanned<Operat
     return (symbol_table, operations);
 }
 
+fn seperate_modifiers(
+    modifiers: &Vec<Spanned<Modifier>>,
+) -> (Vec<Spanned<Condition>>, Vec<Spanned<AluModifier>>) {
+    let mut conditions = Vec::new();
+    let mut alu_modifiers = Vec::new();
+
+    for modifier in modifiers {
+        match modifier.val {
+            Modifier::Condition(condition) => {
+                conditions.push(Spanned::new(condition, modifier.span))
+            }
+            Modifier::AluModifier(alu_modifier) => {
+                alu_modifiers.push(Spanned::new(alu_modifier, modifier.span))
+            }
+        }
+    }
+
+    return (conditions, alu_modifiers);
+}
+
 impl Spanned<Operation> {
     fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
         match self.full_mnemonic.mnemonic.val {
@@ -109,6 +129,26 @@ impl Generatable for Vec<Spanned<Modifier>> {
         let mut opcode = 0;
         for modifier in self {
             opcode |= modifier.generate();
+        }
+        return opcode;
+    }
+}
+
+impl Generatable for Vec<Spanned<Condition>> {
+    fn generate(&self) -> u32 {
+        let mut opcode = 0;
+        for condition in self {
+            opcode |= condition.generate();
+        }
+        return opcode;
+    }
+}
+
+impl Generatable for Vec<Spanned<AluModifier>> {
+    fn generate(&self) -> u32 {
+        let mut opcode = 0;
+        for alu_modifier in self {
+            opcode |= alu_modifier.generate();
         }
         return opcode;
     }
