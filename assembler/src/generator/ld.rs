@@ -99,7 +99,7 @@ fn generate_ld_reg_label(
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LDI.generate();
     opcode |= register.generate() << 16;
-    opcode |= get_label_address(&label, symbol_table)?;
+    opcode |= get_label_address(&label, symbol_table)? & 0xffff;
     return Ok(opcode);
 }
 
@@ -168,6 +168,6 @@ fn generate_ld_reg_ilabel(
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LD.generate();
     opcode |= register.generate() << 16;
-    opcode |= get_label_address(label, symbol_table)?;
+    opcode |= get_label_address(label, symbol_table)? & 0xffff;
     return Ok(opcode);
 }

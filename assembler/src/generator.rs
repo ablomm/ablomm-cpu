@@ -175,7 +175,7 @@ fn get_label_address(
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     if let Some(label_line) = symbol_table.get(label.val) {
-        return Ok(label_line & 0xffff);
+        return Ok(*label_line);
     } else {
         return Err(Error::new("Could not find label", label.span));
     }
