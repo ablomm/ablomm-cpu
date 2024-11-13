@@ -137,6 +137,6 @@ fn generate_st_reg_ilabel(
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::ST.generate();
     opcode |= register.generate() << 16;
-    opcode |= get_label_address(label, symbol_table)?;
+    opcode |= get_label_address(label, symbol_table)? & 0xffff;
     return Ok(opcode);
 }

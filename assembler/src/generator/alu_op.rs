@@ -376,7 +376,7 @@ fn generate_alu_op_3_reg_label_reg(
     opcode |= AluOpFlags::Reverse.generate();
     opcode |= AluOpFlags::Immediate.generate();
     opcode |= register1.generate() << 12;
-    opcode |= get_label_address(label, symbol_table)?;
+    opcode |= get_label_address(label, symbol_table)? & 0xff;
     opcode |= register2.generate() << 8;
     return Ok(opcode);
 }
