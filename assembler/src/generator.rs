@@ -18,17 +18,13 @@ mod st;
 
 pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
-    let (symbol_table, operations) = match pre_process(ast) {
-        Ok(result) => result,
-        Err(error) => return Err(error),
-    };
+    let (symbol_table, operations) = pre_process(ast)?;
 
     for operation in operations {
-        match operation.generate(&symbol_table) {
-            Ok(opcode) => machine_code.push_str(&format!("{:x}\n", opcode).to_string()),
-            Err(error) => return Err(error),
-        }
+        let opcode = operation.generate(&symbol_table)?;
+        machine_code.push_str(&format!("{:x}\n", opcode));
     }
+
     return Ok(machine_code);
 }
 
