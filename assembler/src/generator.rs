@@ -1,6 +1,6 @@
 use crate::error::*;
-use crate::generator::alu_op::*;
 use crate::generator::alu_op::unary_alu_op::*;
+use crate::generator::alu_op::*;
 use crate::generator::int::*;
 use crate::generator::ld::*;
 use crate::generator::pop::*;
@@ -168,4 +168,53 @@ impl Generatable for Mnemonic {
     fn generate(&self) -> u32 {
         return (*self as u32) << 20;
     }
+}
+
+fn get_label_address(
+    label: &Spanned<&str>,
+    symbol_table: &HashMap<String, u32>,
+) -> Result<u32, Error> {
+    if let Some(label_line) = symbol_table.get(label.val) {
+        return Ok(label_line & 0xffff);
+    } else {
+        return Err(Error::new("Could not find label", label.span));
+    }
+}
+
+fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
+    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
+
+    if conditions.len() > 1 {
+        return Err(Error::new(
+            "Multiple conditions is not supported",
+            conditions[1].span,
+        ));
+    }
+    if alu_modifiers.len() > 0 {
+        return Err(Error::new(
+            "Alu modifiers is not supported on this instruction",
+            modifiers.span,
+        ));
+    }
+
+    return Ok(conditions.generate());
+}
+
+fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
+    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
+
+    if conditions.len() > 1 {
+        return Err(Error::new(
+            "Multiple conditions is not supported",
+            conditions[1].span,
+        ));
+    }
+    if alu_modifiers.len() > 1 {
+        return Err(Error::new(
+            "Multiple alu modifiers is not supported",
+            alu_modifiers[1].span,
+        ));
+    }
+
+    return Ok(conditions.generate() | alu_modifiers.generate());
 }
