@@ -22,7 +22,7 @@ module alu (
       alu_pkg::AND: out_var = a & b;
       alu_pkg::OR:  out_var = a | b;
       alu_pkg::XOR: out_var = a ^ b;
-      alu_pkg::NOT: out_var = ~a;
+      alu_pkg::NOT: out_var = ~b;
 
       alu_pkg::ADD: {status.carry, out_var} = a + b;
       alu_pkg::ADDC: {status.carry, out_var} = a + b + carry_in;

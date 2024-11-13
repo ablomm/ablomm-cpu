@@ -5,6 +5,8 @@ use std::collections::HashMap;
 
 use super::seperate_modifiers;
 
+pub mod unary_alu_op;
+
 pub fn generate_alu_op(
     operation: &Spanned<Operation>,
     symbol_table: &HashMap<String, u32>,
@@ -42,7 +44,7 @@ pub fn generate_alu_op(
 }
 
 // parameter length 2
-pub fn generate_alu_op_2(
+fn generate_alu_op_2(
     operation: &Spanned<Operation>,
     opcode: u32,
     symbol_table: &HashMap<String, u32>,
@@ -142,7 +144,7 @@ fn generate_alu_op_2_num_reg(register: &Register, mut opcode: u32) -> Result<u32
 }
 
 // parameter length 3
-pub fn generate_alu_op_3(
+fn generate_alu_op_3(
     operation: &Spanned<Operation>,
     opcode: u32,
     symbol_table: &HashMap<String, u32>,

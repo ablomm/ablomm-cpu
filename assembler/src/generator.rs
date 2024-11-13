@@ -1,5 +1,6 @@
 use crate::error::*;
 use crate::generator::alu_op::*;
+use crate::generator::alu_op::unary_alu_op::*;
 use crate::generator::int::*;
 use crate::generator::ld::*;
 use crate::generator::pop::*;
@@ -87,6 +88,7 @@ impl Spanned<Operation> {
             Mnemonic::POP => generate_pop(self),
             Mnemonic::INT => generate_int(self),
             // alu ops
+            Mnemonic::NOT => generate_unary_alu_op(self, symbol_table),
             _ => generate_alu_op(self, symbol_table),
         }
     }
