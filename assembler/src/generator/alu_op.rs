@@ -91,13 +91,7 @@ fn generate_alu_op_2_reg_reg(
     register: &Register,
     register2: &Register,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= register.generate() << 12;
-    opcode |= register.generate() << 8;
-    opcode |= register2.generate() << 4;
-    return Ok(opcode);
+    return generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register, register, register2);
 }
 
 fn generate_alu_op_2_reg_num(
@@ -106,14 +100,7 @@ fn generate_alu_op_2_reg_num(
     register: &Register,
     number: u32,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= AluOpFlags::Immediate.generate();
-    opcode |= register.generate() << 12;
-    opcode |= register.generate() << 8;
-    opcode |= number & 0xff;
-    return Ok(opcode);
+    return generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register, register, number);
 }
 
 fn generate_alu_op_2_reg_label(
@@ -123,14 +110,14 @@ fn generate_alu_op_2_reg_label(
     label: &Spanned<&str>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= AluOpFlags::Immediate.generate();
-    opcode |= register.generate() << 12;
-    opcode |= register.generate() << 8;
-    opcode |= get_label_address(label, symbol_table)? & 0xff;
-    return Ok(opcode);
+    return generate_alu_op_3_reg_reg_label(
+        mnemonic,
+        modifiers,
+        register,
+        register,
+        label,
+        symbol_table,
+    );
 }
 
 fn generate_alu_op_2_num(
@@ -153,15 +140,7 @@ fn generate_alu_op_2_num_reg(
     number: u32,
     register: &Register,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= AluOpFlags::Reverse.generate();
-    opcode |= AluOpFlags::Immediate.generate();
-    opcode |= number & 0xff;
-    opcode |= register.generate() << 12;
-    opcode |= register.generate() << 8;
-    return Ok(opcode);
+    return generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register);
 }
 
 // parameter length 3
