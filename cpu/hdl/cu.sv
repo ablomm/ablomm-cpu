@@ -57,14 +57,15 @@ module cu (
     EXCEPT1,
     EXCEPT2,
     FETCH,
-    ALU,
+    NOT,
     LD,
     LDR,
     LDI,
     ST,
     STR,
     PUSH,
-    POP
+    POP,
+    ALU
   } states_e;
 
   states_e state = STOP;
@@ -78,14 +79,7 @@ module cu (
         if (hwint & status.imask) state <= HWINT1;
         else if (satisfies_condition(ir.condition, status.alu_status)) begin
           unique casez (ir.instruction)
-            // all alu ops will have a 0 in first instruction nibble
-            // the second nibble will be the alu_op
-            'h0?: begin
-              // exception if try to load status when not in supervisor mode
-              if (ir.params.unknown_alu_op.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
-                state <= EXCEPT1;
-              else state <= ALU;
-            end
+            cu_pkg::NOP: state <= NOP;
             cu_pkg::LD: begin
               if (ir.params.ld_params.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
                 state <= EXCEPT1;
@@ -110,6 +104,14 @@ module cu (
               else state <= POP;
             end
             cu_pkg::INT: state <= SWINT1;
+            // all alu ops will have a f in first instruction nibble
+            // the second nibble will be the alu_op
+            'hf?: begin
+              // exception if try to load status when not in supervisor mode
+              if (ir.params.unknown_alu_op.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                state <= EXCEPT1;
+              else state <= ALU;
+            end
             default: state <= EXCEPT1;
           endcase
         end
@@ -191,40 +193,7 @@ module cu (
         post_inc_pc <= 1;
       end
 
-
-      ALU: begin
-        if (ir.params.unknown_alu_op.flags.immediate) begin
-          if (ir.params.alu_op_i.flags.reverse) begin
-            oe_a_ir <= 1;
-            a_reg_mask <= 32'hff;
-            sel_b_reg <= ir.params.alu_op_i.reg_b;
-            oe_b_reg <= 1;
-          end else begin
-            sel_a_reg <= ir.params.alu_op_i.reg_b;
-            oe_a_reg <= 1;
-            oe_b_ir <= 1;
-            b_reg_mask <= 32'hff;
-          end
-
-        end else begin
-          if (ir.params.alu_op.flags.reverse) begin
-            sel_a_reg <= ir.params.alu_op.reg_c;
-            sel_b_reg <= ir.params.alu_op.reg_b;
-          end else begin
-            sel_a_reg <= ir.params.alu_op.reg_b;
-            sel_b_reg <= ir.params.alu_op.reg_c;
-          end
-
-          oe_a_reg <= 1;
-          oe_b_reg <= 1;
-        end
-
-        alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
-        oe_alu <= ~ir.params.unknown_alu_op.flags.loadn;
-        sel_in_reg <= ir.params.unknown_alu_op.reg_a;
-        ld_reg <= ~ir.params.unknown_alu_op.flags.loadn;
-        ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
-      end
+      NOP: ;
 
       // reg_a <- *address
       LD: begin
@@ -289,6 +258,39 @@ module cu (
         post_inc_sp <= 1;
       end
 
+      ALU: begin
+        if (ir.params.unknown_alu_op.flags.immediate) begin
+          if (ir.params.alu_op_i.flags.reverse) begin
+            oe_a_ir <= 1;
+            a_reg_mask <= 32'hff;
+            sel_b_reg <= ir.params.alu_op_i.reg_b;
+            oe_b_reg <= 1;
+          end else begin
+            sel_a_reg <= ir.params.alu_op_i.reg_b;
+            oe_a_reg <= 1;
+            oe_b_ir <= 1;
+            b_reg_mask <= 32'hff;
+          end
+
+        end else begin
+          if (ir.params.alu_op.flags.reverse) begin
+            sel_a_reg <= ir.params.alu_op.reg_c;
+            sel_b_reg <= ir.params.alu_op.reg_b;
+          end else begin
+            sel_a_reg <= ir.params.alu_op.reg_b;
+            sel_b_reg <= ir.params.alu_op.reg_c;
+          end
+
+          oe_a_reg <= 1;
+          oe_b_reg <= 1;
+        end
+
+        alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
+        oe_alu <= ~ir.params.unknown_alu_op.flags.loadn;
+        sel_in_reg <= ir.params.unknown_alu_op.reg_a;
+        ld_reg <= ~ir.params.unknown_alu_op.flags.loadn;
+        ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
+      end
 
       // push PC
       SWINT1, HWINT1, EXCEPT1: begin
