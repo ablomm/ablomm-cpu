@@ -88,15 +88,15 @@ module cu_tb;
     end
   endtask
 
-  task static test_alu(input alu_op_e op_in, input logic reverse_in = 0, input logic load_in = 1,
-                       input logic set_status_in = 0, input reg_a_in = reg_pkg::R0,
-                       input reg_b_in = reg_pkg::R1, input reg_c_in = reg_pkg::R2);
+  task static test_alu(input alu_op_e op_in, input logic reverse_in = 0, input logic loadn_in = 0,
+                       input logic set_status_in = 0, input reg_e reg_a_in = reg_pkg::R0,
+                       input reg_e reg_b_in = reg_pkg::R1, input reg_e reg_c_in = reg_pkg::R2);
     begin
       ir.condition = NONE;
-      ir.instruction = op_in;
+      ir.instruction = op_in | 8'hf0;  // alu ops start with 0xf*
       ir.params.alu_op.flags.immediate = 0;
       ir.params.alu_op.flags.reverse = reverse_in;
-      ir.params.alu_op.flags.load = load_in;
+      ir.params.alu_op.flags.loadn = loadn_in;
       ir.params.alu_op.flags.set_status = set_status_in;
       ir.params.alu_op.reg_a = reg_a_in;
       ir.params.alu_op.reg_b = reg_b_in;
@@ -105,7 +105,7 @@ module cu_tb;
       clk = 1;
       #1;
 
-      // AND state
+      // CPU state
       clk = 0;
       #1;
 

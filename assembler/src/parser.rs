@@ -99,6 +99,12 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     )));
 
     let mnemonic = choice((
+        text::keyword("nop").to(Mnemonic::NOP),
+        text::keyword("ld").to(Mnemonic::LD),
+        text::keyword("st").to(Mnemonic::ST),
+        text::keyword("push").to(Mnemonic::PUSH),
+        text::keyword("pop").to(Mnemonic::POP),
+        text::keyword("int").to(Mnemonic::INT),
         text::keyword("and").to(Mnemonic::AND),
         text::keyword("or").to(Mnemonic::OR),
         text::keyword("xor").to(Mnemonic::XOR),
@@ -107,14 +113,10 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
         text::keyword("addc").to(Mnemonic::ADDC),
         text::keyword("sub").to(Mnemonic::SUB),
         text::keyword("subb").to(Mnemonic::SUBB),
+        text::keyword("neg").to(Mnemonic::NEG),
         text::keyword("shl").to(Mnemonic::SHL),
         text::keyword("shr").to(Mnemonic::SHR),
         text::keyword("ashr").to(Mnemonic::ASHR),
-        text::keyword("ld").to(Mnemonic::LD),
-        text::keyword("st").to(Mnemonic::ST),
-        text::keyword("push").to(Mnemonic::PUSH),
-        text::keyword("pop").to(Mnemonic::POP),
-        text::keyword("int").to(Mnemonic::INT),
     ));
 
     let full_mnemonic = mnemonic
@@ -209,7 +211,17 @@ pub struct FullMnemonic {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Mnemonic {
-    PASSA = 0,
+    NOP = 0,
+    LD,
+    LDR,
+    LDI,
+    ST,
+    STR,
+    PUSH,
+    POP,
+    INT,
+    // alu ops start with 0xf*
+    PASSA = 0xf0,
     PASSB,
     AND,
     OR,
@@ -219,17 +231,10 @@ pub enum Mnemonic {
     ADDC,
     SUB,
     SUBB,
+    NEG,
     SHL,
     SHR,
     ASHR,
-    LD = 0x10,
-    LDR,
-    LDI,
-    ST,
-    STR,
-    PUSH,
-    POP,
-    INT,
 }
 
 #[derive(Debug, Copy, Clone)]

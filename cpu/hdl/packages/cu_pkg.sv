@@ -17,7 +17,8 @@ package cu_pkg;
   } cond_e;
 
   typedef enum logic [7:0] {
-    LD   = 8'h10,
+    NOP = 8'h00,
+    LD,
     LDR,
     LDI,
     ST,
@@ -25,6 +26,7 @@ package cu_pkg;
     PUSH,
     POP,
     INT
+	// alu ops not shown here, start with 0xf?
   } instruction_e;
 
   typedef struct packed {

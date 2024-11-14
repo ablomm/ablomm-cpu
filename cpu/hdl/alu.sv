@@ -24,10 +24,13 @@ module alu (
       alu_pkg::XOR: out_var = a ^ b;
       alu_pkg::NOT: out_var = ~b;
 
-      alu_pkg::ADD: {status.carry, out_var} = a + b;
+      alu_pkg::ADD:  {status.carry, out_var} = a + b;
       alu_pkg::ADDC: {status.carry, out_var} = a + b + carry_in;
-      alu_pkg::SUB: {status.carry, out_var} = a - b;
+      alu_pkg::SUB:  {status.carry, out_var} = a - b;
       alu_pkg::SUBB: {status.carry, out_var} = a - b - ~carry_in;
+      alu_pkg::NEG:  {status.carry, out_var} = -b;
+
+
       alu_pkg::SHL: {status.carry, out_var} = a << b;
       alu_pkg::SHR: out_var = a >> b;
       alu_pkg::ASHR: out_var = a >>> b;

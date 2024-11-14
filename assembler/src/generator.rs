@@ -1,3 +1,5 @@
+use nop_op::generate_nop;
+
 use crate::error::*;
 use crate::generator::alu_op::unary_alu_op::*;
 use crate::generator::alu_op::*;
@@ -12,6 +14,7 @@ use std::collections::HashMap;
 mod alu_op;
 mod int;
 mod ld;
+mod nop_op;
 mod pop;
 mod push;
 mod st;
@@ -78,13 +81,14 @@ fn seperate_modifiers(
 impl Spanned<Operation> {
     fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
         match self.full_mnemonic.mnemonic.val {
+            Mnemonic::NOP => generate_nop(self),
             Mnemonic::LD => generate_ld(self, symbol_table),
             Mnemonic::ST => generate_st(self, symbol_table),
             Mnemonic::PUSH => generate_push(self),
             Mnemonic::POP => generate_pop(self),
             Mnemonic::INT => generate_int(self),
             // alu ops
-            Mnemonic::NOT => generate_unary_alu_op(self, symbol_table),
+            Mnemonic::NOT | Mnemonic::NEG => generate_unary_alu_op(self, symbol_table),
             _ => generate_alu_op(self, symbol_table),
         }
     }
