@@ -95,12 +95,7 @@ fn generate_ld_reg_label(
     label: &Spanned<&str>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::LDI.generate();
-    opcode |= register.generate() << 16;
-    opcode |= get_label_address(&label, symbol_table)? & 0xffff;
-    return Ok(opcode);
+    return generate_ld_reg_num(modifiers, register, get_label_address(label, symbol_table)?);
 }
 
 fn generate_ld_reg_indirect(
@@ -164,10 +159,5 @@ fn generate_ld_reg_ilabel(
     label: &Spanned<&str>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::LD.generate();
-    opcode |= register.generate() << 16;
-    opcode |= get_label_address(label, symbol_table)? & 0xffff;
-    return Ok(opcode);
+    return generate_ld_reg_inum(modifiers, register, get_label_address(label, symbol_table)?);
 }

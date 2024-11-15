@@ -3,7 +3,7 @@ use chumsky::prelude::*;
 use std::{char, ops::Deref};
 use text::TextParser;
 
-pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
+pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
     let label = text::ident();
 
     // supports leading 0s (e.g. 0b0010, 0x00fff, 0o00300, 000123)
@@ -152,21 +152,16 @@ pub fn parser() -> impl Parser<char, Vec<Statement>, Error = Error> {
     let comment = line_comment.or(multiline_comment);
 
     let statement = choice((
-        operation
-            .then_ignore(just(';'))
-            .map_with_span(Spanned::new)
-            .map(Statement::Operation),
-        label
-            .then_ignore(just(':'))
-            .map_with_span(Spanned::new)
-            .map(Statement::Label),
-        comment
-            .map_with_span(|(_, comment), span| Spanned::new(comment.into(), span))
-            .map(Statement::Comment),
+        operation.then_ignore(just(';')).map(Statement::Operation),
+        label.then_ignore(just(':')).map(Statement::Label),
+        comment.map(|(_, comment)| Statement::Comment(comment.into())),
     ))
     .padded();
 
-    return statement.repeated().then_ignore(end());
+    return statement
+        .map_with_span(Spanned::new)
+        .repeated()
+        .then_ignore(end());
 }
 
 // just a struct to hold a span for error messages
@@ -192,9 +187,9 @@ impl<T> Deref for Spanned<T> {
 
 #[derive(Debug, Clone)]
 pub enum Statement {
-    Operation(Spanned<Operation>),
-    Label(Spanned<String>),
-    Comment(Spanned<String>), // added because maybe it will be useful some day
+    Operation(Operation),
+    Label(String),
+    Comment(String), // added because maybe it will be useful some day
 }
 
 #[derive(Debug, Clone)]

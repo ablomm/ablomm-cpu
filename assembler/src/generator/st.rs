@@ -133,10 +133,5 @@ fn generate_st_reg_ilabel(
     label: &Spanned<&str>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::ST.generate();
-    opcode |= register.generate() << 16;
-    opcode |= get_label_address(label, symbol_table)? & 0xffff;
-    return Ok(opcode);
+    return generate_st_reg_inum(modifiers, register, get_label_address(label, symbol_table)?);
 }

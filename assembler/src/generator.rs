@@ -1,5 +1,3 @@
-use nop_op::generate_nop;
-
 use crate::error::*;
 use crate::generator::alu_op::unary_alu_op::*;
 use crate::generator::alu_op::*;
@@ -9,17 +7,18 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::parser::*;
+use nop::*;
 use std::collections::HashMap;
 
 mod alu_op;
 mod int;
 mod ld;
-mod nop_op;
+mod nop;
 mod pop;
 mod push;
 mod st;
 
-pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
+pub fn generate(ast: Vec<Spanned<Statement>>) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
     let (symbol_table, operations) = pre_process(ast)?;
 
@@ -33,22 +32,22 @@ pub fn generate(ast: Vec<Statement>) -> Result<String, Error> {
 
 // symbol table just has the label and the line associated with that label
 fn pre_process(
-    ast: Vec<Statement>,
+    ast: Vec<Spanned<Statement>>,
 ) -> Result<(HashMap<String, u32>, Vec<Spanned<Operation>>), Error> {
     let mut symbol_table = HashMap::new();
     let mut line_number: u32 = 0;
     let mut operations: Vec<Spanned<Operation>> = Vec::new();
 
     for statement in ast {
-        match statement {
+        match statement.val {
             Statement::Label(label) => {
-                if symbol_table.contains_key(&label.val) {
-                    return Err(Error::new("Label already defined", label.span));
+                if symbol_table.contains_key(&label) {
+                    return Err(Error::new("Label already defined", statement.span));
                 }
-                symbol_table.insert(label.val, line_number as u32);
+                symbol_table.insert(label, line_number as u32);
             }
             Statement::Operation(operation) => {
-                operations.push(operation);
+                operations.push(Spanned::new(operation, statement.span));
                 line_number += 1;
             }
             _ => (),
