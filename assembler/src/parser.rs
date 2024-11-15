@@ -40,7 +40,7 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
     // negative numbers cause some unintuitive behaviour due to the limited bit length of
     // immediates with no sign extension. Looks like other assemblers handles negative numbers by
     // simply converting the operation into the equivalent with unsigned numbers
-    // (e.g. "sub r1, -1;" turns into "sub r1, 1;")
+    // (e.g. "add r1, -1;" turns into "sub r1, 1;")
     // let neg_number = just("-").ignore_then(pos_number).map(|num| -(num as i32));
     // let number = pos_number.or(neg_number.map(|num| num as u32));
 
