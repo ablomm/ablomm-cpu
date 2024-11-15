@@ -2,7 +2,7 @@ use ablomm_asm::*;
 use ariadne::sources;
 use clap::Parser;
 use internment::Intern;
-use std::fs;
+use std::{fs, process};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -31,8 +31,11 @@ fn main() {
                 print!("{}", machine_code);
             }
         },
-        Err(errors) => errors.iter().for_each(|error| {
-            error.eprint(&mut cache).ok();
-        }),
+        Err(errors) => {
+            errors.iter().for_each(|error| {
+                error.eprint(&mut cache).ok();
+            });
+            process::exit(-1);
+        }
     }
 }

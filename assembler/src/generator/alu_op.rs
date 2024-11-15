@@ -277,14 +277,13 @@ fn generate_alu_op_3_reg_reg_label(
     label: &Spanned<&str>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= AluOpFlags::Immediate.generate();
-    opcode |= register1.generate() << 12;
-    opcode |= register2.generate() << 8;
-    opcode |= get_label_address(label, symbol_table)? & 0xff;
-    return Ok(opcode);
+    return generate_alu_op_3_reg_reg_num(
+        mnemonic,
+        modifiers,
+        register1,
+        register2,
+        get_label_address(label, symbol_table)?,
+    );
 }
 
 fn generate_alu_op_3_reg_num(
@@ -310,13 +309,8 @@ fn generate_alu_op_3_reg_num_reg(
     register2: &Register,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
+    opcode |= generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register1, register2, number)?;
     opcode |= AluOpFlags::Reverse.generate();
-    opcode |= AluOpFlags::Immediate.generate();
-    opcode |= register1.generate() << 12;
-    opcode |= number & 0xff;
-    opcode |= register2.generate() << 8;
     return Ok(opcode);
 }
 
@@ -350,12 +344,14 @@ fn generate_alu_op_3_reg_label_reg(
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
-    opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
+    opcode |= generate_alu_op_3_reg_reg_label(
+        mnemonic,
+        modifiers,
+        register1,
+        register2,
+        label,
+        symbol_table,
+    )?;
     opcode |= AluOpFlags::Reverse.generate();
-    opcode |= AluOpFlags::Immediate.generate();
-    opcode |= register1.generate() << 12;
-    opcode |= get_label_address(label, symbol_table)? & 0xff;
-    opcode |= register2.generate() << 8;
     return Ok(opcode);
 }
