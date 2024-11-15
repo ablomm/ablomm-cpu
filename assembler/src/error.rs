@@ -23,12 +23,10 @@ impl Error {
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
-        return Report::build(ReportKind::Error, self.span.src(), self.span.start())
+        return Report::build(ReportKind::Error, self.span)
             .with_code(1)
             .with_message("Assembler Error")
-            .with_label(
-                Label::new((self.span.src(), self.span.range())).with_message(&self.message),
-            )
+            .with_label(Label::new(self.span).with_message(&self.message))
             .finish()
             .write(cache, writer);
     }
@@ -56,11 +54,11 @@ impl chumsky::Error<char> for Error {
             expected
                 .into_iter()
                 .filter_map(|e| e)
-                .map(|e| format!("'{}'", e))
+                .map(|e| format!("'{}'", e.escape_default()))
                 .collect::<Vec<_>>()
                 .join("or "),
             found
-                .map(|e| format!("'{}'", e))
+                .map(|e| format!("'{}'", e.escape_default()))
                 .unwrap_or("nothing".to_string())
         );
         Self { message, span }
