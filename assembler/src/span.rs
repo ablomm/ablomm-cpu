@@ -36,7 +36,7 @@ impl chumsky::Span for Span {
         }
     }
 
-    fn context(&self) -> Intern<String> {
+    fn context(&self) -> Self::Context {
         self.src
     }
     fn start(&self) -> Self::Offset {
@@ -44,5 +44,21 @@ impl chumsky::Span for Span {
     }
     fn end(&self) -> Self::Offset {
         self.range.1
+    }
+}
+
+impl ariadne::Span for Span {
+    type SourceId = Intern<String>;
+
+    fn source(&self) -> &Self::SourceId {
+        return &self.src;
+    }
+
+    fn start(&self) -> usize {
+        return self.range.0;
+    }
+
+    fn end(&self) -> usize {
+        return self.range.1;
     }
 }
