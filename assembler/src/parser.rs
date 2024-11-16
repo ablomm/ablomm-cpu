@@ -16,10 +16,7 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
     let hex_num = just("0x")
         .ignore_then(just("0").repeated())
         .ignore_then(text::int(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
-    let dec_num = just("0")
-        .repeated()
-        .ignore_then(text::int(10))
-        .map(|s: String| u32::from_str_radix(&s, 10).unwrap());
+    let dec_num = text::int(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
     // we're able to do that because empty chars ('') are not supported
@@ -151,9 +148,18 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
     let multiline_comment = just("/*").ignore_then(take_until(just("*/")).padded());
     let comment = line_comment.or(multiline_comment);
 
+    let string = filter(|c| *c != '\\' && *c != '\"')
+        .or(escape_char)
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just("\""), just("\""));
+
+    let literal = choice((number.map(Literal::Number), string.map(Literal::String)));
+
     let statement = choice((
         operation.then_ignore(just(';')).map(Statement::Operation),
         label.then_ignore(just(':')).map(Statement::Label),
+        literal.then_ignore(just(';')).map(Statement::Literal),
         comment.map(|(_, comment)| Statement::Comment(comment.into())),
     ))
     .padded();
@@ -189,7 +195,14 @@ impl<T> Deref for Spanned<T> {
 pub enum Statement {
     Operation(Operation),
     Label(String),
+    Literal(Literal),
     Comment(String), // added because maybe it will be useful some day
+}
+
+#[derive(Debug, Clone)]
+pub enum Literal {
+    Number(u32),
+    String(String),
 }
 
 #[derive(Debug, Clone)]
