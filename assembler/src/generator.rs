@@ -20,11 +20,13 @@ mod st;
 
 pub fn generate(ast: Vec<Spanned<Statement>>) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
-    let (symbol_table, operations) = pre_process(ast)?;
+    let (symbol_table, generatables) = pre_process(ast)?;
 
-    for operation in operations {
-        let opcode = operation.generate(&symbol_table)?;
-        machine_code.push_str(&format!("{:x}\n", opcode));
+    for generatable in generatables {
+        let opcodes = generatable.generate(&symbol_table)?;
+        for opcode in opcodes {
+            machine_code.push_str(&format!("{:x}\n", opcode));
+        }
     }
 
     return Ok(machine_code);
@@ -33,10 +35,10 @@ pub fn generate(ast: Vec<Spanned<Statement>>) -> Result<String, Error> {
 // symbol table just has the label and the line associated with that label
 fn pre_process(
     ast: Vec<Spanned<Statement>>,
-) -> Result<(HashMap<String, u32>, Vec<Spanned<Operation>>), Error> {
+) -> Result<(HashMap<String, u32>, Vec<Box<dyn GeneratableSym>>), Error> {
     let mut symbol_table = HashMap::new();
     let mut line_number: u32 = 0;
-    let mut operations: Vec<Spanned<Operation>> = Vec::new();
+    let mut operations: Vec<Box<dyn GeneratableSym>> = Vec::new();
 
     for statement in ast {
         match statement.val {
@@ -47,8 +49,12 @@ fn pre_process(
                 symbol_table.insert(label, line_number as u32);
             }
             Statement::Operation(operation) => {
-                operations.push(Spanned::new(operation, statement.span));
                 line_number += 1;
+                operations.push(Box::new(Spanned::new(operation, statement.span)));
+            }
+            Statement::Literal(literal) => {
+                line_number += literal.num_lines();
+                operations.push(Box::new(Spanned::new(literal, statement.span)));
             }
             _ => (),
         }
@@ -77,8 +83,23 @@ fn seperate_modifiers(
     return (conditions, alu_modifiers);
 }
 
-impl Spanned<Operation> {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
+impl Literal {
+    pub fn num_lines(&self) -> u32 {
+        match self {
+            Literal::String(string) => {
+                return ((string.len() as f32) / 4.0).ceil() as u32;
+            }
+            _ => return 1,
+        }
+    }
+}
+
+pub trait GeneratableSym {
+    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error>;
+}
+
+impl GeneratableSym for Spanned<Operation> {
+    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
             Mnemonic::NOP => generate_nop(self),
             Mnemonic::LD => generate_ld(self, symbol_table),
@@ -89,6 +110,30 @@ impl Spanned<Operation> {
             // alu ops
             Mnemonic::NOT | Mnemonic::NEG => generate_unary_alu_op(self, symbol_table),
             _ => generate_alu_op(self, symbol_table),
+        }
+        .map(|opcode| vec![opcode])
+    }
+}
+
+impl GeneratableSym for Spanned<Literal> {
+    fn generate(&self, _symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error> {
+        match &self.val {
+            Literal::String(string) => {
+                let mut opcodes = Vec::new();
+                // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
+                // addressible, not byte addressible)
+                for chunk in string.as_bytes().chunks(4) {
+                    let mut opcode: u32 = 0;
+                    // big endian, although not technically since it all exists in the same memory
+                    // address
+                    for (i, c) in chunk.iter().enumerate() {
+                        opcode |= (*c as u32) << i * 8;
+                    }
+                    opcodes.push(opcode);
+                }
+                return Ok(opcodes);
+            }
+            Literal::Number(number) => return Ok(vec![*number]),
         }
     }
 }
