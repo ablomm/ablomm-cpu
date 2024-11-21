@@ -1,0 +1,17 @@
+{
+	"$schema": "https://raw.githubusercontent.com/mfussenegger/dapconfig-schema/master/dapconfig-schema.json",
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug",
+			"preLaunchTask": "cargo build",
+			"program": "target/debug/ablomm_asm",
+			"args": [
+				"../programs/counter.asm"
+			],
+			"cwd": "${workspaceFolder}"
+		}
+	]
+}
