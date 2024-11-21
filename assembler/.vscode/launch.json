@@ -11,7 +11,7 @@
 			"args": [
 				"../programs/counter.asm"
 			],
-            "cwd": "${workspaceFolder}"
+			"cwd": "${workspaceFolder}"
 		}
 	]
 }
