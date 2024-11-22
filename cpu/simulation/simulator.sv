@@ -26,10 +26,8 @@ module simulator;
   ) rom0 (
       .clk (clk),
       .addr(b_bus[13:0]),
-      .data(a_bus),
       .out (result_bus),
       .rd  (mem_rd),
-      .wr  (mem_wr),
       .en  (b_bus[15:14] === 2'b00)
   );
 

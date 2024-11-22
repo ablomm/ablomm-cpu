@@ -52,10 +52,10 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
         text::keyword("r8").to(Register::R8),
         text::keyword("r9").to(Register::R9),
         text::keyword("r10").to(Register::R10),
-        text::keyword("r11").to(Register::R11),
         text::keyword("fp").to(Register::FP),
         text::keyword("status").to(Register::STATUS),
         text::keyword("sp").to(Register::SP),
+        text::keyword("lr").to(Register::LR),
         text::keyword("pc").to(Register::PC),
     ));
 
@@ -297,9 +297,9 @@ pub enum Register {
     R8,
     R9,
     R10,
-    R11,
     FP,
     STATUS,
     SP,
+    LR,
     PC,
 }

@@ -13,7 +13,7 @@ package reg_pkg;
   } status_t;
 
   typedef enum logic [3:0] {
-    R0  = 4'h0,
+    R0 = 4'h0,
     R1,
     R2,
     R3,
@@ -24,10 +24,10 @@ package reg_pkg;
     R8,
     R9,
     R10,
-    R11,
     FP,
     STATUS,
     SP,
+    LR,
     PC
   } reg_e;
 endpackage

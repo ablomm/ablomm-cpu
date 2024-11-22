@@ -8,6 +8,7 @@ hdl/cpu_reg.sv
 hdl/cu.sv
 hdl/filter.sv
 hdl/full_adder.sv
+hdl/lr_reg.sv
 hdl/pc_reg.sv
 hdl/reg_constants.sv
 hdl/register_file.sv
