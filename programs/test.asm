@@ -6,6 +6,8 @@
 
 // params: r0 = string
 ld r0, string1;
+	st r0, [0xffff];
+	st r1, [0xffff];
 ld pc, print;
 ld r0, string2;
 ld pc, print;
@@ -13,9 +15,6 @@ end:
 	ld pc, end;
 
 print:
-	push lr;
-	push r1;
-	push r2;
 print_word:
 	ld r1, [r0];
 	ld r2, 4; // num of bytes in a word
@@ -30,9 +29,7 @@ print_byte:
 	add r0, 1;
 	ld pc, print_word;
 return:
-	pop r2;
-	pop r1;
-	pop pc;
+	ld pc, return;
 
 string1: "Hello world!\n\0";
 string2: "Hello world, again!\n\0";

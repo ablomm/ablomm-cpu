@@ -27,6 +27,8 @@ module cu_tb;
   logic oe_b_reg;
   logic ld_reg;
 
+  logic ld_pc_lr;
+
   logic post_inc_sp;
   logic pre_dec_sp;
   logic post_inc_pc;

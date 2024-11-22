@@ -29,6 +29,8 @@ module cpu (
   wire oe_b_reg;
   wire ld_reg;
 
+  wire ld_pc_lr;
+
   wire post_inc_sp;
   wire pre_dec_sp;
   wire post_inc_pc;
@@ -77,9 +79,9 @@ module cpu (
   );
 
   // public registers
-  // 0-12 => general registers (including fp)
+  // 0-11 => general registers (including fp)
   register_file #(
-      .DEPTH(13)
+      .DEPTH(12)
   ) reg_file (
       .clk(clk),
       .rst(rst),
@@ -122,6 +124,20 @@ module cpu (
       .value()
   );
 
+  wire [31:0] pc_val;
+  lr_reg lr (
+      .clk(clk),
+      .a(a_reg_bus),
+      .b(b_reg_bus),
+      .in(result_bus),
+      .oe_a(sel_a_reg === reg_pkg::LR && oe_a_reg),
+      .oe_b(sel_b_reg === reg_pkg::LR && oe_b_reg),
+      .ld(sel_in_reg === reg_pkg::LR && ld_reg),
+      .pc(pc_val),
+      .ld_pc(ld_pc_lr),
+      .value()
+  );
+
   pc_reg pc (
       .clk(clk),
       .a(a_reg_bus),
@@ -131,7 +147,7 @@ module cpu (
       .oe_b(sel_b_reg === reg_pkg::PC && oe_b_reg),
       .ld(sel_in_reg === reg_pkg::PC && ld_reg),
       .post_inc(post_inc_pc),
-      .value()
+      .value(pc_val)
   );
 
   reg_constants reg_consts (

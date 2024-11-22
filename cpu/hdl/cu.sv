@@ -28,6 +28,8 @@ module cu (
     output logic oe_b_reg,
     output logic ld_reg,
 
+    output logic ld_pc_lr,
+
     output logic post_inc_sp,
     output logic pre_dec_sp,
     output logic post_inc_pc,
@@ -161,6 +163,8 @@ module cu (
       oe_b_reg,
       ld_reg,
 
+      ld_pc_lr,
+
       post_inc_sp,
       pre_dec_sp,
       post_inc_pc,
@@ -202,6 +206,8 @@ module cu (
         mem_rd <= 1;
         sel_in_reg <= ir.params.ld_params.reg_a;
         ld_reg <= 1;
+
+        ld_pc_lr <= ir.params.ld_params.reg_a == reg_pkg::LR;
       end
 
       // reg_a <- *reg_b
@@ -211,6 +217,8 @@ module cu (
         mem_rd <= 1;
         sel_in_reg <= ir.params.ldr_params.reg_a;
         ld_reg <= 1;
+
+        ld_pc_lr <= ir.params.ldr_params.reg_a == reg_pkg::LR;
       end
 
       // reg_a <- immediate
@@ -221,6 +229,8 @@ module cu (
         oe_alu <= 1;
         sel_in_reg <= ir.params.ld_params.reg_a;
         ld_reg <= 1;
+
+        ld_pc_lr <= ir.params.ldi_params.reg_a == reg_pkg::LR;
       end
 
       // *address <- reg_a
@@ -256,6 +266,8 @@ module cu (
         sel_in_reg <= ir.params.pop_params.reg_a;
         ld_reg <= 1;
         post_inc_sp <= 1;
+
+        ld_pc_lr <= ir.params.pop_params.reg_a == reg_pkg::LR;
       end
 
       ALU: begin
@@ -290,6 +302,8 @@ module cu (
         sel_in_reg <= ir.params.unknown_alu_op.reg_a;
         ld_reg <= ~ir.params.unknown_alu_op.flags.loadn;
         ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
+
+        ld_pc_lr <= ir.params.unknown_alu_op.reg_a == reg_pkg::LR;
       end
 
       // push PC
