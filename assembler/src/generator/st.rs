@@ -67,9 +67,9 @@ fn generate_st_reg_reg(
     // MOVR
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= Mnemonic::PASSA.generate();
+    opcode |= Mnemonic::PASS.generate();
     opcode |= register2.generate() << 12;
-    opcode |= register1.generate() << 8;
+    opcode |= register1.generate() << 4;
     return Ok(opcode);
 }
 

@@ -8,15 +8,12 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
 
     // supports leading 0s (e.g. 0b0010, 0x00fff, 0o00300, 000123)
     let bin_num = just("0b")
-        .ignore_then(just("0").repeated())
-        .ignore_then(text::int(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
+        .ignore_then(text::digits(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
     let oct_num = just("0o")
-        .ignore_then(just("0").repeated())
-        .ignore_then(text::int(8).map(|s: String| u32::from_str_radix(&s, 8).unwrap()));
+        .ignore_then(text::digits(8).map(|s: String| u32::from_str_radix(&s, 8).unwrap()));
     let hex_num = just("0x")
-        .ignore_then(just("0").repeated())
-        .ignore_then(text::int(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
-    let dec_num = text::int(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
+        .ignore_then(text::digits(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
+    let dec_num = text::digits(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
     // we're able to do that because empty chars ('') are not supported
@@ -229,8 +226,7 @@ pub enum Mnemonic {
     POP,
     INT,
     // alu ops start with 0xf*
-    PASSA = 0xf0,
-    PASSB,
+    PASS = 0xf0,
     AND,
     OR,
     XOR,

@@ -70,9 +70,9 @@ fn generate_ld_reg_reg(
     // MOV
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= Mnemonic::PASSA.generate();
+    opcode |= Mnemonic::PASS.generate();
     opcode |= register1.generate() << 12;
-    opcode |= register2.generate() << 8;
+    opcode |= register2.generate() << 4;
     return Ok(opcode);
 }
 
