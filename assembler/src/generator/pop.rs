@@ -28,6 +28,6 @@ fn generate_pop_reg(
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::POP.generate();
-    opcode |= register.generate() << 20;
+    opcode |= register.generate() << 16;
     return Ok(opcode);
 }

@@ -4,7 +4,6 @@
 	individually
 */
 
-// params: r0 = string
 ld r0, string1;
 ld pc, print;
 ld r0, string2;
@@ -12,6 +11,7 @@ ld pc, print;
 end:
 	ld pc, end;
 
+// params: r0 = string
 print:
 	push lr;
 	push r1;

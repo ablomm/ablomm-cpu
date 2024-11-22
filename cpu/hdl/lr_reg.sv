@@ -10,7 +10,7 @@ module lr_reg #(
     input oe_a,
     input oe_b,
     input ld,
-	input [SIZE-1:0] pc,
+    input [SIZE-1:0] pc,
     input ld_pc,
     output logic [SIZE-1:0] value = INITIAL_VAL // only if you need to direclty access (not on the data/addr bus)
 );
@@ -22,6 +22,9 @@ module lr_reg #(
 
   always_ff @(posedge clk) begin
     if (ld) value <= in;
-	if (ld_pc) value <= pc;
+  end
+
+  always @(posedge ld_pc) begin
+    value <= pc;
   end
 endmodule
