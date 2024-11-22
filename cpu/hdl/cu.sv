@@ -215,9 +215,9 @@ module cu (
 
       // reg_a <- immediate
       LDI: begin
-        oe_a_ir <= 1;
-        a_reg_mask <= 32'hffff;
-        alu_op <= alu_pkg::PASSA;
+        oe_b_ir <= 1;
+        b_reg_mask <= 32'hffff;
+        alu_op <= alu_pkg::PASS;
         oe_alu <= 1;
         sel_in_reg <= ir.params.ld_params.reg_a;
         ld_reg <= 1;
@@ -304,9 +304,9 @@ module cu (
       // imask <- 0
       // mode <- SUPERVISOR
       HWINT2: begin
-        sel_a_reg <= 4'h1;
-        oe_a_consts <= 1;
-        alu_op <= alu_pkg::PASSA;
+        sel_b_reg <= 4'h1;
+        oe_b_consts <= 1;
+        alu_op <= alu_pkg::PASS;
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
         ld_reg <= 1;
@@ -320,9 +320,9 @@ module cu (
       // imask <- 0
       // mode <- SUPERVISOR
       SWINT2: begin
-        sel_a_reg <= 4'h2;
-        oe_a_consts <= 1;
-        alu_op <= alu_pkg::PASSA;
+        sel_b_reg <= 4'h2;
+        oe_b_consts <= 1;
+        alu_op <= alu_pkg::PASS;
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
         ld_reg <= 1;
@@ -335,9 +335,9 @@ module cu (
       // pc <- 00000003
       // mode <- SUPERVISOR
       EXCEPT2: begin
-        sel_a_reg <= 4'h3;
-        oe_a_consts <= 1;
-        alu_op <= alu_pkg::PASSA;
+        sel_b_reg <= 4'h3;
+        oe_b_consts <= 1;
+        alu_op <= alu_pkg::PASS;
         oe_alu <= 1;
         sel_in_reg <= reg_pkg::PC;
         ld_reg <= 1;

@@ -1,8 +1,7 @@
 package alu_pkg;
 
   typedef enum logic [3:0] {
-    PASSA = 0,
-    PASSB,
+    PASS = 0,
     AND,
     OR,
     XOR,
