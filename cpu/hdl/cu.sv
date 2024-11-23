@@ -75,7 +75,8 @@ module cu (
   always @(posedge rst) state <= STOP;
 
   // state changes
-  always_ff @(posedge clk) begin
+  // negative edge to fix race conditions
+  always_ff @(negedge clk) begin
     unique case (state)
       FETCH: begin
         if (hwint & status.imask) state <= HWINT1;

@@ -50,7 +50,7 @@ module cpu (
 
   cu cu0 (
       .*,
-      .clk(~clk) // negative clk so that control signals are created before loads (fixes race conditions)
+      .clk(clk)
   );
 
   wire alu_status_t alu_status;
