@@ -19,6 +19,7 @@ module cu (
 
     output logic [31:0] a_reg_mask,
     output logic [31:0] b_reg_mask,
+    output logic signed [11:0] b_reg_offset,
 
     output reg_e sel_a_reg,
     output reg_e sel_b_reg,
@@ -185,6 +186,7 @@ module cu (
 
     a_reg_mask = 32'hffffffff;
     b_reg_mask = 32'hffffffff;
+    b_reg_offset = 0;
 
     unique case (state)
 
@@ -214,6 +216,7 @@ module cu (
       LDR: begin
         sel_b_reg = reg_e'(ir.params.ldr_params.reg_b);
         oe_b_reg = 1;
+        b_reg_offset = ir.params.ldr_params.offset;
         mem_rd = 1;
         sel_in_reg = reg_e'(ir.params.ldr_params.reg_a);
         ld_reg = 1;
@@ -248,6 +251,7 @@ module cu (
         oe_a_reg = 1;
         sel_b_reg = reg_e'(ir.params.str_params.reg_b);
         oe_b_reg = 1;
+        b_reg_offset = ir.params.str_params.offset;
         mem_wr = 1;
       end
 
