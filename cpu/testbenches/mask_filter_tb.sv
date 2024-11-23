@@ -1,9 +1,9 @@
-module filter_tb;
+module mask_filter_tb;
   wire  [31:0] out;
   logic [31:0] in;
   logic [31:0] mask;
 
-  filter filter0 (.*);
+  mask_filter mask_filter0 (.*);
   initial begin
     #400;
 	$display("\ntesting filter");

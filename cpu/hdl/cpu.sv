@@ -7,12 +7,16 @@ module cpu (
     input start,
     input rst,
     input hwint,
-    output tri [31:0] a_bus,
-    output tri [31:0] b_bus,
+    output [31:0] a_bus,  // not tri, as it is driven by the filters (the reg bus is a tri)
+    output [31:0] b_bus,  // not tri, as it is driven by the filters (the reg bus is a tri)
     output tri [31:0] result_bus,
     output mem_rd,
     output mem_wr
 );
+
+  // reg buses get filtered and eventually go on the a or b buses
+  tri [31:0] a_reg_bus;
+  tri [31:0] b_reg_bus;
 
   // control signals
   wire oe_alu;
@@ -20,6 +24,7 @@ module cpu (
 
   wire [31:0] a_reg_mask;
   wire [31:0] b_reg_mask;
+  wire signed [11:0] b_reg_offset;
 
   wire reg_e sel_a_reg;
   wire reg_e sel_b_reg;
@@ -64,18 +69,26 @@ module cpu (
       .status(alu_status)
   );
 
-  tri [31:0] a_reg_bus;
-  filter filter_a (
+  mask_filter mask_filter_a (
       .out (a_bus),
       .in  (a_reg_bus),
       .mask(a_reg_mask)
   );
 
-  tri [31:0] b_reg_bus;
-  filter filter_b (
-      .out (b_bus),
+  wire [31:0] b_mask_filter_out;
+  mask_filter mask_filter_b (
+      .out (b_mask_filter_out),
       .in  (b_reg_bus),
       .mask(b_reg_mask)
+  );
+
+  // only b bus will get an offset (for address offsets)
+  offset_filter #(
+      .OFFSET_WIDTH(12)
+  ) offset_filter_b (
+      .out(b_bus),
+      .in(b_mask_filter_out),
+      .offset(b_reg_offset)
   );
 
   // public registers

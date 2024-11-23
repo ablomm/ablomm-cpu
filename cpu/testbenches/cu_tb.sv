@@ -18,6 +18,7 @@ module cu_tb;
 
   logic [31:0] a_reg_mask;
   logic [31:0] b_reg_mask;
+  logic signed [11:0] b_reg_offset;
 
   reg_e sel_a_reg;
   reg_e sel_b_reg;

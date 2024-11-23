@@ -1,4 +1,4 @@
-module filter #(
+module mask_filter #(
     parameter integer WIDTH = 32
 ) (
     output tri [WIDTH-1:0] out,
