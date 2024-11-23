@@ -20,7 +20,6 @@ module pc_reg #(
   always @(posedge rst) value <= INITIAL_VAL;
 
   always @(posedge clk) begin
-    if (ld) value = in;
-    if (post_inc) value += 1;
+    value <= (ld ? in : value) + post_inc;
   end
 endmodule

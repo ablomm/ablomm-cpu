@@ -26,7 +26,7 @@ package cu_pkg;
     PUSH,
     POP,
     INT
-	// alu ops not shown here, start with 0xf?
+	// alu ops not shown here, start with 0xf*
   } instruction_e;
 
   typedef struct packed {
@@ -78,11 +78,6 @@ package cu_pkg;
     reg_e reg_a;
     logic [15:0] unused;
   } register_params_t;
-
-  typedef struct packed {
-    logic [15:0] address;
-    logic [3:0]  unused;
-  } address_params_t;
 
   typedef union packed {
     unknown_alu_op_t unknown_alu_op;

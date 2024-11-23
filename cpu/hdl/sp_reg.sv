@@ -23,7 +23,6 @@ module sp_reg #(
   always @(posedge pre_dec) value -= 1;
 
   always @(posedge clk) begin
-    if (ld) value = in;
-    if (post_inc) value += 1;
+    value <= (ld ? in : value) + post_inc;
   end
 endmodule

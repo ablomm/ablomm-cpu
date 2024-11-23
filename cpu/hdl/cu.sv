@@ -147,221 +147,220 @@ module cu (
   endfunction
 
   // outputs
-  always @(state) begin
-    {
-      mem_rd,
-      mem_wr,
+  always_comb begin
+    //defaults
+    mem_rd = 0;
+    mem_wr = 0;
 
-      oe_alu,
-      alu_op,
+    oe_alu = 0;
+    alu_op = alu_op_e'(0);
 
-      sel_a_reg,
-      sel_b_reg,
-      sel_in_reg,
+    sel_a_reg = reg_e'(0);
+    sel_b_reg = reg_e'(0);
+    sel_in_reg = reg_e'(0);
 
-      oe_a_reg,
-      oe_b_reg,
-      ld_reg,
+    oe_a_reg = 0;
+    oe_b_reg = 0;
+    ld_reg = 0;
 
-      ld_pc_lr,
+    ld_pc_lr = 0;
 
-      post_inc_sp,
-      pre_dec_sp,
-      post_inc_pc,
+    post_inc_sp = 0;
+    pre_dec_sp = 0;
+    post_inc_pc = 0;
 
-      oe_a_consts,
-      oe_b_consts,
+    oe_a_consts = 0;
+    oe_b_consts = 0;
 
-      oe_a_ir,
-      oe_b_ir,
-      ld_ir,
+    oe_a_ir = 0;
+    oe_b_ir = 0;
+    ld_ir = 0;
 
-      ld_alu_status,
-      imask_in,
-      ld_imask,
-      mode_in,
-      ld_mode
-    } <= 0;
+    ld_alu_status = 0;
+    imask_in = 0;
+    ld_imask = 0;
+    mode_in = cpu_mode_e'(0);
+    ld_mode = 0;
 
-    a_reg_mask <= 32'hffffffff;
-    b_reg_mask <= 32'hffffffff;
+    a_reg_mask = 32'hffffffff;
+    b_reg_mask = 32'hffffffff;
 
     unique case (state)
 
       // ir <- *(pc++)
       FETCH: begin
-        sel_b_reg <= reg_pkg::PC;
-        oe_b_reg <= 1;
-        mem_rd <= 1;
-        ld_ir <= 1;
-        post_inc_pc <= 1;
+        sel_b_reg = reg_pkg::PC;
+        oe_b_reg = 1;
+        mem_rd = 1;
+        ld_ir = 1;
+        post_inc_pc = 1;
       end
 
       NOP: ;
 
       // reg_a <- *address
       LD: begin
-        oe_b_ir <= 1;
-        b_reg_mask <= 32'hffff;
-        mem_rd <= 1;
-        sel_in_reg <= ir.params.ld_params.reg_a;
-        ld_reg <= 1;
+        oe_b_ir = 1;
+        b_reg_mask = 32'hffff;
+        mem_rd = 1;
+        sel_in_reg = reg_e'(ir.params.ld_params.reg_a);
+        ld_reg = 1;
 
-        ld_pc_lr <= ir.params.ld_params.reg_a == reg_pkg::PC;
+        ld_pc_lr = ir.params.ld_params.reg_a == reg_pkg::PC;
       end
 
       // reg_a <- *reg_b
       LDR: begin
-        sel_b_reg <= ir.params.ldr_params.reg_b;
-        oe_b_reg <= 1;
-        mem_rd <= 1;
-        sel_in_reg <= ir.params.ldr_params.reg_a;
-        ld_reg <= 1;
+        sel_b_reg = reg_e'(ir.params.ldr_params.reg_b);
+        oe_b_reg = 1;
+        mem_rd = 1;
+        sel_in_reg = reg_e'(ir.params.ldr_params.reg_a);
+        ld_reg = 1;
 
-        ld_pc_lr <= ir.params.ldr_params.reg_a == reg_pkg::PC;
+        ld_pc_lr = ir.params.ldr_params.reg_a == reg_pkg::PC;
       end
 
       // reg_a <- immediate
       LDI: begin
-        oe_b_ir <= 1;
-        b_reg_mask <= 32'hffff;
-        alu_op <= alu_pkg::PASS;
-        oe_alu <= 1;
-        sel_in_reg <= ir.params.ld_params.reg_a;
-        ld_reg <= 1;
+        oe_b_ir = 1;
+        b_reg_mask = 32'hffff;
+        alu_op = alu_pkg::PASS;
+        oe_alu = 1;
+        sel_in_reg = reg_e'(ir.params.ld_params.reg_a);
+        ld_reg = 1;
 
-        ld_pc_lr <= ir.params.ldi_params.reg_a == reg_pkg::PC;
+        ld_pc_lr = ir.params.ldi_params.reg_a == reg_pkg::PC;
       end
 
       // *address <- reg_a
       ST: begin
-        sel_a_reg <= ir.params.st_params.reg_a;
-        oe_a_reg <= 1;
-        oe_b_ir <= 1;
-        b_reg_mask <= 32'hffff;
-        mem_wr <= 1;
+        sel_a_reg = reg_e'(ir.params.st_params.reg_a);
+        oe_a_reg = 1;
+        oe_b_ir = 1;
+        b_reg_mask = 32'hffff;
+        mem_wr = 1;
       end
 
       // *reg_b <- reg_a
       STR: begin
-        sel_a_reg <= ir.params.str_params.reg_a;
-        oe_a_reg <= 1;
-        sel_b_reg <= ir.params.str_params.reg_b;
-        oe_b_reg <= 1;
-        mem_wr <= 1;
+        sel_a_reg = reg_e'(ir.params.str_params.reg_a);
+        oe_a_reg = 1;
+        sel_b_reg = reg_e'(ir.params.str_params.reg_b);
+        oe_b_reg = 1;
+        mem_wr = 1;
       end
 
       // *(--sp) <- reg_a
       PUSH: begin
-        pre_dec_sp <= 1;
-        sel_a_reg <= ir.params.push_params.reg_a;
-        oe_a_reg <= 1;
-        sel_b_reg <= reg_pkg::SP;
-        oe_b_reg <= 1;
-        mem_wr <= 1;
+        pre_dec_sp = 1;
+        sel_a_reg = reg_e'(ir.params.push_params.reg_a);
+        oe_a_reg = 1;
+        sel_b_reg = reg_pkg::SP;
+        oe_b_reg = 1;
+        mem_wr = 1;
       end
 
       // reg_a <- *(sp++)
       POP: begin
-        sel_b_reg <= reg_pkg::SP;
-        oe_b_reg <= 1;
-        mem_rd <= 1;
-        sel_in_reg <= ir.params.pop_params.reg_a;
-        ld_reg <= 1;
-        post_inc_sp <= 1;
+        sel_b_reg = reg_pkg::SP;
+        oe_b_reg = 1;
+        mem_rd = 1;
+        sel_in_reg = reg_e'(ir.params.pop_params.reg_a);
+        ld_reg = 1;
+        post_inc_sp = 1;
 
-        ld_pc_lr <= ir.params.pop_params.reg_a == reg_pkg::PC;
+        ld_pc_lr = ir.params.pop_params.reg_a == reg_pkg::PC;
       end
 
       ALU: begin
         if (ir.params.unknown_alu_op.flags.immediate) begin
           if (ir.params.alu_op_i.flags.reverse) begin
-            oe_a_ir <= 1;
-            a_reg_mask <= 32'hff;
-            sel_b_reg <= ir.params.alu_op_i.reg_b;
-            oe_b_reg <= 1;
+            oe_a_ir = 1;
+            a_reg_mask = 32'hff;
+            sel_b_reg = reg_e'(ir.params.alu_op_i.reg_b);
+            oe_b_reg = 1;
           end else begin
-            sel_a_reg <= ir.params.alu_op_i.reg_b;
-            oe_a_reg <= 1;
-            oe_b_ir <= 1;
-            b_reg_mask <= 32'hff;
+            sel_a_reg = reg_e'(ir.params.alu_op_i.reg_b);
+            oe_a_reg = 1;
+            oe_b_ir = 1;
+            b_reg_mask = 32'hff;
           end
 
         end else begin
           if (ir.params.alu_op.flags.reverse) begin
-            sel_a_reg <= ir.params.alu_op.reg_c;
-            sel_b_reg <= ir.params.alu_op.reg_b;
+            sel_a_reg = reg_e'(ir.params.alu_op.reg_c);
+            sel_b_reg = reg_e'(ir.params.alu_op.reg_b);
           end else begin
-            sel_a_reg <= ir.params.alu_op.reg_b;
-            sel_b_reg <= ir.params.alu_op.reg_c;
+            sel_a_reg = reg_e'(ir.params.alu_op.reg_b);
+            sel_b_reg = reg_e'(ir.params.alu_op.reg_c);
           end
 
-          oe_a_reg <= 1;
-          oe_b_reg <= 1;
+          oe_a_reg = 1;
+          oe_b_reg = 1;
         end
 
-        alu_op <= ir[23:20];  // the alu op will always be the second nibble of the instruction
-        oe_alu <= ~ir.params.unknown_alu_op.flags.loadn;
-        sel_in_reg <= ir.params.unknown_alu_op.reg_a;
-        ld_reg <= ~ir.params.unknown_alu_op.flags.loadn;
-        ld_alu_status <= ir.params.unknown_alu_op.flags.set_status;
+        alu_op = alu_op_e'(ir[23:20]);  // the alu op will always be the second nibble of the instruction
+        oe_alu = ~ir.params.unknown_alu_op.flags.loadn;
+        sel_in_reg = reg_e'(ir.params.unknown_alu_op.reg_a);
+        ld_reg = ~ir.params.unknown_alu_op.flags.loadn;
+        ld_alu_status = ir.params.unknown_alu_op.flags.set_status;
 
-        ld_pc_lr <= ir.params.unknown_alu_op.reg_a == reg_pkg::PC;
+        ld_pc_lr = ir.params.unknown_alu_op.reg_a == reg_pkg::PC;
       end
 
       // push PC
       SWINT1, HWINT1, EXCEPT1: begin
-        pre_dec_sp <= 1;
-        sel_a_reg <= reg_pkg::PC;
-        oe_a_reg <= 1;
-        sel_b_reg <= reg_pkg::SP;
-        oe_b_reg <= 1;
-        mem_wr <= 1;
+        pre_dec_sp = 1;
+        sel_a_reg = reg_pkg::PC;
+        oe_a_reg = 1;
+        sel_b_reg = reg_pkg::SP;
+        oe_b_reg = 1;
+        mem_wr = 1;
       end
 
       // PC <- 00000001
       // imask <- 0
       // mode <- SUPERVISOR
       HWINT2: begin
-        sel_b_reg <= 4'h1;
-        oe_b_consts <= 1;
-        alu_op <= alu_pkg::PASS;
-        oe_alu <= 1;
-        sel_in_reg <= reg_pkg::PC;
-        ld_reg <= 1;
-        imask_in <= 0;
-        ld_imask <= 1;
-        mode_in <= reg_pkg::SUPERVISOR;
-        ld_mode <= 1;
+        sel_b_reg = reg_e'(4'h1);
+        oe_b_consts = 1;
+        alu_op = alu_pkg::PASS;
+        oe_alu = 1;
+        sel_in_reg = reg_pkg::PC;
+        ld_reg = 1;
+        imask_in = 0;
+        ld_imask = 1;
+        mode_in = reg_pkg::SUPERVISOR;
+        ld_mode = 1;
       end
 
       // PC <- 00000002
       // imask <- 0
       // mode <- SUPERVISOR
       SWINT2: begin
-        sel_b_reg <= 4'h2;
-        oe_b_consts <= 1;
-        alu_op <= alu_pkg::PASS;
-        oe_alu <= 1;
-        sel_in_reg <= reg_pkg::PC;
-        ld_reg <= 1;
-        imask_in <= 0;
-        ld_imask <= 1;
-        mode_in <= reg_pkg::SUPERVISOR;
-        ld_mode <= 1;
+        sel_b_reg = reg_e'(4'h2);
+        oe_b_consts = 1;
+        alu_op = alu_pkg::PASS;
+        oe_alu = 1;
+        sel_in_reg = reg_pkg::PC;
+        ld_reg = 1;
+        imask_in = 0;
+        ld_imask = 1;
+        mode_in = reg_pkg::SUPERVISOR;
+        ld_mode = 1;
       end
 
       // pc <- 00000003
       // mode <- SUPERVISOR
       EXCEPT2: begin
-        sel_b_reg <= 4'h3;
-        oe_b_consts <= 1;
-        alu_op <= alu_pkg::PASS;
-        oe_alu <= 1;
-        sel_in_reg <= reg_pkg::PC;
-        ld_reg <= 1;
-        mode_in <= reg_pkg::SUPERVISOR;
-        ld_mode <= 1;
+        sel_b_reg = reg_e'(4'h3);
+        oe_b_consts = 1;
+        alu_op = alu_pkg::PASS;
+        oe_alu = 1;
+        sel_in_reg = reg_pkg::PC;
+        ld_reg = 1;
+        mode_in = reg_pkg::SUPERVISOR;
+        ld_mode = 1;
       end
       default: ;
     endcase
