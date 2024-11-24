@@ -83,13 +83,11 @@ fn generate_st_reg_indirect(
         Parameter::Register(register2) => {
             return generate_st_reg_ireg(modifiers, register, register2)
         }
-        Parameter::Number(number) => return generate_st_reg_inum(modifiers, register, *number),
-        Parameter::Label(label) => {
-            return generate_st_reg_ilabel(
+        Parameter::Expression(expression) => {
+            return generate_st_reg_inum(
                 modifiers,
                 register,
-                &Spanned::new(label, parameter.span),
-                symbol_table,
+                expression.eval(parameter.span, symbol_table)?,
             )
         }
         _ => {
@@ -125,13 +123,4 @@ fn generate_st_reg_inum(
     opcode |= register.generate() << 16;
     opcode |= number & 0xffff;
     return Ok(opcode);
-}
-
-fn generate_st_reg_ilabel(
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    register: &Register,
-    label: &Spanned<&str>,
-    symbol_table: &HashMap<String, u32>,
-) -> Result<u32, Error> {
-    return generate_st_reg_inum(modifiers, register, get_label_address(label, symbol_table)?);
 }
