@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 pub fn generate_unary_alu_op(
     operation: &Spanned<Operation>,
-    symbol_table: &HashMap<String, u32>,
+    symbol_table: &HashMap<String, i64>,
 ) -> Result<u32, Error> {
     if operation.parameters.len() == 1 {
         return generate_unary_alu_op_1(
@@ -46,7 +46,7 @@ fn generate_unary_alu_op_2(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
-    symbol_table: &HashMap<String, u32>,
+    symbol_table: &HashMap<String, i64>,
 ) -> Result<u32, Error> {
     match &parameters[0].val {
         Parameter::Register(register) => {

@@ -45,6 +45,9 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
     let parameter = recursive(|parameter| {
         let indirect = parameter.delimited_by(just('['), just(']'));
         return choice((
+            register_parser()
+                .then(expression_parser())
+                .map(|(register, offset)| Parameter::RegisterOffset(register, offset)),
             register_parser().map(Parameter::Register),
             expression_parser().map(Parameter::Expression),
             indirect.map(|i| Parameter::Indirect(Box::new(i))),

@@ -1,18 +1,10 @@
-	ld r1, '0';
+	ld r0, '0';
+	ld r1, '\n';
 loop:
-	st r1, [0x4000]; // write r1
-	add r1, 1;
-	sub.t r1, '9';
+	st r0, [0x4000];
+	add r0, 1;
+	sub.t r0, '9';
 	ld.leu pc, loop;
-	ld pc, test;
+	st r1, [0x4000];
 end:
 	ld pc, end;
-
-test:
-	ld r2, [0x123 - 0x1*2];
-	ld pc, lr;
-
-'\n';
-thing: '9';
-
-whatthe: 0x123+321;

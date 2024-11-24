@@ -36,7 +36,7 @@ pub fn generate(ast: Vec<Spanned<Statement>>) -> Result<String, Error> {
 // symbol table just has the label and the line associated with that label
 fn pre_process(
     ast: Vec<Spanned<Statement>>,
-) -> Result<(HashMap<String, u32>, Vec<Box<dyn GeneratableSym>>), Error> {
+) -> Result<(HashMap<String, i64>, Vec<Box<dyn GeneratableSym>>), Error> {
     let mut symbol_table = HashMap::new();
     let mut line_number: u32 = 0;
     let mut operations: Vec<Box<dyn GeneratableSym>> = Vec::new();
@@ -47,7 +47,7 @@ fn pre_process(
                 if symbol_table.contains_key(&label) {
                     return Err(Error::new("Identifier already defined", statement.span));
                 }
-                symbol_table.insert(label, line_number as u32);
+                symbol_table.insert(label, line_number as i64);
             }
             Statement::Operation(operation) => {
                 line_number += 1;
@@ -96,11 +96,11 @@ impl Literal {
 }
 
 pub trait GeneratableSym {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error>;
+    fn generate(&self, symbol_table: &HashMap<String, i64>) -> Result<Vec<u32>, Error>;
 }
 
 impl GeneratableSym for Spanned<Operation> {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error> {
+    fn generate(&self, symbol_table: &HashMap<String, i64>) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
             Mnemonic::NOP => generate_nop(self),
             Mnemonic::LD => generate_ld(self, symbol_table),
@@ -117,7 +117,7 @@ impl GeneratableSym for Spanned<Operation> {
 }
 
 impl GeneratableSym for Spanned<Literal> {
-    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error> {
+    fn generate(&self, symbol_table: &HashMap<String, i64>) -> Result<Vec<u32>, Error> {
         match &self.val {
             Literal::String(string) => {
                 let mut opcodes = Vec::new();
@@ -135,7 +135,7 @@ impl GeneratableSym for Spanned<Literal> {
                 return Ok(opcodes);
             }
             Literal::Expression(expression) => {
-                return Ok(vec![expression.eval(self.span, symbol_table)?])
+                return Ok(vec![expression.eval(self.span, symbol_table)? as u32])
             }
         }
     }
@@ -219,8 +219,8 @@ impl Generatable for Mnemonic {
 
 fn get_identifier(
     label: &Spanned<&str>,
-    symbol_table: &HashMap<String, u32>,
-) -> Result<u32, Error> {
+    symbol_table: &HashMap<String, i64>,
+) -> Result<i64, Error> {
     if let Some(label_line) = symbol_table.get(label.val) {
         return Ok(*label_line);
     } else {
@@ -267,11 +267,11 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
 }
 
 impl Expression {
-    pub fn eval(&self, span: Span, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
+    pub fn eval(&self, span: Span, symbol_table: &HashMap<String, i64>) -> Result<i64, Error> {
         match self {
             Expression::Number(a) => return Ok(*a),
             Expression::Ident(a) => return get_identifier(&Spanned::new(&a, span), symbol_table),
-            Expression::Neg(a) => return a.eval(a.span, symbol_table), // todo negatives
+            Expression::Neg(a) => return Ok(-a.eval(a.span, symbol_table)?),
             Expression::Add(a, b) => {
                 return Ok(a.eval(a.span, symbol_table)? + b.eval(b.span, symbol_table)?)
             }
