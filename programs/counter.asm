@@ -9,7 +9,7 @@ end:
 	ld pc, end;
 
 test:
-	ld r2, [thing - 1];
+	ld r2, [0x123 - 0x1*2];
 	ld pc, lr;
 
 '\n';

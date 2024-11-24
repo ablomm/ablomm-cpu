@@ -84,7 +84,11 @@ fn generate_st_reg_indirect(
             return generate_st_reg_ireg(modifiers, register, register2)
         }
         Parameter::Expression(expression) => {
-            return generate_st_reg_iexpr(modifiers, register, expression, symbol_table)
+            return generate_st_reg_inum(
+                modifiers,
+                register,
+                expression.eval(parameter.span, symbol_table)?,
+            )
         }
         _ => {
             return Err(Error::new(
@@ -106,15 +110,6 @@ fn generate_st_reg_ireg(
     opcode |= register1.generate() << 16;
     opcode |= register2.generate() << 12;
     return Ok(opcode);
-}
-
-fn generate_st_reg_iexpr(
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    register: &Register,
-    expression: &Expression,
-    symbol_table: &HashMap<String, u32>
-) -> Result<u32, Error> {
-    return generate_st_reg_inum(modifiers, register, expression.eval(symbol_table)?);
 }
 
 fn generate_st_reg_inum(

@@ -7,9 +7,10 @@ use parser::*;
 use span::*;
 
 pub mod error;
-pub mod generator;
-pub mod parser;
-pub mod span;
+mod generator;
+mod parser;
+mod span;
+mod ast;
 
 pub fn assemble(assembly_code: &str, src: Intern<String>) -> Result<String, Vec<Error>> {
     let len = assembly_code.chars().count();

@@ -43,7 +43,11 @@ fn generate_ld_reg(
         }
 
         Parameter::Expression(expression) => {
-            return generate_ld_reg_expr(modifiers, register, expression, symbol_table)
+            return generate_ld_reg_num(
+                modifiers,
+                register,
+                expression.eval(parameters[1].span, symbol_table)?,
+            )
         }
         Parameter::Indirect(parameter) => {
             return generate_ld_reg_indirect(
@@ -70,15 +74,6 @@ fn generate_ld_reg_reg(
     return Ok(opcode);
 }
 
-fn generate_ld_reg_expr(
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    register: &Register,
-    expression: &Expression,
-    symbol_table: &HashMap<String, u32>,
-) -> Result<u32, Error> {
-    return generate_ld_reg_num(modifiers, register, expression.eval(symbol_table)?);
-}
-
 fn generate_ld_reg_num(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
@@ -103,7 +98,11 @@ fn generate_ld_reg_indirect(
             return generate_ld_reg_ireg(modifiers, register, register2)
         }
         Parameter::Expression(expression) => {
-            return generate_ld_reg_iexpr(modifiers, register, expression, symbol_table)
+            return generate_ld_reg_inum(
+                modifiers,
+                register,
+                expression.eval(parameter.span, symbol_table)?,
+            )
         }
         _ => {
             return Err(Error::new(
@@ -126,15 +125,6 @@ fn generate_ld_reg_ireg(
     opcode |= register1.generate() << 16;
     opcode |= register2.generate() << 12;
     return Ok(opcode);
-}
-
-fn generate_ld_reg_iexpr(
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    register: &Register,
-    expression: &Expression,
-    symbol_table: &HashMap<String, u32>,
-) -> Result<u32, Error> {
-    return generate_ld_reg_inum(modifiers, register, expression.eval(symbol_table)?);
 }
 
 fn generate_ld_reg_inum(

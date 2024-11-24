@@ -30,6 +30,14 @@ impl Span {
     pub fn end(&self) -> usize {
         self.range.1
     }
+
+    pub fn union(&self, other: &Self) -> Self {
+        assert!(self.src == other.src);
+        Self {
+            src: self.src,
+            range: (self.start().min(other.start()), self.end().max(other.end())),
+        }
+    }
 }
 
 impl chumsky::Span for Span {

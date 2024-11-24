@@ -1,3 +1,4 @@
+use crate::ast::*;
 use crate::error::*;
 use crate::generator::alu_op::unary_alu_op::*;
 use crate::generator::alu_op::*;
@@ -6,9 +7,7 @@ use crate::generator::ld::*;
 use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
-use crate::parser::*;
 use crate::span::*;
-use internment::Intern;
 use nop::*;
 use std::collections::HashMap;
 
@@ -46,7 +45,7 @@ fn pre_process(
         match statement.val {
             Statement::Label(label) => {
                 if symbol_table.contains_key(&label) {
-                    return Err(Error::new("Label already defined", statement.span));
+                    return Err(Error::new("Identifier already defined", statement.span));
                 }
                 symbol_table.insert(label, line_number as u32);
             }
@@ -135,7 +134,9 @@ impl GeneratableSym for Spanned<Literal> {
                 }
                 return Ok(opcodes);
             }
-            Literal::Expression(expression) => return Ok(vec![expression.eval(symbol_table)?]),
+            Literal::Expression(expression) => {
+                return Ok(vec![expression.eval(self.span, symbol_table)?])
+            }
         }
     }
 }
@@ -216,14 +217,14 @@ impl Generatable for Mnemonic {
     }
 }
 
-fn get_label_address(
+fn get_identifier(
     label: &Spanned<&str>,
     symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     if let Some(label_line) = symbol_table.get(label.val) {
         return Ok(*label_line);
     } else {
-        return Err(Error::new("Could not find label", label.span));
+        return Err(Error::new("Could not find identifier", label.span));
     }
 }
 
@@ -266,20 +267,23 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
 }
 
 impl Expression {
-    pub fn eval(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
+    pub fn eval(&self, span: Span, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
         match self {
             Expression::Number(a) => return Ok(*a),
-            Expression::Ident(a) => {
-                return get_label_address(
-                    &Spanned::new(a, Span::new(Intern::new("abc".to_string()), 2..2)),
-                    symbol_table,
-                )
+            Expression::Ident(a) => return get_identifier(&Spanned::new(&a, span), symbol_table),
+            Expression::Neg(a) => return a.eval(a.span, symbol_table), // todo negatives
+            Expression::Add(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? + b.eval(b.span, symbol_table)?)
             }
-            Expression::Neg(a) => return a.eval(symbol_table), // todo negatives
-            Expression::Add(a, b) => return Ok(a.eval(symbol_table)? + b.eval(symbol_table)?),
-            Expression::Sub(a, b) => return Ok(a.eval(symbol_table)? - b.eval(symbol_table)?),
-            Expression::Mul(a, b) => return Ok(a.eval(symbol_table)? * b.eval(symbol_table)?),
-            Expression::Div(a, b) => return Ok(a.eval(symbol_table)? / b.eval(symbol_table)?),
+            Expression::Sub(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? - b.eval(b.span, symbol_table)?)
+            }
+            Expression::Mul(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? * b.eval(b.span, symbol_table)?)
+            }
+            Expression::Div(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? / b.eval(b.span, symbol_table)?)
+            }
         }
     }
 }

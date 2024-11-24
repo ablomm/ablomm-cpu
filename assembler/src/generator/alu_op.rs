@@ -41,17 +41,16 @@ fn generate_alu_op_2(
             return generate_alu_op_2_reg(mnemonic, modifiers, register, parameters, symbol_table)
         }
         Parameter::Expression(expression) => {
-            return generate_alu_op_2_expr(
+            return generate_alu_op_2_num(
                 mnemonic,
                 modifiers,
-                expression,
+                expression.eval(parameters[0].span, symbol_table)?,
                 parameters,
-                symbol_table,
             )
         }
         _ => {
             return Err(Error::new(
-                "Expected either a register or number",
+                "Expected either a register or expression",
                 parameters[0].span,
             ))
         }
@@ -71,17 +70,16 @@ fn generate_alu_op_2_reg(
             return generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
         Parameter::Expression(expression) => {
-            return generate_alu_op_2_reg_expr(
+            return generate_alu_op_2_reg_num(
                 mnemonic,
                 modifiers,
                 register,
-                expression,
-                symbol_table,
+                expression.eval(parameters[1].span, symbol_table)?,
             )
         }
         _ => {
             return Err(Error::new(
-                "Expected either a register, number, or label",
+                "Expected either a register or expression",
                 parameters[1].span,
             ))
         }
@@ -97,58 +95,52 @@ fn generate_alu_op_2_reg_reg(
     return generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register, register, register2);
 }
 
-fn generate_alu_op_2_reg_expr(
+fn generate_alu_op_2_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    expression: &Expression,
-    symbol_table: &HashMap<String, u32>,
+    number: u32,
 ) -> Result<u32, Error> {
-    return generate_alu_op_3_reg_reg_expr(
+    return generate_alu_op_3_reg_reg_num(
         mnemonic,
         modifiers,
         register,
         register,
-        expression,
-        symbol_table,
+        number,
     );
 }
 
-fn generate_alu_op_2_expr(
+fn generate_alu_op_2_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    expression: &Expression,
+    number: u32,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
-    symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     match &parameters[1].val {
         Parameter::Register(register) => {
-            return generate_alu_op_2_expr_reg(
+            return generate_alu_op_2_num_reg(
                 mnemonic,
                 modifiers,
-                expression,
+                number,
                 register,
-                symbol_table,
             )
         }
         _ => return Err(Error::new("Expected a register", parameters[1].span)),
     }
 }
 
-fn generate_alu_op_2_expr_reg(
+fn generate_alu_op_2_num_reg(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    expression: &Expression,
+    number: u32,
     register: &Register,
-    symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
-    return generate_alu_op_3_reg_expr_reg(
+    return generate_alu_op_3_reg_num_reg(
         mnemonic,
         modifiers,
         register,
-        expression,
+        number,
         register,
-        symbol_table,
     );
 }
 
@@ -186,18 +178,17 @@ fn generate_alu_op_3_reg(
             )
         }
         Parameter::Expression(expression) => {
-            return generate_alu_op_3_reg_expr(
+            return generate_alu_op_3_reg_num(
                 mnemonic,
                 modifiers,
                 register,
-                expression,
+                expression.eval(parameters[1].span, symbol_table)?,
                 parameters,
-                symbol_table,
             )
         }
         _ => {
             return Err(Error::new(
-                "Expected either a register, number, or label",
+                "Expected either a register or expression",
                 parameters[1].span,
             ))
         }
@@ -219,18 +210,17 @@ fn generate_alu_op_3_reg_reg(
             )
         }
         Parameter::Expression(expression) => {
-            return generate_alu_op_3_reg_reg_expr(
+            return generate_alu_op_3_reg_reg_num(
                 mnemonic,
                 modifiers,
                 register1,
                 register2,
-                expression,
-                symbol_table,
+                expression.eval(parameters[2].span, symbol_table)?,
             )
         }
         _ => {
             return Err(Error::new(
-                "Expected either a register, number, or label",
+                "Expected either a register or expression",
                 parameters[2].span,
             ))
         }
@@ -253,23 +243,6 @@ fn generate_alu_op_3_reg_reg_reg(
     return Ok(opcode);
 }
 
-fn generate_alu_op_3_reg_reg_expr(
-    mnemonic: &Spanned<Mnemonic>,
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    register1: &Register,
-    register2: &Register,
-    expression: &Expression,
-    symbol_table: &HashMap<String, u32>,
-) -> Result<u32, Error> {
-    return generate_alu_op_3_reg_reg_num(
-        mnemonic,
-        modifiers,
-        register1,
-        register2,
-        expression.eval(symbol_table)?,
-    );
-}
-
 fn generate_alu_op_3_reg_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
@@ -287,45 +260,41 @@ fn generate_alu_op_3_reg_reg_num(
     return Ok(opcode);
 }
 
-fn generate_alu_op_3_reg_expr(
+fn generate_alu_op_3_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    expression: &Expression,
+    number: u32,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
-    symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     match &parameters[2].val {
         Parameter::Register(register2) => {
-            return generate_alu_op_3_reg_expr_reg(
+            return generate_alu_op_3_reg_num_reg(
                 mnemonic,
                 modifiers,
                 register,
-                expression,
+                number,
                 register2,
-                symbol_table,
             )
         }
         _ => return Err(Error::new("Expected a register", parameters[2].span)),
     }
 }
 
-fn generate_alu_op_3_reg_expr_reg(
+fn generate_alu_op_3_reg_num_reg(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register1: &Register,
-    expression: &Expression,
+    number: u32,
     register2: &Register,
-    symbol_table: &HashMap<String, u32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
-    opcode |= generate_alu_op_3_reg_reg_expr(
+    opcode |= generate_alu_op_3_reg_reg_num(
         mnemonic,
         modifiers,
         register1,
         register2,
-        expression,
-        symbol_table,
+        number,
     )?;
     opcode |= AluOpFlags::Reverse.generate();
     return Ok(opcode);
