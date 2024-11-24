@@ -8,6 +8,14 @@ pub struct Span {
 }
 
 impl Span {
+    pub fn new(src: Intern<String>, range: Range<usize>) -> Self {
+        assert!(range.start <= range.end);
+        Self {
+            src,
+            range: (range.start, range.end),
+        }
+    }
+
     pub fn src(&self) -> Intern<String> {
         return self.src;
     }

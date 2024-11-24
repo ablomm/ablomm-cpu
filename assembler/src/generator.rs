@@ -7,6 +7,8 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::parser::*;
+use crate::span::*;
+use internment::Intern;
 use nop::*;
 use std::collections::HashMap;
 
@@ -116,7 +118,7 @@ impl GeneratableSym for Spanned<Operation> {
 }
 
 impl GeneratableSym for Spanned<Literal> {
-    fn generate(&self, _symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error> {
+    fn generate(&self, symbol_table: &HashMap<String, u32>) -> Result<Vec<u32>, Error> {
         match &self.val {
             Literal::String(string) => {
                 let mut opcodes = Vec::new();
@@ -133,7 +135,7 @@ impl GeneratableSym for Spanned<Literal> {
                 }
                 return Ok(opcodes);
             }
-            Literal::Number(number) => return Ok(vec![*number]),
+            Literal::Expression(expression) => return Ok(vec![expression.eval(symbol_table)?]),
         }
     }
 }
@@ -261,4 +263,23 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
     }
 
     return Ok(conditions.generate() | alu_modifiers.generate());
+}
+
+impl Expression {
+    pub fn eval(&self, symbol_table: &HashMap<String, u32>) -> Result<u32, Error> {
+        match self {
+            Expression::Number(a) => return Ok(*a),
+            Expression::Ident(a) => {
+                return get_label_address(
+                    &Spanned::new(a, Span::new(Intern::new("abc".to_string()), 2..2)),
+                    symbol_table,
+                )
+            }
+            Expression::Neg(a) => return a.eval(symbol_table), // todo negatives
+            Expression::Add(a, b) => return Ok(a.eval(symbol_table)? + b.eval(symbol_table)?),
+            Expression::Sub(a, b) => return Ok(a.eval(symbol_table)? - b.eval(symbol_table)?),
+            Expression::Mul(a, b) => return Ok(a.eval(symbol_table)? * b.eval(symbol_table)?),
+            Expression::Div(a, b) => return Ok(a.eval(symbol_table)? / b.eval(symbol_table)?),
+        }
+    }
 }

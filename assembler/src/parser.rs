@@ -3,10 +3,7 @@ use chumsky::prelude::*;
 use std::{char, ops::Deref};
 use text::TextParser;
 
-pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
-    let label = text::ident();
-
-    // supports leading 0s (e.g. 0b0010, 0x00fff, 0o00300, 000123)
+pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
     let bin_num = just("0b")
         .ignore_then(text::digits(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
     let oct_num = just("0o")
@@ -38,7 +35,52 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
     // let neg_number = just("-").ignore_then(pos_number).map(|num| -(num as i32));
     // let number = pos_number.or(neg_number.map(|num| num as u32));
 
-    let number = pos_number;
+    let atom = choice((
+        pos_number.map(Expression::Number),
+        text::ident().map(Expression::Ident),
+    ));
+
+    let unary = just('-')
+        .padded()
+        .repeated()
+        .then(atom)
+        .foldr(|_op, rhs| Expression::Neg(Box::new(rhs)));
+
+    let product = unary
+        .then(
+            choice((
+                just('*').padded().to(Expression::Mul as fn(_, _) -> _),
+                just('/').padded().to(Expression::Div as fn(_, _) -> _),
+            ))
+            .then(unary)
+            .repeated(),
+        )
+        .foldl(|lhs, (op, rhs)| op(Box::new(lhs), Box::new(rhs)));
+
+    let sum = product
+        .then(
+            choice((
+                just('+').padded().to(Expression::Add as fn(_, _) -> _),
+                just('-').padded().to(Expression::Sub as fn(_, _) -> _),
+            ))
+            .then(product)
+            .repeated(),
+        )
+        .foldl(|lhs, (op, rhs)| op(Box::new(lhs), Box::new(rhs)));
+
+    return sum;
+}
+
+pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
+    let label = text::ident();
+    // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
+    // we're able to do that because empty chars ('') are not supported
+    let escape_char = just('\\').ignore_then(choice((
+        just('n').to('\n'),
+        just('r').to('\r'),
+        just('t').to('\t'),
+        just('0').to('\0'),
+    )));
 
     let register = choice((
         text::keyword("r0").to(Register::R0),
@@ -62,9 +104,8 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
     let parameter = recursive(|parameter| {
         let indirect = parameter.delimited_by(just('['), just(']'));
         return choice((
-            number.map(Parameter::Number),
             register.map(Parameter::Register),
-            label.map(Parameter::Label),
+            expression_parser().map(Parameter::Expression),
             indirect.map(|i| Parameter::Indirect(Box::new(i))),
         ));
     });
@@ -151,7 +192,10 @@ pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
         .collect::<String>()
         .delimited_by(just("\""), just("\""));
 
-    let literal = choice((number.map(Literal::Number), string.map(Literal::String)));
+    let literal = choice((
+        expression_parser().map(Literal::Expression),
+        string.map(Literal::String),
+    ));
 
     let statement = choice((
         operation.then_ignore(just(';')).map(Statement::Operation),
@@ -198,8 +242,19 @@ pub enum Statement {
 
 #[derive(Debug, Clone)]
 pub enum Literal {
-    Number(u32),
+    Expression(Expression),
     String(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum Expression {
+    Number(u32),
+    Ident(String),
+    Neg(Box<Expression>),
+    Add(Box<Expression>, Box<Expression>),
+    Sub(Box<Expression>, Box<Expression>),
+    Mul(Box<Expression>, Box<Expression>),
+    Div(Box<Expression>, Box<Expression>),
 }
 
 #[derive(Debug, Clone)]
@@ -278,9 +333,8 @@ pub enum AluOpFlags {
 
 #[derive(Debug, Clone)]
 pub enum Parameter {
-    Label(String),
-    Number(u32),
     Register(Register),
+    Expression(Expression),
     Indirect(Box<Parameter>),
 }
 
