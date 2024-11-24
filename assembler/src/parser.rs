@@ -1,5 +1,6 @@
 use crate::ast::*;
 use crate::Error;
+use chumsky::combinator::MapWithSpan;
 use chumsky::prelude::*;
 use expression::*;
 use keywords::*;
@@ -43,11 +44,27 @@ fn string_parser() -> impl Parser<char, String, Error = Error> {
 
 fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
     let parameter = recursive(|parameter| {
+        let register_offset = register_parser()
+            .then(
+                choice((
+                    just('+').to(Expression::Pos as fn(_) -> _),
+                    just('-').to(Expression::Neg as fn(_) -> _),
+                ))
+                .padded()
+                .map_with_span(Spanned::new),
+            )
+            .then(expression_parser().map_with_span(Spanned::new))
+            .map(|((register, op), expression)| {
+                let span = op.span.union(&expression.span);
+                Parameter::RegisterOffset(
+                    register,
+                    op(Box::new(Spanned::new(expression.val, span))),
+                )
+            });
+
         let indirect = parameter.delimited_by(just('['), just(']'));
         return choice((
-            register_parser()
-                .then(expression_parser())
-                .map(|(register, offset)| Parameter::RegisterOffset(register, offset)),
+            register_offset,
             register_parser().map(Parameter::Register),
             expression_parser().map(Parameter::Expression),
             indirect.map(|i| Parameter::Indirect(Box::new(i))),

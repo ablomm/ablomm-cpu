@@ -40,11 +40,20 @@ pub enum Literal {
 pub enum Expression {
     Number(i64),
     Ident(String),
+    Pos(Box<Spanned<Expression>>),
     Neg(Box<Spanned<Expression>>),
-    Add(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
-    Sub(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Not(Box<Spanned<Expression>>),
     Mul(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Div(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Remainder(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Add(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Sub(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Shl(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Shr(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Ashr(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    And(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Or(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Xor(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
 }
 
 #[derive(Debug, Clone)]
