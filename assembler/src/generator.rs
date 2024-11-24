@@ -26,7 +26,7 @@ pub fn generate(ast: Vec<Spanned<Statement>>) -> Result<String, Error> {
     for generatable in generatables {
         let opcodes = generatable.generate(&symbol_table)?;
         for opcode in opcodes {
-            machine_code.push_str(&format!("{:x}\n", opcode));
+            machine_code.push_str(&format!("{:0>8x}\n", opcode));
         }
     }
 
@@ -271,18 +271,45 @@ impl Expression {
         match self {
             Expression::Number(a) => return Ok(*a),
             Expression::Ident(a) => return get_identifier(&Spanned::new(&a, span), symbol_table),
+            Expression::Pos(a) => return Ok(a.eval(a.span, symbol_table)?),
             Expression::Neg(a) => return Ok(-a.eval(a.span, symbol_table)?),
+            Expression::Not(a) => return Ok(!a.eval(a.span, symbol_table)?),
+            Expression::Mul(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? * b.eval(b.span, symbol_table)?)
+            }
+            Expression::Div(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? / b.eval(b.span, symbol_table)?)
+            }
+            Expression::Remainder(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? % b.eval(b.span, symbol_table)?)
+            }
             Expression::Add(a, b) => {
                 return Ok(a.eval(a.span, symbol_table)? + b.eval(b.span, symbol_table)?)
             }
             Expression::Sub(a, b) => {
                 return Ok(a.eval(a.span, symbol_table)? - b.eval(b.span, symbol_table)?)
             }
-            Expression::Mul(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? * b.eval(b.span, symbol_table)?)
+            Expression::Shl(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? << b.eval(b.span, symbol_table)?)
             }
-            Expression::Div(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? / b.eval(b.span, symbol_table)?)
+            Expression::Shr(a, b) => {
+                // rust will use normal shift right on unsigned types
+                return Ok(
+                    (a.eval(a.span, symbol_table)? as u64 >> b.eval(b.span, symbol_table)?) as i64,
+                );
+            }
+            Expression::Ashr(a, b) => {
+                // rust will use arithmetic shift right on signed types
+                return Ok(a.eval(a.span, symbol_table)? >> b.eval(b.span, symbol_table)?);
+            }
+            Expression::And(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? & b.eval(b.span, symbol_table)?)
+            }
+            Expression::Or(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? | b.eval(b.span, symbol_table)?)
+            }
+            Expression::Xor(a, b) => {
+                return Ok(a.eval(a.span, symbol_table)? ^ b.eval(b.span, symbol_table)?)
             }
         }
     }
