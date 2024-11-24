@@ -6,11 +6,11 @@ use internment::Intern;
 use parser::*;
 use span::*;
 
+mod ast;
 pub mod error;
 mod generator;
 mod parser;
 mod span;
-mod ast;
 
 pub fn assemble(assembly_code: &str, src: Intern<String>) -> Result<String, Vec<Error>> {
     let len = assembly_code.chars().count();

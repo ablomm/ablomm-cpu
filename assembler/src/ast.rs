@@ -38,7 +38,7 @@ pub enum Literal {
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    Number(u32),
+    Number(i64),
     Ident(String),
     Neg(Box<Spanned<Expression>>),
     Add(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
@@ -124,6 +124,7 @@ pub enum AluOpFlags {
 #[derive(Debug, Clone)]
 pub enum Parameter {
     Register(Register),
+    RegisterOffset(Register, Expression),
     Expression(Expression),
     Indirect(Box<Parameter>),
 }

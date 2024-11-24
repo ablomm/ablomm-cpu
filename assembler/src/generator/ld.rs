@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 pub fn generate_ld(
     operation: &Spanned<Operation>,
-    symbol_table: &HashMap<String, u32>,
+    symbol_table: &HashMap<String, i64>,
 ) -> Result<u32, Error> {
     if operation.parameters.len() != 2 {
         return Err(Error::new(
@@ -35,7 +35,7 @@ fn generate_ld_reg(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
-    symbol_table: &HashMap<String, u32>,
+    symbol_table: &HashMap<String, i64>,
 ) -> Result<u32, Error> {
     match &parameters[1].val {
         Parameter::Register(register2) => {
@@ -57,6 +57,12 @@ fn generate_ld_reg(
                 symbol_table,
             )
         }
+        _ => {
+            return Err(Error::new(
+                "Expected either a register, expression, or indirect",
+                parameters[1].span,
+            ));
+        }
     }
 }
 
@@ -77,13 +83,13 @@ fn generate_ld_reg_reg(
 fn generate_ld_reg_num(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: u32,
+    number: i64,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LDI.generate();
     opcode |= register.generate() << 16;
-    opcode |= number & 0xffff;
+    opcode |= number as u32 & 0xffff;
     return Ok(opcode);
 }
 
@@ -91,7 +97,7 @@ fn generate_ld_reg_indirect(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
     parameter: &Spanned<&Parameter>,
-    symbol_table: &HashMap<String, u32>,
+    symbol_table: &HashMap<String, i64>,
 ) -> Result<u32, Error> {
     match parameter.val {
         Parameter::Register(register2) => {
@@ -104,9 +110,17 @@ fn generate_ld_reg_indirect(
                 expression.eval(parameter.span, symbol_table)?,
             )
         }
+        Parameter::RegisterOffset(register2, offset) => {
+            return generate_ld_reg_ireg_offset(
+                modifiers,
+                register,
+                register2,
+                offset.eval(parameter.span, symbol_table)?,
+            )
+        }
         _ => {
             return Err(Error::new(
-                "Nested indirection is not supported",
+                "Expected either a register, expression, or register offset",
                 parameter.span,
             ))
         }
@@ -119,23 +133,33 @@ fn generate_ld_reg_ireg(
     register1: &Register,
     register2: &Register,
 ) -> Result<u32, Error> {
+    return generate_ld_reg_ireg_offset(modifiers, register1, register2, 0);
+}
+
+fn generate_ld_reg_ireg_offset(
+    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
+    register1: &Register,
+    register2: &Register,
+    offset: i64,
+) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LDR.generate();
     opcode |= register1.generate() << 16;
     opcode |= register2.generate() << 12;
+    opcode |= offset as u32 & 0xfff;
     return Ok(opcode);
 }
 
 fn generate_ld_reg_inum(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: u32,
+    number: i64,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LD.generate();
     opcode |= register.generate() << 16;
-    opcode |= number & 0xffff;
+    opcode |= number as u32 & 0xffff;
     return Ok(opcode);
 }
