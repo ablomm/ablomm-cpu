@@ -59,8 +59,6 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
                 let span = op.span.union(&expression.span);
                 Parameter::RegisterOffset(
                     register,
-                    // yes, we use the span twice, because technically the unary expression span is
-                    // reduendent, but it makes parsing much more concise
                     Spanned::new(op(Box::new(Spanned::new(expression.val, span))), span),
                 )
             });
