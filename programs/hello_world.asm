@@ -4,10 +4,11 @@
 	individually
 */
 
-ld r0, string1;
-ld pc, print;
-ld r0, string2;
-ld pc, print;
+tty_addr = 0x4000;
+	ld r0, string1;
+	ld pc, print;
+	ld r0, string2;
+	ld pc, print;
 end:
 	ld pc, end;
 
@@ -22,7 +23,7 @@ print_word:
 print_byte:
 	and.t r1, 0xff;
 	ld.eq pc, return;
-	st r1, [0x4000];
+	st r1, [tty_addr];
 	shr r1, 8;
 	sub.s r2, 1;
 	ld.ne pc, print_byte;

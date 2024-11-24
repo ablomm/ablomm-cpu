@@ -49,6 +49,15 @@ fn pre_process(
                 }
                 symbol_table.insert(label, line_number as i64);
             }
+            Statement::Assignment(identifier, expression) => {
+                if symbol_table.contains_key(&identifier.val) {
+                    return Err(Error::new("Identifier already defined", identifier.span));
+                }
+                symbol_table.insert(
+                    identifier.val,
+                    expression.eval(expression.span, &symbol_table)?,
+                );
+            }
             Statement::Operation(operation) => {
                 line_number += 1;
                 operations.push(Box::new(Spanned::new(operation, statement.span)));

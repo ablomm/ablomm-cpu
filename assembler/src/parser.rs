@@ -45,6 +45,7 @@ fn string_parser() -> impl Parser<char, String, Error = Error> {
 fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
     let parameter = recursive(|parameter| {
         let register_offset = register_parser()
+            .map_with_span(Spanned::new)
             .then(
                 choice((
                     just('+').to(Expression::Pos as fn(_) -> _),
@@ -58,7 +59,9 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
                 let span = op.span.union(&expression.span);
                 Parameter::RegisterOffset(
                     register,
-                    op(Box::new(Spanned::new(expression.val, span))),
+                    // yes, we use the span twice, because technically the unary expression span is
+                    // reduendent, but it makes parsing much more concise
+                    Spanned::new(op(Box::new(Spanned::new(expression.val, span))), span),
                 )
             });
 
@@ -113,11 +116,19 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
         string_parser().map(Literal::String),
     ));
 
+    let assignment = text::ident()
+        .map_with_span(Spanned::new)
+        .then_ignore(just('=').padded())
+        .then(expression_parser().map_with_span(Spanned::new));
+
     return choice((
         operation_parser()
             .then_ignore(just(';'))
             .map(Statement::Operation),
         label.then_ignore(just(':')).map(Statement::Label),
+        assignment
+            .then_ignore(just(';'))
+            .map(|(ident, expr)| Statement::Assignment(ident, expr)),
         literal.then_ignore(just(';')).map(Statement::Literal),
         comment_parser().map(Statement::Comment),
     ))
