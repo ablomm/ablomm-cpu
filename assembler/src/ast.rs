@@ -26,6 +26,7 @@ impl<T> Deref for Spanned<T> {
 pub enum Statement {
     Operation(Operation),
     Label(String),
+    Assignment(Spanned<String>, Spanned<Expression>),
     Literal(Literal),
     Comment(String), // added because maybe it will be useful some day
 }
@@ -133,7 +134,7 @@ pub enum AluOpFlags {
 #[derive(Debug, Clone)]
 pub enum Parameter {
     Register(Register),
-    RegisterOffset(Register, Expression),
+    RegisterOffset(Spanned<Register>, Spanned<Expression>),
     Expression(Expression),
     Indirect(Box<Parameter>),
 }
