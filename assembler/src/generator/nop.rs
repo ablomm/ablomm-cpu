@@ -1,7 +1,7 @@
 use crate::generator::*;
 use crate::Error;
 
-pub fn generate_nop(operation: &Spanned<Operation>) -> Result<u32, Error> {
+pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     if operation.parameters.len() != 0 {
         return Err(Error::new(
             "Expected 0 parameters",

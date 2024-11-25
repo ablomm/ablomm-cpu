@@ -1,20 +1,31 @@
 use crate::ast::*;
+use crate::symbol_table::SymbolTable;
 use crate::Error;
-use chumsky::combinator::MapWithSpan;
 use chumsky::prelude::*;
 use expression::*;
 use keywords::*;
+use std::cell::RefCell;
 use std::char;
+use std::collections::HashMap;
+use std::rc::Rc;
 use text::TextParser;
 
 mod expression;
 mod keywords;
 
-pub fn parser() -> impl Parser<char, Vec<Spanned<Statement>>, Error = Error> {
+pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
     return statement_parser()
         .map_with_span(Spanned::new)
         .repeated()
-        .then_ignore(end());
+        .then_ignore(end())
+        .map(|statements| Block {
+            statements,
+            symbol_table: Rc::new(RefCell::new(SymbolTable {
+                table: HashMap::new(),
+                parent: None,
+            })),
+        })
+        .map_with_span(Spanned::new);
 }
 
 fn comment_parser() -> impl Parser<char, String, Error = Error> {
@@ -119,16 +130,32 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
         .then_ignore(just('=').padded())
         .then(expression_parser().map_with_span(Spanned::new));
 
-    return choice((
-        operation_parser()
-            .then_ignore(just(';'))
-            .map(Statement::Operation),
-        label.then_ignore(just(':')).map(Statement::Label),
-        assignment
-            .then_ignore(just(';'))
-            .map(|(ident, expr)| Statement::Assignment(ident, expr)),
-        literal.then_ignore(just(';')).map(Statement::Literal),
-        comment_parser().map(Statement::Comment),
-    ))
-    .padded();
+    return recursive(|statement| {
+        let block = statement
+            .map_with_span(Spanned::new)
+            .repeated()
+            .padded()
+            .delimited_by(just('{'), just('}'))
+            .map(|statements| Block {
+                statements,
+                symbol_table: Rc::new(RefCell::new(SymbolTable {
+                    table: HashMap::new(),
+                    parent: None,
+                })),
+            });
+
+        return choice((
+            block.map(Statement::Block),
+            operation_parser()
+                .then_ignore(just(';'))
+                .map(Statement::Operation),
+            label.then_ignore(just(':')).map(Statement::Label),
+            assignment
+                .then_ignore(just(';'))
+                .map(|(ident, expr)| Statement::Assignment(ident, expr)),
+            literal.then_ignore(just(';')).map(Statement::Literal),
+            comment_parser().map(Statement::Comment),
+        ))
+        .padded();
+    });
 }

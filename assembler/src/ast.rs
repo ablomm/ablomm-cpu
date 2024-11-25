@@ -1,5 +1,5 @@
-use crate::Span;
-use std::ops::Deref;
+use crate::{symbol_table::SymbolTable, Span};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 // just a struct to hold a span for error messages
 #[derive(Debug, Clone)]
@@ -11,6 +11,11 @@ pub struct Spanned<T> {
 impl<T> Spanned<T> {
     pub fn new(val: T, span: Span) -> Self {
         Self { val, span }
+    }
+
+    // converts &Spanned<T> to Spanned<&T>
+    pub fn as_ref(&self) -> Spanned<&T> {
+        return Spanned::new(&self.val, self.span);
     }
 }
 
@@ -24,11 +29,18 @@ impl<T> Deref for Spanned<T> {
 
 #[derive(Debug, Clone)]
 pub enum Statement {
+    Block(Block),
     Operation(Operation),
     Label(String),
     Assignment(Spanned<String>, Spanned<Expression>),
     Literal(Literal),
     Comment(String), // added because maybe it will be useful some day
+}
+
+#[derive(Debug, Clone)]
+pub struct Block {
+    pub statements: Vec<Spanned<Statement>>,
+    pub symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
 #[derive(Debug, Clone)]
@@ -104,7 +116,7 @@ pub enum Modifier {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Condition {
-    NONE = 0,
+    _NONE = 0, // not used, but for completeness
     EQ,
     NE,
     LTU,

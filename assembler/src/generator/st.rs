@@ -1,9 +1,8 @@
 use crate::generator::*;
-use std::collections::HashMap;
 
 pub fn generate_st(
-    operation: &Spanned<Operation>,
-    symbol_table: &HashMap<String, i64>,
+    operation: &Spanned<&Operation>,
+    symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     if operation.parameters.len() != 2 {
         return Err(Error::new(
@@ -35,7 +34,7 @@ fn generate_st_reg(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
-    symbol_table: &HashMap<String, i64>,
+    symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     match &parameters[1].val {
         Parameter::Register(register2) => {
@@ -77,7 +76,7 @@ fn generate_st_reg_indirect(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
     parameter: &Spanned<&Parameter>,
-    symbol_table: &HashMap<String, i64>,
+    symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     match parameter.val {
         Parameter::Register(register2) => {
@@ -87,7 +86,7 @@ fn generate_st_reg_indirect(
             return generate_st_reg_inum(
                 modifiers,
                 register,
-                expression.eval(parameter.span, symbol_table)?,
+                Spanned::new(expression, parameter.span).eval(symbol_table)?,
             )
         }
         Parameter::RegisterOffset(register2, offset) => {
@@ -95,7 +94,7 @@ fn generate_st_reg_indirect(
                 modifiers,
                 register,
                 register2,
-                offset.eval(parameter.span, symbol_table)?,
+                offset.as_ref().eval(symbol_table)?,
             )
         }
         _ => {

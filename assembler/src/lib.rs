@@ -11,6 +11,7 @@ pub mod error;
 mod generator;
 mod parser;
 mod span;
+mod symbol_table;
 
 pub fn assemble(assembly_code: &str, src: Intern<String>) -> Result<String, Vec<Error>> {
     let len = assembly_code.chars().count();
@@ -24,5 +25,5 @@ pub fn assemble(assembly_code: &str, src: Intern<String>) -> Result<String, Vec<
             .map(|(i, c)| (c, Span::new(src, i..i + 1))),
     ))?;
 
-    return generate(ast).map_err(|error| vec![error]);
+    return compile_ast(&ast.as_ref()).map_err(|error| vec![error]);
 }

@@ -1,11 +1,11 @@
 /add string specific escapes (\", \\)
-add constants
+/add constants
 /add arithmetic expressions evaluated at compile time
 /add register relative offsets e.g. "ld r1, [fp + 3]" (literals and identifiers will be expressions, evaluated at compile time e.g. "ld r1, [label + 23 * 23])
 rename "parameters" to "arguments" or maybe "operands"
 maybe have each operation allowed to generate multiple opcodes and have "push {r1, r2, r3}" and "pop {r1, r2, r3}" or "push r1, r2, r3", "pop r1, r2, r3" (could maybe be done in hardware)
 negative numbers in argument converts it to the equivalent instruction, e.g. "add r1, -3" gets generated as "sub r1, 3"
-scopes for identifiers (labels, and constants) i.e. {} blocks
+/scopes for identifiers (labels, and constants) i.e. {} blocks
 
 imports
 
