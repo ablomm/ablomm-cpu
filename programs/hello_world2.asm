@@ -5,12 +5,10 @@
 	individually
 */
 tty = 0x4000;
-string_pseudonym = string2;
-
-ld r0, string1;
-ld pc, print;
-ld r0, string2;
-ld pc, print;
+	ld r0, string1;
+	ld pc, print;
+	ld r0, string2;
+	ld pc, print;
 end:
 	ld pc, end;
 

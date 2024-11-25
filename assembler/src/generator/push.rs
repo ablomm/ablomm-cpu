@@ -1,6 +1,6 @@
 use crate::generator::*;
 
-pub fn generate_push(operation: &Spanned<Operation>) -> Result<u32, Error> {
+pub fn generate_push(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     if operation.parameters.len() != 1 {
         return Err(Error::new(
             "Expected 1 parameter",

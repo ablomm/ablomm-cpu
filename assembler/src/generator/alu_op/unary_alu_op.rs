@@ -1,12 +1,11 @@
 use super::*;
-use std::collections::HashMap;
 
 // a lot of the generation here is delegated to alu_op because, internally, a unary operation uses
 // the least significant bits for it's input (i.e. the second input of a binary operation)
 
 pub fn generate_unary_alu_op(
-    operation: &Spanned<Operation>,
-    symbol_table: &HashMap<String, i64>,
+    operation: &Spanned<&Operation>,
+    symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     if operation.parameters.len() == 1 {
         return generate_unary_alu_op_1(
@@ -46,7 +45,7 @@ fn generate_unary_alu_op_2(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
-    symbol_table: &HashMap<String, i64>,
+    symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     match &parameters[0].val {
         Parameter::Register(register) => {

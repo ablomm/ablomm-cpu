@@ -9,7 +9,7 @@ use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::span::*;
 use nop::*;
-use std::collections::HashMap;
+use std::rc::Rc;
 
 mod alu_op;
 mod int;
@@ -19,58 +19,74 @@ mod pop;
 mod push;
 mod st;
 
-pub fn generate(ast: Vec<Spanned<Statement>>) -> Result<String, Error> {
+pub fn generate(mut ast: Block) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
-    let (symbol_table, generatables) = pre_process(ast)?;
+    pre_process(&mut ast, 0)?;
 
-    for generatable in generatables {
-        let opcodes = generatable.generate(&symbol_table)?;
-        for opcode in opcodes {
-            machine_code.push_str(&format!("{:0>8x}\n", opcode));
-        }
+    let opcodes = ast.generate()?;
+    for opcode in opcodes {
+        machine_code.push_str(&format!("{:0>8x}\n", opcode));
     }
 
     return Ok(machine_code);
 }
 
-// symbol table just has the label and the line associated with that label
-fn pre_process(
-    ast: Vec<Spanned<Statement>>,
-) -> Result<(HashMap<String, i64>, Vec<Box<dyn GeneratableSym>>), Error> {
-    let mut symbol_table = HashMap::new();
-    let mut line_number: u32 = 0;
-    let mut operations: Vec<Box<dyn GeneratableSym>> = Vec::new();
+impl Block {
+    fn generate(&self) -> Result<Vec<u32>, Error> {
+        let mut opcodes = Vec::new();
+        for statement in &self.statements {
+            opcodes.append(&mut statement.generate(&self.symbol_table.borrow())?);
+        }
 
-    for statement in ast {
-        match statement.val {
+        return Ok(opcodes);
+    }
+}
+
+// symbol table just has the label and the line associated with that label
+fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
+    let mut line_number: u32 = start_address;
+
+    for statement in &block.statements {
+        match &statement.val {
             Statement::Label(label) => {
-                if symbol_table.contains_key(&label) {
+                if block.symbol_table.borrow().contains_key(&label) {
                     return Err(Error::new("Identifier already defined", statement.span));
                 }
-                symbol_table.insert(label, line_number as i64);
+                block
+                    .symbol_table
+                    .borrow_mut()
+                    .insert(label.to_string(), line_number as i64);
             }
             Statement::Assignment(identifier, expression) => {
-                if symbol_table.contains_key(&identifier.val) {
+                if block.symbol_table.borrow().contains_key(&identifier.val) {
                     return Err(Error::new("Identifier already defined", identifier.span));
                 }
-                symbol_table.insert(
-                    identifier.val,
-                    expression.eval(expression.span, &symbol_table)?,
-                );
+
+                // need to move the expression evaluation out of the symbol_table.insert() call
+                // to satisfy the borrow checker
+                let expression_val =
+                    expression.eval(expression.span, &block.symbol_table.borrow())?;
+
+                block
+                    .symbol_table
+                    .borrow_mut()
+                    .insert(identifier.val.clone(), expression_val);
             }
-            Statement::Operation(operation) => {
+            Statement::Operation(_) => {
                 line_number += 1;
-                operations.push(Box::new(Spanned::new(operation, statement.span)));
             }
             Statement::Literal(literal) => {
                 line_number += literal.num_lines();
-                operations.push(Box::new(Spanned::new(literal, statement.span)));
+            }
+            Statement::Block(sub_block) => {
+                sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
+                line_number = pre_process(&sub_block, line_number)?;
             }
             _ => (),
         }
     }
-
-    return Ok((symbol_table, operations));
+    print!("line_num = {}", line_number);
+    return Ok(line_number);
 }
 
 fn seperate_modifiers(
@@ -105,11 +121,24 @@ impl Literal {
 }
 
 pub trait GeneratableSym {
-    fn generate(&self, symbol_table: &HashMap<String, i64>) -> Result<Vec<u32>, Error>;
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error>;
 }
 
-impl GeneratableSym for Spanned<Operation> {
-    fn generate(&self, symbol_table: &HashMap<String, i64>) -> Result<Vec<u32>, Error> {
+impl Spanned<Statement> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+        match &self.val {
+            Statement::Operation(operation) => {
+                Spanned::new(operation, self.span).generate(symbol_table)
+            }
+            Statement::Block(block) => block.generate(),
+            Statement::Literal(literal) => Spanned::new(literal, self.span).generate(symbol_table),
+            _ => Ok(vec![]),
+        }
+    }
+}
+
+impl GeneratableSym for Spanned<&Operation> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
             Mnemonic::NOP => generate_nop(self),
             Mnemonic::LD => generate_ld(self, symbol_table),
@@ -125,8 +154,8 @@ impl GeneratableSym for Spanned<Operation> {
     }
 }
 
-impl GeneratableSym for Spanned<Literal> {
-    fn generate(&self, symbol_table: &HashMap<String, i64>) -> Result<Vec<u32>, Error> {
+impl GeneratableSym for Spanned<&Literal> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match &self.val {
             Literal::String(string) => {
                 let mut opcodes = Vec::new();
@@ -226,12 +255,9 @@ impl Generatable for Mnemonic {
     }
 }
 
-fn get_identifier(
-    label: &Spanned<&str>,
-    symbol_table: &HashMap<String, i64>,
-) -> Result<i64, Error> {
-    if let Some(label_line) = symbol_table.get(label.val) {
-        return Ok(*label_line);
+fn get_identifier(label: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i64, Error> {
+    if let Some(label_line) = symbol_table.get_recursive(&label.val) {
+        return Ok(label_line);
     } else {
         return Err(Error::new("Could not find identifier", label.span));
     }
@@ -276,7 +302,7 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
 }
 
 impl Expression {
-    pub fn eval(&self, span: Span, symbol_table: &HashMap<String, i64>) -> Result<i64, Error> {
+    pub fn eval(&self, span: Span, symbol_table: &SymbolTable) -> Result<i64, Error> {
         match self {
             Expression::Number(a) => return Ok(*a),
             Expression::Ident(a) => return get_identifier(&Spanned::new(&a, span), symbol_table),

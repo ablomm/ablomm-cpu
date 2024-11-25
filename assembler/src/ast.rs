@@ -1,5 +1,5 @@
 use crate::Span;
-use std::ops::Deref;
+use std::{cell::RefCell, collections::HashMap, ops::Deref, rc::Rc};
 
 // just a struct to hold a span for error messages
 #[derive(Debug, Clone)]
@@ -24,11 +24,64 @@ impl<T> Deref for Spanned<T> {
 
 #[derive(Debug, Clone)]
 pub enum Statement {
+    Block(Block),
     Operation(Operation),
     Label(String),
     Assignment(Spanned<String>, Spanned<Expression>),
     Literal(Literal),
     Comment(String), // added because maybe it will be useful some day
+}
+
+#[derive(Debug, Clone)]
+pub struct Block {
+    pub statements: Vec<Spanned<Statement>>,
+    pub symbol_table: Rc<RefCell<SymbolTable>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SymbolTable {
+    pub table: HashMap<String, i64>,
+    pub parent: Option<Rc<RefCell<SymbolTable>>>,
+}
+
+impl SymbolTable {
+    pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
+        return self.table.contains_key(key.as_ref());
+    }
+
+    pub fn contains_key_recursive(&self, key: &impl AsRef<str>) -> bool {
+        let value = self.contains_key(key);
+        if value {
+            return true;
+        };
+
+        if let Some(parent) = &self.parent {
+            return parent.borrow().contains_key_recursive(key);
+        }
+
+        return false;
+    }
+
+    pub fn get(&self, key: impl AsRef<str>) -> Option<i64> {
+        return self.table.get(key.as_ref()).copied();
+    }
+
+    pub fn get_recursive(&self, key: &impl AsRef<str>) -> Option<i64> {
+        let value = self.get(key);
+        if let Some(value) = value {
+            return Some(value);
+        }
+
+        if let Some(parent) = &self.parent {
+            return parent.borrow().get_recursive(key);
+        }
+
+        return None;
+    }
+
+    pub fn insert(&mut self, key: String, value: i64) -> Option<i64> {
+        return self.table.insert(key, value);
+    }
 }
 
 #[derive(Debug, Clone)]
