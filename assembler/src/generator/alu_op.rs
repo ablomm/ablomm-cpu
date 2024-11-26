@@ -43,7 +43,7 @@ fn generate_alu_op_2(
             return generate_alu_op_2_num(
                 mnemonic,
                 modifiers,
-                expression.eval(parameters[0].span, symbol_table)?,
+                Spanned::new(expression, parameters[0].span).eval(symbol_table)?,
                 parameters,
             )
         }
@@ -73,7 +73,7 @@ fn generate_alu_op_2_reg(
                 mnemonic,
                 modifiers,
                 register,
-                expression.eval(parameters[1].span, symbol_table)?,
+                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
             )
         }
         _ => {
@@ -164,7 +164,7 @@ fn generate_alu_op_3_reg(
                 mnemonic,
                 modifiers,
                 register,
-                expression.eval(parameters[1].span, symbol_table)?,
+                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
                 parameters,
             )
         }
@@ -197,7 +197,7 @@ fn generate_alu_op_3_reg_reg(
                 modifiers,
                 register1,
                 register2,
-                expression.eval(parameters[2].span, symbol_table)?,
+                Spanned::new(expression, parameters[2].span).eval(symbol_table)?,
             )
         }
         _ => {

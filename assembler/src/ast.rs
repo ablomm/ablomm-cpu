@@ -1,5 +1,5 @@
-use crate::Span;
-use std::{cell::RefCell, collections::HashMap, ops::Deref, rc::Rc};
+use crate::{symbol_table::SymbolTable, Span};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 // just a struct to hold a span for error messages
 #[derive(Debug, Clone)]
@@ -11,6 +11,11 @@ pub struct Spanned<T> {
 impl<T> Spanned<T> {
     pub fn new(val: T, span: Span) -> Self {
         Self { val, span }
+    }
+
+    // converts &Spanned<T> to Spanned<&T>
+    pub fn as_ref(&self) -> Spanned<&T> {
+        return Spanned::new(&self.val, self.span);
     }
 }
 
@@ -36,52 +41,6 @@ pub enum Statement {
 pub struct Block {
     pub statements: Vec<Spanned<Statement>>,
     pub symbol_table: Rc<RefCell<SymbolTable>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct SymbolTable {
-    pub table: HashMap<String, i64>,
-    pub parent: Option<Rc<RefCell<SymbolTable>>>,
-}
-
-impl SymbolTable {
-    pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
-        return self.table.contains_key(key.as_ref());
-    }
-
-    pub fn contains_key_recursive(&self, key: &impl AsRef<str>) -> bool {
-        let value = self.contains_key(key);
-        if value {
-            return true;
-        };
-
-        if let Some(parent) = &self.parent {
-            return parent.borrow().contains_key_recursive(key);
-        }
-
-        return false;
-    }
-
-    pub fn get(&self, key: impl AsRef<str>) -> Option<i64> {
-        return self.table.get(key.as_ref()).copied();
-    }
-
-    pub fn get_recursive(&self, key: &impl AsRef<str>) -> Option<i64> {
-        let value = self.get(key);
-        if let Some(value) = value {
-            return Some(value);
-        }
-
-        if let Some(parent) = &self.parent {
-            return parent.borrow().get_recursive(key);
-        }
-
-        return None;
-    }
-
-    pub fn insert(&mut self, key: String, value: i64) -> Option<i64> {
-        return self.table.insert(key, value);
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -157,7 +116,7 @@ pub enum Modifier {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Condition {
-    NONE = 0,
+    _NONE = 0, // not used, but for completeness
     EQ,
     NE,
     LTU,

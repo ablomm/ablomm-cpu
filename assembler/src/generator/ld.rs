@@ -45,7 +45,7 @@ fn generate_ld_reg(
             return generate_ld_reg_num(
                 modifiers,
                 register,
-                expression.eval(parameters[1].span, symbol_table)?,
+                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
             )
         }
         Parameter::Indirect(parameter) => {
@@ -106,7 +106,7 @@ fn generate_ld_reg_indirect(
             return generate_ld_reg_inum(
                 modifiers,
                 register,
-                expression.eval(parameter.span, symbol_table)?,
+                Spanned::new(expression, parameter.span).eval(symbol_table)?,
             )
         }
         Parameter::RegisterOffset(register2, offset) => {
@@ -114,7 +114,7 @@ fn generate_ld_reg_indirect(
                 modifiers,
                 register,
                 register2,
-                offset.eval(parameter.span, symbol_table)?,
+                offset.as_ref().eval(symbol_table)?,
             )
         }
         _ => {

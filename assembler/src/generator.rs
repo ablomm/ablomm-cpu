@@ -7,7 +7,7 @@ use crate::generator::ld::*;
 use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
-use crate::span::*;
+use crate::symbol_table::SymbolTable;
 use nop::*;
 use std::rc::Rc;
 
@@ -19,9 +19,9 @@ mod pop;
 mod push;
 mod st;
 
-pub fn generate(mut ast: Block) -> Result<String, Error> {
+pub fn compile_ast(ast: &Spanned<&Block>) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
-    pre_process(&mut ast, 0)?;
+    pre_process(ast, 0)?;
 
     let opcodes = ast.generate()?;
     for opcode in opcodes {
@@ -31,11 +31,11 @@ pub fn generate(mut ast: Block) -> Result<String, Error> {
     return Ok(machine_code);
 }
 
-impl Block {
+impl Spanned<&Block> {
     fn generate(&self) -> Result<Vec<u32>, Error> {
         let mut opcodes = Vec::new();
         for statement in &self.statements {
-            opcodes.append(&mut statement.generate(&self.symbol_table.borrow())?);
+            opcodes.append(&mut statement.as_ref().generate(&self.symbol_table.borrow())?);
         }
 
         return Ok(opcodes);
@@ -43,13 +43,13 @@ impl Block {
 }
 
 // symbol table just has the label and the line associated with that label
-fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
+fn pre_process(block: &Spanned<&Block>, start_address: u32) -> Result<u32, Error> {
     let mut line_number: u32 = start_address;
 
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
-                if block.symbol_table.borrow().contains_key(&label) {
+                if block.symbol_table.borrow().contains_key(label) {
                     return Err(Error::new("Identifier already defined", statement.span));
                 }
                 block
@@ -64,8 +64,7 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
 
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
-                let expression_val =
-                    expression.eval(expression.span, &block.symbol_table.borrow())?;
+                let expression_val = expression.as_ref().eval(&block.symbol_table.borrow())?;
 
                 block
                     .symbol_table
@@ -80,12 +79,11 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
             }
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-                line_number = pre_process(&sub_block, line_number)?;
+                line_number = pre_process(&Spanned::new(sub_block, statement.span), line_number)?;
             }
             _ => (),
         }
     }
-    print!("line_num = {}", line_number);
     return Ok(line_number);
 }
 
@@ -120,24 +118,20 @@ impl Literal {
     }
 }
 
-pub trait GeneratableSym {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error>;
-}
-
-impl Spanned<Statement> {
+impl Spanned<&Statement> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match &self.val {
             Statement::Operation(operation) => {
                 Spanned::new(operation, self.span).generate(symbol_table)
             }
-            Statement::Block(block) => block.generate(),
+            Statement::Block(block) => Spanned::new(block, self.span).generate(),
             Statement::Literal(literal) => Spanned::new(literal, self.span).generate(symbol_table),
             _ => Ok(vec![]),
         }
     }
 }
 
-impl GeneratableSym for Spanned<&Operation> {
+impl Spanned<&Operation> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
             Mnemonic::NOP => generate_nop(self),
@@ -154,7 +148,7 @@ impl GeneratableSym for Spanned<&Operation> {
     }
 }
 
-impl GeneratableSym for Spanned<&Literal> {
+impl Spanned<&Literal> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match &self.val {
             Literal::String(string) => {
@@ -173,7 +167,109 @@ impl GeneratableSym for Spanned<&Literal> {
                 return Ok(opcodes);
             }
             Literal::Expression(expression) => {
-                return Ok(vec![expression.eval(self.span, symbol_table)? as u32])
+                return Ok(vec![
+                    Spanned::new(expression, self.span).eval(symbol_table)? as u32,
+                ])
+            }
+        }
+    }
+}
+
+fn get_identifier(label: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i64, Error> {
+    if let Some(label_line) = symbol_table.get_recursive(label.val) {
+        return Ok(label_line);
+    } else {
+        return Err(Error::new("Could not find identifier", label.span));
+    }
+}
+
+fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
+    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
+
+    if conditions.len() > 1 {
+        return Err(Error::new(
+            "Multiple conditions is not supported",
+            conditions[1].span,
+        ));
+    }
+    if alu_modifiers.len() > 0 {
+        return Err(Error::new(
+            "Alu modifiers is not supported on this instruction",
+            modifiers.span,
+        ));
+    }
+
+    return Ok(conditions.generate());
+}
+
+fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
+    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
+
+    if conditions.len() > 1 {
+        return Err(Error::new(
+            "Multiple conditions is not supported",
+            conditions[1].span,
+        ));
+    }
+    if alu_modifiers.len() > 1 {
+        return Err(Error::new(
+            "Multiple alu modifiers is not supported",
+            alu_modifiers[1].span,
+        ));
+    }
+
+    return Ok(conditions.generate() | alu_modifiers.generate());
+}
+
+impl Spanned<&Expression> {
+    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<i64, Error> {
+        match &self.val {
+            // there is a bunch of deref's here (i.e. **a) because a and b are a Box, which has
+            // it's own as_ref() function, but we really need the Spanned::as_ref() function. No
+            // deref's are needed if the Spanned::as_ref() method is named differently, but I
+            // didn't like that
+            Expression::Number(a) => return Ok(*a),
+            Expression::Ident(a) => {
+                return get_identifier(&Spanned::new(&a, self.span), symbol_table)
+            }
+            Expression::Pos(a) => return Ok((**a).as_ref().eval(symbol_table)?),
+            Expression::Neg(a) => return Ok(-(**a).as_ref().eval(symbol_table)?),
+            Expression::Not(a) => return Ok(!(**a).as_ref().eval(symbol_table)?),
+            Expression::Mul(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? * (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Div(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? / (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Remainder(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? % (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Add(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? + (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Sub(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? - (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Shl(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? << (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Shr(a, b) => {
+                // rust will use normal shift right on unsigned types
+                return Ok(((**a).as_ref().eval(symbol_table)? as u64
+                    >> (**b).as_ref().eval(symbol_table)?) as i64);
+            }
+            Expression::Ashr(a, b) => {
+                // rust will use arithmetic shift right on signed types
+                return Ok((**a).as_ref().eval(symbol_table)? >> (**b).as_ref().eval(symbol_table)?);
+            }
+            Expression::And(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? & (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Or(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? | (**b).as_ref().eval(symbol_table)?)
+            }
+            Expression::Xor(a, b) => {
+                return Ok((**a).as_ref().eval(symbol_table)? ^ (**b).as_ref().eval(symbol_table)?)
             }
         }
     }
@@ -252,100 +348,5 @@ impl Generatable for Vec<Spanned<AluModifier>> {
 impl Generatable for Mnemonic {
     fn generate(&self) -> u32 {
         return (*self as u32) << 20;
-    }
-}
-
-fn get_identifier(label: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i64, Error> {
-    if let Some(label_line) = symbol_table.get_recursive(&label.val) {
-        return Ok(label_line);
-    } else {
-        return Err(Error::new("Could not find identifier", label.span));
-    }
-}
-
-fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
-    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
-
-    if conditions.len() > 1 {
-        return Err(Error::new(
-            "Multiple conditions is not supported",
-            conditions[1].span,
-        ));
-    }
-    if alu_modifiers.len() > 0 {
-        return Err(Error::new(
-            "Alu modifiers is not supported on this instruction",
-            modifiers.span,
-        ));
-    }
-
-    return Ok(conditions.generate());
-}
-
-fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
-    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
-
-    if conditions.len() > 1 {
-        return Err(Error::new(
-            "Multiple conditions is not supported",
-            conditions[1].span,
-        ));
-    }
-    if alu_modifiers.len() > 1 {
-        return Err(Error::new(
-            "Multiple alu modifiers is not supported",
-            alu_modifiers[1].span,
-        ));
-    }
-
-    return Ok(conditions.generate() | alu_modifiers.generate());
-}
-
-impl Expression {
-    pub fn eval(&self, span: Span, symbol_table: &SymbolTable) -> Result<i64, Error> {
-        match self {
-            Expression::Number(a) => return Ok(*a),
-            Expression::Ident(a) => return get_identifier(&Spanned::new(&a, span), symbol_table),
-            Expression::Pos(a) => return Ok(a.eval(a.span, symbol_table)?),
-            Expression::Neg(a) => return Ok(-a.eval(a.span, symbol_table)?),
-            Expression::Not(a) => return Ok(!a.eval(a.span, symbol_table)?),
-            Expression::Mul(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? * b.eval(b.span, symbol_table)?)
-            }
-            Expression::Div(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? / b.eval(b.span, symbol_table)?)
-            }
-            Expression::Remainder(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? % b.eval(b.span, symbol_table)?)
-            }
-            Expression::Add(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? + b.eval(b.span, symbol_table)?)
-            }
-            Expression::Sub(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? - b.eval(b.span, symbol_table)?)
-            }
-            Expression::Shl(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? << b.eval(b.span, symbol_table)?)
-            }
-            Expression::Shr(a, b) => {
-                // rust will use normal shift right on unsigned types
-                return Ok(
-                    (a.eval(a.span, symbol_table)? as u64 >> b.eval(b.span, symbol_table)?) as i64,
-                );
-            }
-            Expression::Ashr(a, b) => {
-                // rust will use arithmetic shift right on signed types
-                return Ok(a.eval(a.span, symbol_table)? >> b.eval(b.span, symbol_table)?);
-            }
-            Expression::And(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? & b.eval(b.span, symbol_table)?)
-            }
-            Expression::Or(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? | b.eval(b.span, symbol_table)?)
-            }
-            Expression::Xor(a, b) => {
-                return Ok(a.eval(a.span, symbol_table)? ^ b.eval(b.span, symbol_table)?)
-            }
-        }
     }
 }
