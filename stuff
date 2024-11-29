@@ -71,3 +71,23 @@ need to handle duplicate identifiers. i.e. if the package was already imported, 
 
 will need to modify pre_process to include a start address, since imported files will start at a line number that is not 0.
 the previous pre_process call should also return the last line number which can be then fed into the next imported file's pre_process() call
+
+
+
+make string into expression
+
+make memory clocked
+
+use verilator
+
+use i32 types
+use Wrapped<> to allow integer overflows
+
+check immediates are correct bit length, and error instead of truncating
+maybe have two different values in symbol table for u32 and i32
+
+maybe have parameters all be expressions
+
+expressions = arithemtic expression, string, register, register offset, indirect
+
+maybe combine register and register-offset, i.e. register + 0 = register

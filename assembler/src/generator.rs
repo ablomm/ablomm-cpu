@@ -8,6 +8,7 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
+use internment::Intern;
 use nop::*;
 use std::rc::Rc;
 
@@ -19,7 +20,7 @@ mod pop;
 mod push;
 mod st;
 
-pub fn compile_ast(ast: &Spanned<&Block>) -> Result<String, Error> {
+pub fn compile_ast(ast: &Block) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
     pre_process(ast, 0)?;
 
@@ -31,7 +32,7 @@ pub fn compile_ast(ast: &Spanned<&Block>) -> Result<String, Error> {
     return Ok(machine_code);
 }
 
-impl Spanned<&Block> {
+impl Block {
     fn generate(&self) -> Result<Vec<u32>, Error> {
         let mut opcodes = Vec::new();
         for statement in &self.statements {
@@ -42,8 +43,19 @@ impl Spanned<&Block> {
     }
 }
 
+pub fn find_includes(block: &Spanned<&Block>) -> Vec<Intern<String>> {
+    let mut imports = Vec::new();
+
+    for statement in &block.statements {
+        if let Statement::Include(include) = &statement.val {
+            imports.push(Intern::new(include.val.clone()));
+        }
+    }
+    return imports;
+}
+
 // symbol table just has the label and the line associated with that label
-fn pre_process(block: &Spanned<&Block>, start_address: u32) -> Result<u32, Error> {
+fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
     let mut line_number: u32 = start_address;
 
     for statement in &block.statements {
@@ -76,6 +88,34 @@ fn pre_process(block: &Spanned<&Block>, start_address: u32) -> Result<u32, Error
             }
             Statement::Literal(literal) => {
                 line_number += literal.num_lines();
+            }
+            Statement::Export(exports) => {
+                let symbol_table = &block.symbol_table.borrow();
+                match &symbol_table.parent {
+                    Some(parent_symbol_table) => {
+                        for export in exports {
+                            match symbol_table.get(&export.val) {
+                                Some(value) => {
+                                    parent_symbol_table
+                                        .borrow_mut()
+                                        .insert(export.val.clone(), value);
+                                }
+                                None => {
+                                    return Err(Error::new(
+                                        "Could not find identifier",
+                                        export.span,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                    None => {
+                        return Err(Error::new(
+                            "No parent symbol table found in this scope",
+                            statement.span,
+                        ));
+                    }
+                }
             }
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
@@ -175,11 +215,11 @@ impl Spanned<&Literal> {
     }
 }
 
-fn get_identifier(label: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i64, Error> {
-    if let Some(label_line) = symbol_table.get_recursive(label.val) {
+fn get_identifier(ident: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i64, Error> {
+    if let Some(label_line) = symbol_table.get_recursive(ident.val) {
         return Ok(label_line);
     } else {
-        return Err(Error::new("Could not find identifier", label.span));
+        return Err(Error::new("Could not find identifier", ident.span));
     }
 }
 

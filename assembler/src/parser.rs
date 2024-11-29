@@ -130,6 +130,15 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
         .then_ignore(just('=').padded())
         .then(expression_parser().map_with_span(Spanned::new));
 
+    let export = just("export").ignore_then(
+        text::ident()
+            .padded()
+            .map_with_span(Spanned::new)
+            .separated_by(just(',')),
+    );
+
+    let include = just("include").ignore_then(string_parser().padded().map_with_span(Spanned::new));
+
     return recursive(|statement| {
         let block = statement
             .map_with_span(Spanned::new)
@@ -154,6 +163,8 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
                 .then_ignore(just(';'))
                 .map(|(ident, expr)| Statement::Assignment(ident, expr)),
             literal.then_ignore(just(';')).map(Statement::Literal),
+            export.then_ignore(just(';')).map(Statement::Export),
+            include.then_ignore(just(';')).map(Statement::Include),
             comment_parser().map(Statement::Comment),
         ))
         .padded();
