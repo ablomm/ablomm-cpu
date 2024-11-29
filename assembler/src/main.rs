@@ -27,7 +27,10 @@ fn main() {
                 print!("{}", machine_code);
             }
         },
-        Err(errors) => {
+        Err((errors, mut cache)) => {
+            errors.iter().for_each(|error| {
+                error.eprint(&mut cache).ok();
+            });
             process::exit(-1);
         }
     }

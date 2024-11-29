@@ -1,7 +1,7 @@
 use internment::Intern;
 use std::ops::Range;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {
     src: Intern<String>,
     range: (usize, usize),

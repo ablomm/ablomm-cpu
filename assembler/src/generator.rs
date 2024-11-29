@@ -20,6 +20,7 @@ mod pop;
 mod push;
 mod st;
 
+// cannot include span because blocks may span multiple different files
 pub fn compile_ast(ast: &Block) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
     pre_process(ast, 0)?;
@@ -32,6 +33,7 @@ pub fn compile_ast(ast: &Block) -> Result<String, Error> {
     return Ok(machine_code);
 }
 
+// cannot include span because blocks may span multiple different files
 impl Block {
     fn generate(&self) -> Result<Vec<u32>, Error> {
         let mut opcodes = Vec::new();
@@ -43,18 +45,7 @@ impl Block {
     }
 }
 
-pub fn find_includes(block: &Spanned<&Block>) -> Vec<Intern<String>> {
-    let mut imports = Vec::new();
-
-    for statement in &block.statements {
-        if let Statement::Include(include) = &statement.val {
-            imports.push(Intern::new(include.val.clone()));
-        }
-    }
-    return imports;
-}
-
-// symbol table just has the label and the line associated with that label
+// cannot include span because blocks may span multiple different files
 fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
     let mut line_number: u32 = start_address;
 

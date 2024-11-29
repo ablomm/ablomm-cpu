@@ -2,7 +2,7 @@ use crate::{symbol_table::SymbolTable, Span};
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 // just a struct to hold a span for error messages
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Spanned<T> {
     pub val: T,
     pub span: Span,
