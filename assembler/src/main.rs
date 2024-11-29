@@ -17,12 +17,8 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let assembly_code = fs::read_to_string(&args.input).expect("Error reading file");
-    let src = Intern::new(args.input);
 
-    let mut cache = sources(std::iter::once((src, &assembly_code)));
-
-    match assemble(&assembly_code, src) {
+    match assemble(&args.input) {
         Ok(machine_code) => match args.output {
             Some(output_file) => {
                 fs::write(output_file, machine_code).expect("Error writing file");
@@ -31,7 +27,7 @@ fn main() {
                 print!("{}", machine_code);
             }
         },
-        Err(errors) => {
+        Err((errors, mut cache)) => {
             errors.iter().for_each(|error| {
                 error.eprint(&mut cache).ok();
             });

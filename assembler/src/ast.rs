@@ -2,7 +2,7 @@ use crate::{symbol_table::SymbolTable, Span};
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 // just a struct to hold a span for error messages
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Spanned<T> {
     pub val: T,
     pub span: Span,
@@ -34,6 +34,8 @@ pub enum Statement {
     Label(String),
     Assignment(Spanned<String>, Spanned<Expression>),
     Literal(Literal),
+    Export(Vec<Spanned<String>>),
+    Include(Spanned<String>),
     Comment(String), // added because maybe it will be useful some day
 }
 

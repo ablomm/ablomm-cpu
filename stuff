@@ -7,67 +7,26 @@ maybe have each operation allowed to generate multiple opcodes and have "push {r
 negative numbers in argument converts it to the equivalent instruction, e.g. "add r1, -3" gets generated as "sub r1, 3"
 /scopes for identifiers (labels, and constants) i.e. {} blocks
 
-imports
+/imports
+make string into expression
 
-i.e. import package.asm;
+make memory clocked
 
-exports
+use verilator
 
-i.e. export some_function;
+use i32 types
+use Wrapped<> to allow integer overflows
 
-works with scopes i.e. export just adds symbol to parents symbol table
-imports simply work like this
+check immediates are correct bit length, and error instead of truncating
+maybe have two different values in symbol table for u32 and i32
 
-option 1:
-{
-	import package;
-	// rest of file
+maybe have parameters all be expressions
 
+expressions = arithemtic expression, string, register, register offset, indirect
 
-	// inserted after pre_process of parent, which finds the import  
-	{
-		export some_function;
+maybe combine register and register-offset, i.e. register + 0 = register
 
-		some_function:
-			push lr;
-			pop pc;
-	}
-}
+make imports paths relative to the importees path instead of relative to where the assembler program is ran
+in lib.rs there is a bunch of clones for the cache, maybe possible to reduce it
 
-
-OR option 2:
-
-{
-	{
-		import package;
-		// rest of file
-	}
-
-	// inserted after pre_process of first block, which finds the import
-	{
-		export some_function;
-
-		some_function:
-			push lr;
-			pop pc;
-	}
-}
-
-option 1 would require exported function to be unique in the importer's scope (i.e. couldn't define some_function: in importer).
-option 2 would allow importer to define the same function, it would simply hide the importee's function.
-
-option 1 allows importer's scope to be passed to importee (maybe this is good, maybe it is bad) (probably bad, since you should really just pass a callback as a parameters)
-option 2 does not allow importee to see scope of importer.
-
-option 1 transitive dependencies (i.e. importee's imports) are not visible to importer
-option 2 transitive dependencies are visible to importer.
-
-overall, I think option 2 might be a bit better
-
-allow cyclic dependencies by simply keeping a map of each file name and it's symbol table. If a depenencies was already imported previously, just use the already created symbol table, probably would only work with
-option 2 since option 1 modifies the importer's symbol table.
-
-need to handle duplicate identifiers. i.e. if the package was already imported, do nothing (because some packages might have a common dependency) 
-
-will need to modify pre_process to include a start address, since imported files will start at a line number that is not 0.
-the previous pre_process call should also return the last line number which can be then fed into the next imported file's pre_process() call
+interns on identifiers
