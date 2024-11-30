@@ -1,8 +1,6 @@
 use ablomm_asm::*;
-use ariadne::sources;
 use clap::Parser;
-use internment::Intern;
-use std::{fs, process};
+use std::{fs, process::ExitCode};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -15,23 +13,26 @@ struct Args {
     output: Option<String>,
 }
 
-fn main() {
+fn main() -> ExitCode {
     let args = Args::parse();
 
     match assemble(&args.input) {
-        Ok(machine_code) => match args.output {
-            Some(output_file) => {
-                fs::write(output_file, machine_code).expect("Error writing file");
+        Ok(machine_code) => {
+            match args.output {
+                Some(output_file) => {
+                    fs::write(output_file, machine_code).expect("Error writing file");
+                }
+                None => {
+                    print!("{}", machine_code);
+                }
             }
-            None => {
-                print!("{}", machine_code);
-            }
-        },
+            return ExitCode::SUCCESS;
+        }
         Err((errors, mut cache)) => {
             errors.iter().for_each(|error| {
                 error.eprint(&mut cache).ok();
             });
-            process::exit(-1);
+            return ExitCode::FAILURE;
         }
     }
 }
