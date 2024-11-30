@@ -15,30 +15,29 @@ impl Spanned<&Expression> {
             Expression::Neg(a) => return Ok(-((**a).as_ref().eval(symbol_table)? as i32) as u32),
             Expression::Not(a) => return Ok(!(**a).as_ref().eval(symbol_table)?),
             Expression::Mul(a, b) => {
+                // multiplication works with 2's compliment; no need to cast
                 return Ok((**a)
                     .as_ref()
                     .eval(symbol_table)?
-                    .wrapping_mul((**b).as_ref().eval(symbol_table)?))
+                    .wrapping_mul((**b).as_ref().eval(symbol_table)?));
             }
             Expression::Div(a, b) => {
-                let denominator = (**b).as_ref().eval(symbol_table)?;
+                let denominator = (**b).as_ref().eval(symbol_table)? as i32;
                 if denominator == 0 {
                     return Err(Error::new("divison by 0 is undefined", b.span));
                 }
-                return Ok((**a)
-                    .as_ref()
-                    .eval(symbol_table)?
-                    .wrapping_div((**b).as_ref().eval(symbol_table)?));
+                return Ok(
+                    ((**a).as_ref().eval(symbol_table)? as i32).wrapping_div(denominator) as u32,
+                );
             }
             Expression::Remainder(a, b) => {
-                let denominator = (**b).as_ref().eval(symbol_table)?;
+                let denominator = (**b).as_ref().eval(symbol_table)? as i32;
                 if denominator == 0 {
                     return Err(Error::new("divison by 0 is undefined", b.span));
                 }
-                return Ok((**a)
-                    .as_ref()
-                    .eval(symbol_table)?
-                    .wrapping_rem((**b).as_ref().eval(symbol_table)?));
+                return Ok(
+                    ((**a).as_ref().eval(symbol_table)? as i32).wrapping_rem(denominator) as u32,
+                );
             }
             Expression::Add(a, b) => {
                 return Ok((**a)
