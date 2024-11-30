@@ -104,7 +104,7 @@ fn generate_alu_op_2_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     return generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register, register, number);
 }
@@ -112,7 +112,7 @@ fn generate_alu_op_2_reg_num(
 fn generate_alu_op_2_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
 ) -> Result<u32, Error> {
     match &parameters[1].val {
@@ -126,7 +126,7 @@ fn generate_alu_op_2_num(
 fn generate_alu_op_2_num_reg(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
     register: &Register,
 ) -> Result<u32, Error> {
     return generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register);
@@ -242,7 +242,7 @@ fn generate_alu_op_3_reg_reg_num(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register1: &Register,
     register2: &Register,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     assert_bit_length(&number, 8)?;
@@ -251,7 +251,7 @@ fn generate_alu_op_3_reg_reg_num(
     opcode |= AluOpFlags::Immediate.generate();
     opcode |= register1.generate() << 12;
     opcode |= register2.generate() << 8;
-    opcode |= number.val as u32 & 0xff;
+    opcode |= number.val & 0xff;
     return Ok(opcode);
 }
 
@@ -259,7 +259,7 @@ fn generate_alu_op_3_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
 ) -> Result<u32, Error> {
     match &parameters[2].val {
@@ -274,7 +274,7 @@ fn generate_alu_op_3_reg_num_reg(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register1: &Register,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
     register2: &Register,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;

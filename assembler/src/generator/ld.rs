@@ -85,14 +85,14 @@ fn generate_ld_reg_reg(
 fn generate_ld_reg_num(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     assert_bit_length(&number, 16)?;
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LDI.generate();
     opcode |= register.generate() << 16;
-    opcode |= number.val as u32 & 0xffff;
+    opcode |= number.val & 0xffff;
     return Ok(opcode);
 }
 
@@ -146,27 +146,27 @@ fn generate_ld_reg_ireg_offset(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register1: &Register,
     register2: &Register,
-    offset: i32,
+    offset: u32,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LDR.generate();
     opcode |= register1.generate() << 16;
     opcode |= register2.generate() << 12;
-    opcode |= offset as u32 & 0xfff;
+    opcode |= offset & 0xfff;
     return Ok(opcode);
 }
 
 fn generate_ld_reg_inum(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<i32>,
+    number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     assert_bit_length(&number, 16)?;
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::LD.generate();
     opcode |= register.generate() << 16;
-    opcode |= number.val as u32 & 0xffff;
+    opcode |= number.val & 0xffff;
     return Ok(opcode);
 }

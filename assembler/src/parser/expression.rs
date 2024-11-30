@@ -2,12 +2,12 @@ use super::*;
 
 pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
     let bin_num = just("0b")
-        .ignore_then(text::digits(2).map(|s: String| i64::from_str_radix(&s, 2).unwrap() as i32));
+        .ignore_then(text::digits(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
     let oct_num = just("0o")
-        .ignore_then(text::digits(8).map(|s: String| i64::from_str_radix(&s, 8).unwrap() as i32));
+        .ignore_then(text::digits(8).map(|s: String| u32::from_str_radix(&s, 8).unwrap()));
     let hex_num = just("0x")
-        .ignore_then(text::digits(16).map(|s: String| i64::from_str_radix(&s, 16).unwrap() as i32));
-    let dec_num = text::digits(10).map(|s: String| i64::from_str_radix(&s, 10).unwrap() as i32);
+        .ignore_then(text::digits(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
+    let dec_num = text::digits(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
     // we're able to do that because empty chars ('') are not supported
@@ -21,7 +21,7 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
     let char_num = escape_char
         .or(any())
         .delimited_by(just('\''), just('\''))
-        .map(|c| c as i32);
+        .map(|c| c as u32);
 
     let number = choice((bin_num, oct_num, hex_num, dec_num, char_num));
 

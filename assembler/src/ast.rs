@@ -53,7 +53,7 @@ pub enum Literal {
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    Number(i32),
+    Number(u32),
     Ident(String),
     Pos(Box<Spanned<Expression>>),
     Neg(Box<Spanned<Expression>>),
