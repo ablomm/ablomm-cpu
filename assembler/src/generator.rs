@@ -10,6 +10,9 @@ use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
 use internment::Intern;
 use nop::*;
+use std::fmt::Display;
+use std::ops::Range;
+use std::ops::RangeBounds;
 use std::rc::Rc;
 
 mod alu_op;
@@ -251,14 +254,16 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
     return Ok(conditions.generate() | alu_modifiers.generate());
 }
 
-fn assert_bit_length(number: &Spanned<u32>, bit_length: usize) -> Result<(), Error> {
-    if number.val & (1 << bit_length) - 1 != number.val {
+// asserts the number is in the given range, range is inclusive of lower value, exclusive of higher
+fn assert_range<T: Display + PartialOrd>(
+    number: &Spanned<T>,
+    range: Range<T>,
+) -> Result<(), Error> {
+    if !range.contains(&number.val) {
         return Err(Error::new(
             format!(
-                "Only {} bit number supported, expression evaluates to {}, which is {} bits",
-                bit_length,
-                number.val,
-                (number.val as f32).log2().ceil()
+                "Only argument in range of [{}, {}) is supported, expression evaluates to {}",
+                range.start, range.end, number.val,
             ),
             number.span,
         ));
