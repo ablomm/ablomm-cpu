@@ -15,7 +15,7 @@ mod expression;
 mod keywords;
 
 pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
-    return statement_parser()
+    statement_parser()
         .map_with_span(Spanned::new)
         .repeated()
         .then_ignore(end())
@@ -26,15 +26,16 @@ pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
                 parent: None,
             })),
         })
-        .map_with_span(Spanned::new);
+        .map_with_span(Spanned::new)
 }
 
 fn comment_parser() -> impl Parser<char, String, Error = Error> {
     let line_comment = just("//").ignore_then(take_until(just("\n")).padded());
     let multiline_comment = just("/*").ignore_then(take_until(just("*/")).padded());
-    return line_comment
+
+    line_comment
         .or(multiline_comment)
-        .map(|(_, comment)| comment.into());
+        .map(|(_, comment)| comment.into())
 }
 
 fn string_parser() -> impl Parser<char, String, Error = Error> {
@@ -47,11 +48,11 @@ fn string_parser() -> impl Parser<char, String, Error = Error> {
         just('0').to('\0'),
     )));
 
-    return filter(|c| *c != '\\' && *c != '"')
+    filter(|c| *c != '\\' && *c != '"')
         .or(escape_string)
         .repeated()
         .collect::<String>()
-        .delimited_by(just('"'), just('"'));
+        .delimited_by(just('"'), just('"'))
 }
 
 fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
@@ -76,12 +77,13 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
             });
 
         let indirect = parameter.delimited_by(just('['), just(']'));
-        return choice((
+
+        choice((
             register_offset,
             register_parser().map(Parameter::Register),
             expression_parser().map(Parameter::Expression),
             indirect.map(|i| Parameter::Indirect(Box::new(i))),
-        ));
+        ))
     });
 
     let modifier = just('.').ignore_then(choice((
@@ -102,7 +104,7 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
             modifiers,
         });
 
-    return full_mnemonic
+    full_mnemonic
         .map_with_span(Spanned::new)
         .padded()
         .then(
@@ -115,7 +117,7 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
         .map(|(full_mnemonic, parameters)| Operation {
             full_mnemonic,
             parameters,
-        });
+        })
 }
 
 fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
@@ -142,7 +144,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
 
     let import = just("import").ignore_then(string_parser().map_with_span(Spanned::new).padded());
 
-    return recursive(|statement| {
+    recursive(|statement| {
         let block = statement
             .map_with_span(Spanned::new)
             .repeated()
@@ -156,7 +158,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
                 })),
             });
 
-        return choice((
+        choice((
             block.map(Statement::Block),
             operation_parser()
                 .then_ignore(just(';'))
@@ -170,6 +172,6 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
             import.then_ignore(just(';')).map(Statement::Import),
             comment_parser().map(Statement::Comment),
         ))
-        .padded();
-    });
+        .padded()
+    })
 }

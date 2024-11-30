@@ -31,8 +31,8 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     let mut statements = Vec::new();
     let mut cache = HashMap::new();
     let mut import_stack = VecDeque::new();
-    // create a dummy span because the assert before ""should"" guarantee no errors for that span
 
+    // create a dummy span because the assert before ""should"" guarantee no errors for that span
     let dummy_span = Span::new(Intern::new(src.to_str().unwrap().to_string()), 0..0);
     import_stack.push_back(Spanned::new(src, dummy_span));
 
@@ -108,7 +108,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
         symbol_table: root_symbol_table,
     };
 
-    return compile_ast(&ast).map_err(|error| (vec![error], sources(cache.into_iter())));
+    compile_ast(&ast).map_err(|error| (vec![error], sources(cache.into_iter())))
 }
 
 fn find_imports(block: &Spanned<&Block>) -> Vec<Spanned<Intern<String>>> {
@@ -119,5 +119,6 @@ fn find_imports(block: &Spanned<&Block>) -> Vec<Spanned<Intern<String>>> {
             imports.push(Spanned::new(Intern::new(import.val.clone()), import.span));
         }
     }
-    return imports;
+
+    imports
 }

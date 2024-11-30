@@ -33,7 +33,7 @@ pub fn compile_ast(ast: &Block) -> Result<String, Error> {
         machine_code.push_str(&format!("{:0>8x}\n", opcode));
     }
 
-    return Ok(machine_code);
+    Ok(machine_code)
 }
 
 // cannot include span because blocks may span multiple different files
@@ -44,7 +44,7 @@ impl Block {
             opcodes.append(&mut statement.as_ref().generate(&self.symbol_table.borrow())?);
         }
 
-        return Ok(opcodes);
+        Ok(opcodes)
     }
 }
 
@@ -72,7 +72,7 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
                 block
                     .symbol_table
                     .borrow_mut()
-                    .insert(identifier.val.clone(), expression_val);
+                    .insert(identifier.val, expression_val);
             }
             Statement::Operation(_) => {
                 line_number += 1;
@@ -87,9 +87,7 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
                         for export in exports {
                             match symbol_table.get(&export.val) {
                                 Some(value) => {
-                                    parent_symbol_table
-                                        .borrow_mut()
-                                        .insert(export.val.clone(), value);
+                                    parent_symbol_table.borrow_mut().insert(export.val, value);
                                 }
                                 None => {
                                     return Err(Error::new(
@@ -115,7 +113,8 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
             _ => (),
         }
     }
-    return Ok(line_number);
+
+    Ok(line_number)
 }
 
 fn seperate_modifiers(
@@ -135,16 +134,14 @@ fn seperate_modifiers(
         }
     }
 
-    return (conditions, alu_modifiers);
+    (conditions, alu_modifiers)
 }
 
 impl Literal {
     pub fn num_lines(&self) -> u32 {
         match self {
-            Literal::String(string) => {
-                return ((string.len() as f32) / 4.0).ceil() as u32;
-            }
-            _ => return 1,
+            Literal::String(string) => ((string.len() as f32) / 4.0).ceil() as u32,
+            _ => 1,
         }
     }
 }
@@ -165,14 +162,14 @@ impl Spanned<&Statement> {
 impl Spanned<&Operation> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
-            Mnemonic::NOP => generate_nop(self),
-            Mnemonic::LD => generate_ld(self, symbol_table),
-            Mnemonic::ST => generate_st(self, symbol_table),
-            Mnemonic::PUSH => generate_push(self),
-            Mnemonic::POP => generate_pop(self),
-            Mnemonic::INT => generate_int(self),
+            Mnemonic::Nop => generate_nop(self),
+            Mnemonic::Ld => generate_ld(self, symbol_table),
+            Mnemonic::St => generate_st(self, symbol_table),
+            Mnemonic::Push => generate_push(self),
+            Mnemonic::Pop => generate_pop(self),
+            Mnemonic::Int => generate_int(self),
             // alu ops
-            Mnemonic::NOT | Mnemonic::NEG => generate_unary_alu_op(self, symbol_table),
+            Mnemonic::Not | Mnemonic::Neg => generate_unary_alu_op(self, symbol_table),
             _ => generate_alu_op(self, symbol_table),
         }
         .map(|opcode| vec![opcode])
@@ -191,14 +188,14 @@ impl Spanned<&Literal> {
                     // big endian, although not technically since it all exists in the same memory
                     // address
                     for (i, c) in chunk.iter().enumerate() {
-                        opcode |= (*c as u32) << i * 8;
+                        opcode |= (*c as u32) << (i * 8);
                     }
                     opcodes.push(opcode);
                 }
-                return Ok(opcodes);
+                Ok(opcodes)
             }
             Literal::Expression(expression) => {
-                return Ok(vec![Spanned::new(expression, self.span).eval(symbol_table)?])
+                Ok(vec![Spanned::new(expression, self.span).eval(symbol_table)?])
             }
         }
     }
@@ -209,9 +206,9 @@ fn get_identifier(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     if let Some(label_line) = symbol_table.get_recursive(ident.val) {
-        return Ok(label_line);
+        Ok(label_line)
     } else {
-        return Err(Error::new("Could not find identifier", ident.span));
+        Err(Error::new("Could not find identifier", ident.span))
     }
 }
 
@@ -224,14 +221,14 @@ fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Re
             conditions[1].span,
         ));
     }
-    if alu_modifiers.len() > 0 {
+    if !alu_modifiers.is_empty() {
         return Err(Error::new(
             "Alu modifiers is not supported on this instruction",
             modifiers.span,
         ));
     }
 
-    return Ok(conditions.generate());
+    Ok(conditions.generate())
 }
 
 fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
@@ -250,7 +247,7 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
         ));
     }
 
-    return Ok(conditions.generate() | alu_modifiers.generate());
+    Ok(conditions.generate() | alu_modifiers.generate())
 }
 
 // asserts the number is in the given range, range is inclusive of lower value, exclusive of higher
@@ -267,7 +264,8 @@ fn assert_range<T: Display + PartialOrd>(
             number.span,
         ));
     }
-    return Ok(());
+
+    Ok(())
 }
 
 pub trait Generatable {
@@ -276,19 +274,19 @@ pub trait Generatable {
 
 impl Generatable for Register {
     fn generate(&self) -> u32 {
-        return *self as u32;
+        *self as u32
     }
 }
 
 impl Generatable for Condition {
     fn generate(&self) -> u32 {
-        return (*self as u32) << 28;
+        (*self as u32) << 28
     }
 }
 
 impl Generatable for AluOpFlags {
     fn generate(&self) -> u32 {
-        return (*self as u32) << 16;
+        (*self as u32) << 16
     }
 }
 
@@ -316,7 +314,8 @@ impl Generatable for Vec<Spanned<Modifier>> {
         for modifier in self {
             opcode |= modifier.generate();
         }
-        return opcode;
+
+        opcode
     }
 }
 
@@ -326,7 +325,8 @@ impl Generatable for Vec<Spanned<Condition>> {
         for condition in self {
             opcode |= condition.generate();
         }
-        return opcode;
+
+        opcode
     }
 }
 
@@ -336,12 +336,13 @@ impl Generatable for Vec<Spanned<AluModifier>> {
         for alu_modifier in self {
             opcode |= alu_modifier.generate();
         }
-        return opcode;
+
+        opcode
     }
 }
 
 impl Generatable for Mnemonic {
     fn generate(&self) -> u32 {
-        return (*self as u32) << 20;
+        (*self as u32) << 20
     }
 }

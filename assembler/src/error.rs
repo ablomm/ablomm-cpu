@@ -32,11 +32,11 @@ impl Error {
     }
 
     pub fn eprint(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
-        return self.write(cache, std::io::stderr());
+        self.write(cache, std::io::stderr())
     }
 
     pub fn print(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
-        return self.write(cache, std::io::stdout());
+        self.write(cache, std::io::stdout())
     }
 }
 
@@ -53,7 +53,7 @@ impl chumsky::Error<char> for Error {
             "Expected one of {}, but found {}",
             expected
                 .into_iter()
-                .filter_map(|e| e)
+                .flatten()
                 .map(|e| format!("'{}'", e.escape_default()))
                 .collect::<Vec<_>>()
                 .join("or "),
@@ -63,11 +63,14 @@ impl chumsky::Error<char> for Error {
         );
         Self { message, span }
     }
+
+    // not implemented
     fn with_label(self, _label: Self::Label) -> Self {
-        return self;
+        self
     }
 
+    // not implemented
     fn merge(self, _other: Self) -> Self {
-        return self;
+        self
     }
 }

@@ -11,6 +11,6 @@ pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
 
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(&operation.full_mnemonic.modifiers)?;
-    opcode |= Mnemonic::NOP.generate();
-    return Ok(opcode);
+    opcode |= Mnemonic::Nop.generate();
+    Ok(opcode)
 }

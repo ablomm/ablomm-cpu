@@ -67,7 +67,8 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
             )
             .foldl(|lhs, (op, rhs)| {
                 let span = lhs.span.union(&rhs.span);
-                return Spanned::new(op(Box::new(lhs), Box::new(rhs)), span);
+
+                Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
             })
             .boxed();
 
@@ -85,7 +86,8 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
             )
             .foldl(|lhs, (op, rhs)| {
                 let span = lhs.span.union(&rhs.span);
-                return Spanned::new(op(Box::new(lhs), Box::new(rhs)), span);
+
+                Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
             })
             .boxed();
 
@@ -104,7 +106,8 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
             )
             .foldl(|lhs, (op, rhs)| {
                 let span = lhs.span.union(&rhs.span);
-                return Spanned::new(op(Box::new(lhs), Box::new(rhs)), span);
+
+                Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
             })
             .boxed();
 
@@ -113,7 +116,8 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
             .then(just('&').padded().then(shift.clone()).repeated())
             .foldl(|lhs, (_op, rhs)| {
                 let span = lhs.span.union(&rhs.span);
-                return Spanned::new(Expression::And(Box::new(lhs), Box::new(rhs)), span);
+
+                Spanned::new(Expression::And(Box::new(lhs), Box::new(rhs)), span)
             })
             .boxed();
 
@@ -122,7 +126,8 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
             .then(just('^').padded().then(and.clone()).repeated())
             .foldl(|lhs, (_op, rhs)| {
                 let span = lhs.span.union(&rhs.span);
-                return Spanned::new(Expression::Xor(Box::new(lhs), Box::new(rhs)), span);
+
+                Spanned::new(Expression::Xor(Box::new(lhs), Box::new(rhs)), span)
             })
             .boxed();
 
@@ -131,12 +136,13 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
             .then(just('|').padded().then(xor.clone()).repeated())
             .foldl(|lhs, (_op, rhs)| {
                 let span = lhs.span.union(&rhs.span);
-                return Spanned::new(Expression::Or(Box::new(lhs), Box::new(rhs)), span);
+
+                Spanned::new(Expression::Or(Box::new(lhs), Box::new(rhs)), span)
             })
             .boxed();
 
-        return or.map(|expression| expression.val);
+        or.map(|expression| expression.val)
     });
 
-    return expr;
+    expr
 }

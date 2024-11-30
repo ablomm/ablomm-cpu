@@ -26,13 +26,15 @@ fn main() -> ExitCode {
                     print!("{}", machine_code);
                 }
             }
-            return ExitCode::SUCCESS;
+
+            ExitCode::SUCCESS
         }
         Err((errors, mut cache)) => {
             errors.iter().for_each(|error| {
                 error.eprint(&mut cache).ok();
             });
-            return ExitCode::FAILURE;
+
+            ExitCode::FAILURE
         }
     }
 }

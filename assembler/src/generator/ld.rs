@@ -12,21 +12,17 @@ pub fn generate_ld(
     }
 
     match &operation.parameters[0].val {
-        Parameter::Register(register) => {
-            return generate_ld_reg(
-                &operation.full_mnemonic.modifiers,
-                register,
-                &operation.parameters,
-                symbol_table,
-            )
-        }
+        Parameter::Register(register) => generate_ld_reg(
+            &operation.full_mnemonic.modifiers,
+            register,
+            &operation.parameters,
+            symbol_table,
+        ),
 
-        _ => {
-            return Err(Error::new(
-                "Expected a register",
-                operation.parameters[0].span,
-            ))
-        }
+        _ => Err(Error::new(
+            "Expected a register",
+            operation.parameters[0].span,
+        )),
     }
 }
 
@@ -37,34 +33,26 @@ fn generate_ld_reg(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     match &parameters[1].val {
-        Parameter::Register(register2) => {
-            return generate_ld_reg_reg(modifiers, register, &register2)
-        }
+        Parameter::Register(register2) => generate_ld_reg_reg(modifiers, register, register2),
 
-        Parameter::Expression(expression) => {
-            return generate_ld_reg_num(
-                modifiers,
-                register,
-                &Spanned::new(
-                    Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
-                    parameters[1].span,
-                ),
-            )
-        }
-        Parameter::Indirect(parameter) => {
-            return generate_ld_reg_indirect(
-                modifiers,
-                register,
-                &Spanned::new(parameter, parameters[1].span),
-                symbol_table,
-            )
-        }
-        _ => {
-            return Err(Error::new(
-                "Expected either a register, expression, or indirect",
+        Parameter::Expression(expression) => generate_ld_reg_num(
+            modifiers,
+            register,
+            &Spanned::new(
+                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
                 parameters[1].span,
-            ));
-        }
+            ),
+        ),
+        Parameter::Indirect(parameter) => generate_ld_reg_indirect(
+            modifiers,
+            register,
+            &Spanned::new(parameter, parameters[1].span),
+            symbol_table,
+        ),
+        _ => Err(Error::new(
+            "Expected either a register, expression, or indirect",
+            parameters[1].span,
+        )),
     }
 }
 
@@ -76,10 +64,10 @@ fn generate_ld_reg_reg(
     // MOV
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_alu(modifiers)?;
-    opcode |= Mnemonic::PASS.generate();
+    opcode |= Mnemonic::Pass.generate();
     opcode |= register1.generate() << 12;
     opcode |= register2.generate() << 4;
-    return Ok(opcode);
+    Ok(opcode)
 }
 
 fn generate_ld_reg_num(
@@ -90,10 +78,10 @@ fn generate_ld_reg_num(
     assert_range(number, 0..(1 << 16))?;
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::LDI.generate();
+    opcode |= Mnemonic::Ldi.generate();
     opcode |= register.generate() << 16;
     opcode |= number.val & 0xffff;
-    return Ok(opcode);
+    Ok(opcode)
 }
 
 fn generate_ld_reg_indirect(
@@ -103,33 +91,25 @@ fn generate_ld_reg_indirect(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     match parameter.val {
-        Parameter::Register(register2) => {
-            return generate_ld_reg_ireg(modifiers, register, register2)
-        }
-        Parameter::Expression(expression) => {
-            return generate_ld_reg_inum(
-                modifiers,
-                register,
-                &Spanned::new(
-                    Spanned::new(expression, parameter.span).eval(symbol_table)?,
-                    parameter.span,
-                ),
-            )
-        }
-        Parameter::RegisterOffset(register2, offset) => {
-            return generate_ld_reg_ireg_offset(
-                modifiers,
-                register,
-                register2,
-                &Spanned::new(offset.as_ref().eval(symbol_table)? as i32, offset.span),
-            )
-        }
-        _ => {
-            return Err(Error::new(
-                "Expected either a register, expression, or register offset",
+        Parameter::Register(register2) => generate_ld_reg_ireg(modifiers, register, register2),
+        Parameter::Expression(expression) => generate_ld_reg_inum(
+            modifiers,
+            register,
+            &Spanned::new(
+                Spanned::new(expression, parameter.span).eval(symbol_table)?,
                 parameter.span,
-            ))
-        }
+            ),
+        ),
+        Parameter::RegisterOffset(register2, offset) => generate_ld_reg_ireg_offset(
+            modifiers,
+            register,
+            register2,
+            &Spanned::new(offset.as_ref().eval(symbol_table)? as i32, offset.span),
+        ),
+        _ => Err(Error::new(
+            "Expected either a register, expression, or register offset",
+            parameter.span,
+        )),
     }
 }
 
@@ -141,10 +121,10 @@ fn generate_ld_reg_ireg(
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::LDR.generate();
+    opcode |= Mnemonic::Ldr.generate();
     opcode |= register1.generate() << 16;
     opcode |= register2.generate() << 12;
-    return Ok(opcode);
+    Ok(opcode)
 }
 
 fn generate_ld_reg_ireg_offset(
@@ -156,7 +136,7 @@ fn generate_ld_reg_ireg_offset(
     assert_range(offset, (-1 << 11)..(1 << 11))?;
     let mut opcode = generate_ld_reg_ireg(modifiers, register1, register2)?;
     opcode |= offset.val as u32 & 0xfff;
-    return Ok(opcode);
+    Ok(opcode)
 }
 
 fn generate_ld_reg_inum(
@@ -167,8 +147,8 @@ fn generate_ld_reg_inum(
     assert_range(number, 0..(1 << 16))?;
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::LD.generate();
+    opcode |= Mnemonic::Ld.generate();
     opcode |= register.generate() << 16;
     opcode |= number.val & 0xffff;
-    return Ok(opcode);
+    Ok(opcode)
 }
