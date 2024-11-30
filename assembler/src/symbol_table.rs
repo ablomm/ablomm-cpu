@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
-    pub table: HashMap<String, i32>,
+    pub table: HashMap<String, u32>,
     pub parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
@@ -32,7 +32,7 @@ impl SymbolTable {
         return false;
     }
 
-    pub fn get<Q>(&self, key: &Q) -> Option<i32>
+    pub fn get<Q>(&self, key: &Q) -> Option<u32>
     where
         Q: Eq + Hash + ?Sized,
         String: std::borrow::Borrow<Q>,
@@ -40,7 +40,7 @@ impl SymbolTable {
         return self.table.get(key).copied();
     }
 
-    pub fn get_recursive<Q>(&self, key: &Q) -> Option<i32>
+    pub fn get_recursive<Q>(&self, key: &Q) -> Option<u32>
     where
         Q: Eq + Hash + ?Sized,
         String: std::borrow::Borrow<Q>,
@@ -57,7 +57,7 @@ impl SymbolTable {
         return None;
     }
 
-    pub fn insert(&mut self, key: String, value: i32) -> Option<i32> {
+    pub fn insert(&mut self, key: String, value: u32) -> Option<u32> {
         return self.table.insert(key, value);
     }
 }
