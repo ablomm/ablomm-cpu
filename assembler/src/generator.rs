@@ -196,9 +196,7 @@ impl Spanned<&Literal> {
                 return Ok(opcodes);
             }
             Literal::Expression(expression) => {
-                return Ok(vec![
-                    Spanned::new(expression, self.span).eval(symbol_table)? as u32,
-                ])
+                return Ok(vec![Spanned::new(expression, self.span).eval(symbol_table)?])
             }
         }
     }

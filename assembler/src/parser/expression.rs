@@ -36,7 +36,9 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
 
         let unary = choice((
             just('+').to(Expression::Pos as fn(_) -> _),
-            just('-').to(Expression::Neg as fn(_) -> _),
+            // purposely disallow negatives, as everything should be unsigned
+            // (negatives are still used in register offsets, as the cpu treats that as signed)
+            // just('-').to(Expression::Neg as fn(_) -> _),
             just('~').to(Expression::Not as fn(_) -> _),
         ))
         .padded()
