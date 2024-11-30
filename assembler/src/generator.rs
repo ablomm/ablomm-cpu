@@ -12,13 +12,13 @@ use nop::*;
 use std::rc::Rc;
 
 mod alu_op;
+mod expression;
 mod int;
 mod ld;
 mod nop;
 mod pop;
 mod push;
 mod st;
-mod expression;
 
 // cannot include span because blocks may span multiple different files
 pub fn compile_ast(ast: &Block) -> Result<String, Error> {
@@ -266,7 +266,6 @@ fn assert_bit_length(number: &Spanned<u32>, bit_length: usize) -> Result<(), Err
     }
     return Ok(());
 }
-
 
 pub trait Generatable {
     fn generate(&self) -> u32;

@@ -35,7 +35,7 @@ pub enum Statement {
     Assignment(Spanned<String>, Spanned<Expression>),
     Literal(Literal),
     Export(Vec<Spanned<String>>),
-    Include(Spanned<String>),
+    Import(Spanned<String>),
     Comment(String), // added because maybe it will be useful some day
 }
 

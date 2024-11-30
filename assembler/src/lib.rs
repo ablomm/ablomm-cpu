@@ -28,12 +28,12 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     let src = Intern::new(src.clone());
     let mut statements = Vec::new();
     let mut cache = HashMap::new();
-    let mut include_stack = VecDeque::new();
+    let mut import_stack = VecDeque::new();
     assert!(Path::new(&*src).exists(), "file: '{}' does not exist", src);
     // create a dummy span because the assert before ""should"" guarantee no errors for that span
-    include_stack.push_back(Spanned::new(src, Span::new(src, 0..0)));
+    import_stack.push_back(Spanned::new(src, Span::new(src, 0..0)));
 
-    while let Some(src) = include_stack.pop_front() {
+    while let Some(src) = import_stack.pop_front() {
         // need to do a match here because map_err causes the borrow checker to think that cache is
         // moved into the map_err closure
         let assembly_code = match fs::read_to_string(&*src.val) {
@@ -64,11 +64,11 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
             Err(err) => return Err((err, sources(cache.into_iter()))),
         };
 
-        let includes = find_includes(&block.as_ref());
-        includes
+        let imports = find_imports(&block.as_ref());
+        imports
             .into_iter()
             .filter(|import_src| !cache.contains_key(&import_src.val))
-            .for_each(|import_src| include_stack.push_back(import_src));
+            .for_each(|import_src| import_stack.push_back(import_src));
         statements.push(Spanned::new(Statement::Block(block.val), block.span));
     }
 
@@ -85,12 +85,12 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     return compile_ast(&ast).map_err(|error| (vec![error], sources(cache.into_iter())));
 }
 
-pub fn find_includes(block: &Spanned<&Block>) -> Vec<Spanned<Intern<String>>> {
+pub fn find_imports(block: &Spanned<&Block>) -> Vec<Spanned<Intern<String>>> {
     let mut imports = Vec::new();
 
     for statement in &block.statements {
-        if let Statement::Include(include) = &statement.val {
-            imports.push(Spanned::new(Intern::new(include.val.clone()), include.span));
+        if let Statement::Import(import) = &statement.val {
+            imports.push(Spanned::new(Intern::new(import.val.clone()), import.span));
         }
     }
     return imports;
