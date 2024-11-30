@@ -8,6 +8,7 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
+use internment::Intern;
 use nop::*;
 use std::rc::Rc;
 
@@ -55,10 +56,7 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
                 if block.symbol_table.borrow().contains_key(label) {
                     return Err(Error::new("Identifier already defined", statement.span));
                 }
-                block
-                    .symbol_table
-                    .borrow_mut()
-                    .insert(label.to_string(), line_number);
+                block.symbol_table.borrow_mut().insert(*label, line_number);
             }
             Statement::Assignment(identifier, expression) => {
                 if block.symbol_table.borrow().contains_key(&identifier.val) {
@@ -206,7 +204,10 @@ impl Spanned<&Literal> {
     }
 }
 
-fn get_identifier(ident: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<u32, Error> {
+fn get_identifier(
+    ident: &Spanned<&Intern<String>>,
+    symbol_table: &SymbolTable,
+) -> Result<u32, Error> {
     if let Some(label_line) = symbol_table.get_recursive(ident.val) {
         return Ok(label_line);
     } else {
