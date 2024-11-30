@@ -3,6 +3,7 @@ use crate::symbol_table::SymbolTable;
 use crate::Error;
 use chumsky::prelude::*;
 use expression::*;
+use internment::Intern;
 use keywords::*;
 use std::cell::RefCell;
 use std::char;
@@ -118,7 +119,7 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
 }
 
 fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
-    let label = text::ident();
+    let label = text::ident().map(Intern::new);
 
     let literal = choice((
         expression_parser().map(Literal::Expression),
@@ -126,12 +127,14 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
     ));
 
     let assignment = text::ident()
+        .map(Intern::new)
         .map_with_span(Spanned::new)
         .then_ignore(just('=').padded())
         .then(expression_parser().map_with_span(Spanned::new));
 
     let export = just("export").ignore_then(
         text::ident()
+            .map(Intern::new)
             .map_with_span(Spanned::new)
             .padded()
             .separated_by(just(',')),

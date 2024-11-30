@@ -1,3 +1,5 @@
+use internment::Intern;
+
 use crate::{symbol_table::SymbolTable, Span};
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
@@ -31,10 +33,10 @@ impl<T> Deref for Spanned<T> {
 pub enum Statement {
     Block(Block),
     Operation(Operation),
-    Label(String),
-    Assignment(Spanned<String>, Spanned<Expression>),
+    Label(Intern<String>),
+    Assignment(Spanned<Intern<String>>, Spanned<Expression>),
     Literal(Literal),
-    Export(Vec<Spanned<String>>),
+    Export(Vec<Spanned<Intern<String>>>),
     Import(Spanned<String>),
     Comment(String), // added because maybe it will be useful some day
 }
@@ -54,7 +56,7 @@ pub enum Literal {
 #[derive(Debug, Clone)]
 pub enum Expression {
     Number(u32),
-    Ident(String),
+    Ident(Intern<String>),
     Pos(Box<Spanned<Expression>>),
     Neg(Box<Spanned<Expression>>),
     Not(Box<Spanned<Expression>>),

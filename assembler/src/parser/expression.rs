@@ -28,7 +28,7 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
     let expr = recursive(|expression| {
         let atom = choice((
             number.map(Expression::Number),
-            text::ident().map(Expression::Ident),
+            text::ident().map(Intern::new).map(Expression::Ident),
             expression.delimited_by(just('('), just(')')),
         ))
         .map_with_span(Spanned::new)

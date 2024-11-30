@@ -1,8 +1,10 @@
 use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
+use internment::Intern;
+
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
-    pub table: HashMap<String, u32>,
+    pub table: HashMap<Intern<String>, u32>,
     pub parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
@@ -10,7 +12,7 @@ impl SymbolTable {
     pub fn contains_key<Q>(&self, key: &Q) -> bool
     where
         Q: Eq + Hash + ?Sized,
-        String: std::borrow::Borrow<Q>,
+        Intern<String>: std::borrow::Borrow<Q>,
     {
         return self.table.contains_key(key);
     }
@@ -18,7 +20,7 @@ impl SymbolTable {
     pub fn contains_key_recursive<Q>(&self, key: &Q) -> bool
     where
         Q: Eq + Hash + ?Sized,
-        String: std::borrow::Borrow<Q>,
+        Intern<String>: std::borrow::Borrow<Q>,
     {
         let value = self.contains_key(key);
         if value {
@@ -35,7 +37,7 @@ impl SymbolTable {
     pub fn get<Q>(&self, key: &Q) -> Option<u32>
     where
         Q: Eq + Hash + ?Sized,
-        String: std::borrow::Borrow<Q>,
+        Intern<String>: std::borrow::Borrow<Q>,
     {
         return self.table.get(key).copied();
     }
@@ -43,7 +45,7 @@ impl SymbolTable {
     pub fn get_recursive<Q>(&self, key: &Q) -> Option<u32>
     where
         Q: Eq + Hash + ?Sized,
-        String: std::borrow::Borrow<Q>,
+        Intern<String>: std::borrow::Borrow<Q>,
     {
         let value = self.get(key);
         if let Some(value) = value {
@@ -57,7 +59,7 @@ impl SymbolTable {
         return None;
     }
 
-    pub fn insert(&mut self, key: String, value: u32) -> Option<u32> {
+    pub fn insert(&mut self, key: Intern<String>, value: u32) -> Option<u32> {
         return self.table.insert(key, value);
     }
 }
