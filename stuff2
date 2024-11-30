@@ -1,0 +1,10 @@
+better imports / exports:
+
+	make one pass for all the exports, have a map of each file name and exports (could be a symbol table)
+
+	add the sub-blocks as normally
+
+	send this map to the pre-process, and import the identifier by simply going to the exports symbol table.
+
+would need to remove the exports in block.
+

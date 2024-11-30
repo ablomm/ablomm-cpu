@@ -46,8 +46,8 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
             }
         };
 
-        //todo: get rid of this clone
-        cache.insert(src.val, assembly_code.clone());
+        cache.insert(src.val, assembly_code);
+        let assembly_code = cache.get(&src.val).unwrap(); // can unwrap since we just inserted
         let len = assembly_code.chars().count();
         let eoi = Span::new(src.val, len..len);
 

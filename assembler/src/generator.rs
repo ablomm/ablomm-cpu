@@ -8,7 +8,6 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
-use internment::Intern;
 use nop::*;
 use std::rc::Rc;
 
@@ -58,7 +57,7 @@ fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
                 block
                     .symbol_table
                     .borrow_mut()
-                    .insert(label.to_string(), line_number as i64);
+                    .insert(label.to_string(), line_number as i32);
             }
             Statement::Assignment(identifier, expression) => {
                 if block.symbol_table.borrow().contains_key(&identifier.val) {
@@ -206,7 +205,7 @@ impl Spanned<&Literal> {
     }
 }
 
-fn get_identifier(ident: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i64, Error> {
+fn get_identifier(ident: &Spanned<&str>, symbol_table: &SymbolTable) -> Result<i32, Error> {
     if let Some(label_line) = symbol_table.get_recursive(ident.val) {
         return Ok(label_line);
     } else {
@@ -252,8 +251,23 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
     return Ok(conditions.generate() | alu_modifiers.generate());
 }
 
+fn assert_bit_length(number: &Spanned<i32>, bit_length: usize) -> Result<(), Error> {
+    if number.val & (1 << bit_length) - 1 != number.val {
+        return Err(Error::new(
+            format!(
+                "Only {} bit number supported, expression evaluates to {}, which is {} bits",
+                bit_length,
+                number.val as u32,
+                (number.val as u32 as f32).log2().ceil()
+            ),
+            number.span,
+        ));
+    }
+    return Ok(());
+}
+
 impl Spanned<&Expression> {
-    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<i64, Error> {
+    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<i32, Error> {
         match &self.val {
             // there is a bunch of deref's here (i.e. **a) because a and b are a Box, which has
             // it's own as_ref() function, but we really need the Spanned::as_ref() function. No
@@ -267,31 +281,82 @@ impl Spanned<&Expression> {
             Expression::Neg(a) => return Ok(-(**a).as_ref().eval(symbol_table)?),
             Expression::Not(a) => return Ok(!(**a).as_ref().eval(symbol_table)?),
             Expression::Mul(a, b) => {
-                return Ok((**a).as_ref().eval(symbol_table)? * (**b).as_ref().eval(symbol_table)?)
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_mul((**b).as_ref().eval(symbol_table)?))
             }
             Expression::Div(a, b) => {
-                return Ok((**a).as_ref().eval(symbol_table)? / (**b).as_ref().eval(symbol_table)?)
+                let denominator = (**b).as_ref().eval(symbol_table)?;
+                if denominator == 0 {
+                    return Err(Error::new("divison by 0 is undefined", b.span));
+                }
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_div((**b).as_ref().eval(symbol_table)?));
             }
             Expression::Remainder(a, b) => {
-                return Ok((**a).as_ref().eval(symbol_table)? % (**b).as_ref().eval(symbol_table)?)
+                let denominator = (**b).as_ref().eval(symbol_table)?;
+                if denominator == 0 {
+                    return Err(Error::new("divison by 0 is undefined", b.span));
+                }
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_rem((**b).as_ref().eval(symbol_table)?));
             }
             Expression::Add(a, b) => {
-                return Ok((**a).as_ref().eval(symbol_table)? + (**b).as_ref().eval(symbol_table)?)
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_add((**b).as_ref().eval(symbol_table)?))
             }
             Expression::Sub(a, b) => {
-                return Ok((**a).as_ref().eval(symbol_table)? - (**b).as_ref().eval(symbol_table)?)
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_sub((**b).as_ref().eval(symbol_table)?))
             }
             Expression::Shl(a, b) => {
-                return Ok((**a).as_ref().eval(symbol_table)? << (**b).as_ref().eval(symbol_table)?)
+                let b_val = (**b).as_ref().eval(symbol_table)?;
+                if b_val < 0 {
+                    return Err(Error::new(
+                        format!("second operand cannot be negative; evaluates to {}", b_val),
+                        b.span,
+                    ));
+                }
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_shl(b_val as u32));
             }
             Expression::Shr(a, b) => {
+                let b_val = (**b).as_ref().eval(symbol_table)?;
+                if b_val < 0 {
+                    return Err(Error::new(
+                        format!("second operand cannot be negative; evaluates to {}", b_val),
+                        b.span,
+                    ));
+                }
                 // rust will use normal shift right on unsigned types
-                return Ok(((**a).as_ref().eval(symbol_table)? as u64
-                    >> (**b).as_ref().eval(symbol_table)?) as i64);
+                return Ok(
+                    (((**a).as_ref().eval(symbol_table)? as u32).wrapping_shr(b_val as u32)) as i32,
+                );
             }
             Expression::Ashr(a, b) => {
+                let b_val = (**b).as_ref().eval(symbol_table)?;
+                if b_val < 0 {
+                    return Err(Error::new(
+                        format!("second operand cannot be negative; evaluates to {}", b_val),
+                        b.span,
+                    ));
+                }
                 // rust will use arithmetic shift right on signed types
-                return Ok((**a).as_ref().eval(symbol_table)? >> (**b).as_ref().eval(symbol_table)?);
+                return Ok((**a)
+                    .as_ref()
+                    .eval(symbol_table)?
+                    .wrapping_shr(b_val as u32));
             }
             Expression::And(a, b) => {
                 return Ok((**a).as_ref().eval(symbol_table)? & (**b).as_ref().eval(symbol_table)?)
