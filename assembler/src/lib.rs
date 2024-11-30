@@ -111,7 +111,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     return compile_ast(&ast).map_err(|error| (vec![error], sources(cache.into_iter())));
 }
 
-pub fn find_imports(block: &Spanned<&Block>) -> Vec<Spanned<Intern<String>>> {
+fn find_imports(block: &Spanned<&Block>) -> Vec<Spanned<Intern<String>>> {
     let mut imports = Vec::new();
 
     for statement in &block.statements {

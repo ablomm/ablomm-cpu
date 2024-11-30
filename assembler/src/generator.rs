@@ -12,7 +12,6 @@ use internment::Intern;
 use nop::*;
 use std::fmt::Display;
 use std::ops::Range;
-use std::ops::RangeBounds;
 use std::rc::Rc;
 
 mod alu_op;
