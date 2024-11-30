@@ -43,7 +43,10 @@ fn generate_alu_op_2(
             return generate_alu_op_2_num(
                 mnemonic,
                 modifiers,
-                Spanned::new(expression, parameters[0].span).eval(symbol_table)?,
+                &Spanned::new(
+                    Spanned::new(expression, parameters[0].span).eval(symbol_table)?,
+                    parameters[0].span,
+                ),
                 parameters,
             )
         }
@@ -73,7 +76,10 @@ fn generate_alu_op_2_reg(
                 mnemonic,
                 modifiers,
                 register,
-                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
+                &Spanned::new(
+                    Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
+                    parameters[1].span,
+                ),
             )
         }
         _ => {
@@ -98,7 +104,7 @@ fn generate_alu_op_2_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: i64,
+    number: &Spanned<i32>,
 ) -> Result<u32, Error> {
     return generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register, register, number);
 }
@@ -106,7 +112,7 @@ fn generate_alu_op_2_reg_num(
 fn generate_alu_op_2_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    number: i64,
+    number: &Spanned<i32>,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
 ) -> Result<u32, Error> {
     match &parameters[1].val {
@@ -120,7 +126,7 @@ fn generate_alu_op_2_num(
 fn generate_alu_op_2_num_reg(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    number: i64,
+    number: &Spanned<i32>,
     register: &Register,
 ) -> Result<u32, Error> {
     return generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register);
@@ -164,7 +170,10 @@ fn generate_alu_op_3_reg(
                 mnemonic,
                 modifiers,
                 register,
-                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
+                &Spanned::new(
+                    Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
+                    parameters[1].span,
+                ),
                 parameters,
             )
         }
@@ -197,7 +206,10 @@ fn generate_alu_op_3_reg_reg(
                 modifiers,
                 register1,
                 register2,
-                Spanned::new(expression, parameters[2].span).eval(symbol_table)?,
+                &Spanned::new(
+                    Spanned::new(expression, parameters[2].span).eval(symbol_table)?,
+                    parameters[2].span,
+                ),
             )
         }
         _ => {
@@ -230,15 +242,16 @@ fn generate_alu_op_3_reg_reg_num(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register1: &Register,
     register2: &Register,
-    number: i64,
+    number: &Spanned<i32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
+    assert_bit_length(&number, 8)?;
     opcode |= mnemonic.generate();
     opcode |= generate_modifiers_alu(modifiers)?;
     opcode |= AluOpFlags::Immediate.generate();
     opcode |= register1.generate() << 12;
     opcode |= register2.generate() << 8;
-    opcode |= number as u32 & 0xff;
+    opcode |= number.val as u32 & 0xff;
     return Ok(opcode);
 }
 
@@ -246,7 +259,7 @@ fn generate_alu_op_3_reg_num(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: i64,
+    number: &Spanned<i32>,
     parameters: &Spanned<Vec<Spanned<Parameter>>>,
 ) -> Result<u32, Error> {
     match &parameters[2].val {
@@ -261,7 +274,7 @@ fn generate_alu_op_3_reg_num_reg(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register1: &Register,
-    number: i64,
+    number: &Spanned<i32>,
     register2: &Register,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
