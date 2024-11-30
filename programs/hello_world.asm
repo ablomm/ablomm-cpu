@@ -1,4 +1,4 @@
-import "../programs/print.asm";
+import "lib/print.asm";
 
 	ld r0, string1;
 	ld pc, print;

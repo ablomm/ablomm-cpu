@@ -1,4 +1,4 @@
-import "../programs/defines.asm";
+import "defines.asm";
 
 // params: r0 = string to be printed
 print: {
