@@ -245,7 +245,7 @@ fn generate_alu_op_3_reg_reg_num(
     number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
-    assert_bit_length(&number, 8)?;
+    assert_range(&number, 0..(1 << 8))?;
     opcode |= mnemonic.generate();
     opcode |= generate_modifiers_alu(modifiers)?;
     opcode |= AluOpFlags::Immediate.generate();
