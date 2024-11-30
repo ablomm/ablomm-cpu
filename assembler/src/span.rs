@@ -17,11 +17,11 @@ impl Span {
     }
 
     pub fn src(&self) -> Intern<String> {
-        return self.src;
+        self.src
     }
 
     pub fn range(&self) -> std::ops::Range<usize> {
-        return self.range.0..self.range.1;
+        self.range.0..self.range.1
     }
 
     pub fn start(&self) -> usize {
@@ -67,14 +67,14 @@ impl ariadne::Span for Span {
     type SourceId = Intern<String>;
 
     fn source(&self) -> &Self::SourceId {
-        return &self.src;
+        &self.src
     }
 
     fn start(&self) -> usize {
-        return self.range.0;
+        self.range.0
     }
 
     fn end(&self) -> usize {
-        return self.range.1;
+        self.range.1
     }
 }

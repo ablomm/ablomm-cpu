@@ -10,14 +10,12 @@ pub fn generate_pop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
 
     match &operation.parameters[0].val {
         Parameter::Register(register) => {
-            generate_pop_reg(&operation.full_mnemonic.modifiers, &register)
+            generate_pop_reg(&operation.full_mnemonic.modifiers, register)
         }
-        _ => {
-            return Err(Error::new(
-                "Expected a register",
-                operation.parameters[0].span,
-            ))
-        }
+        _ => Err(Error::new(
+            "Expected a register",
+            operation.parameters[0].span,
+        )),
     }
 }
 
@@ -27,7 +25,7 @@ fn generate_pop_reg(
 ) -> Result<u32, Error> {
     let mut opcode: u32 = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::POP.generate();
+    opcode |= Mnemonic::Pop.generate();
     opcode |= register.generate() << 16;
-    return Ok(opcode);
+    Ok(opcode)
 }

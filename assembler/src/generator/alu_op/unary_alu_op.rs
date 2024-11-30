@@ -8,23 +8,23 @@ pub fn generate_unary_alu_op(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     if operation.parameters.len() == 1 {
-        return generate_unary_alu_op_1(
+        generate_unary_alu_op_1(
             &operation.full_mnemonic.mnemonic,
             &operation.full_mnemonic.modifiers,
             &operation.parameters,
-        );
+        )
     } else if operation.parameters.len() == 2 {
-        return generate_unary_alu_op_2(
+        generate_unary_alu_op_2(
             &operation.full_mnemonic.mnemonic,
             &operation.full_mnemonic.modifiers,
             &operation.parameters,
             symbol_table,
-        );
+        )
     } else {
-        return Err(Error::new(
+        Err(Error::new(
             "Expected 1 or 2 parameters",
             operation.parameters.span,
-        ));
+        ))
     }
 }
 
@@ -35,9 +35,9 @@ fn generate_unary_alu_op_1(
 ) -> Result<u32, Error> {
     match &parameters[0].val {
         Parameter::Register(register) => {
-            return generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
+            generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
-        _ => return Err(Error::new("Expected a register", parameters[0].span)),
+        _ => Err(Error::new("Expected a register", parameters[0].span)),
     }
 }
 
@@ -49,8 +49,8 @@ fn generate_unary_alu_op_2(
 ) -> Result<u32, Error> {
     match &parameters[0].val {
         Parameter::Register(register) => {
-            return generate_alu_op_2_reg(mnemonic, modifiers, register, parameters, symbol_table)
+            generate_alu_op_2_reg(mnemonic, modifiers, register, parameters, symbol_table)
         }
-        _ => return Err(Error::new("Expected a register", parameters[0].span)),
+        _ => Err(Error::new("Expected a register", parameters[0].span)),
     }
 }

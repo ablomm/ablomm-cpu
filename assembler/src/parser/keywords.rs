@@ -2,24 +2,24 @@ use super::*;
 
 pub fn mnemonic_parser() -> impl Parser<char, Mnemonic, Error = Error> {
     return choice((
-        text::keyword("nop").to(Mnemonic::NOP),
-        text::keyword("ld").to(Mnemonic::LD),
-        text::keyword("st").to(Mnemonic::ST),
-        text::keyword("push").to(Mnemonic::PUSH),
-        text::keyword("pop").to(Mnemonic::POP),
-        text::keyword("int").to(Mnemonic::INT),
-        text::keyword("and").to(Mnemonic::AND),
-        text::keyword("or").to(Mnemonic::OR),
-        text::keyword("xor").to(Mnemonic::XOR),
-        text::keyword("not").to(Mnemonic::NOT),
-        text::keyword("add").to(Mnemonic::ADD),
-        text::keyword("addc").to(Mnemonic::ADDC),
-        text::keyword("sub").to(Mnemonic::SUB),
-        text::keyword("subb").to(Mnemonic::SUBB),
-        text::keyword("neg").to(Mnemonic::NEG),
-        text::keyword("shl").to(Mnemonic::SHL),
-        text::keyword("shr").to(Mnemonic::SHR),
-        text::keyword("ashr").to(Mnemonic::ASHR),
+        text::keyword("nop").to(Mnemonic::Nop),
+        text::keyword("ld").to(Mnemonic::Ld),
+        text::keyword("st").to(Mnemonic::St),
+        text::keyword("push").to(Mnemonic::Push),
+        text::keyword("pop").to(Mnemonic::Pop),
+        text::keyword("int").to(Mnemonic::Int),
+        text::keyword("and").to(Mnemonic::And),
+        text::keyword("or").to(Mnemonic::Or),
+        text::keyword("xor").to(Mnemonic::Xor),
+        text::keyword("not").to(Mnemonic::Not),
+        text::keyword("add").to(Mnemonic::Add),
+        text::keyword("addc").to(Mnemonic::Addc),
+        text::keyword("sub").to(Mnemonic::Sub),
+        text::keyword("subb").to(Mnemonic::Subb),
+        text::keyword("neg").to(Mnemonic::Neg),
+        text::keyword("shl").to(Mnemonic::Shl),
+        text::keyword("shr").to(Mnemonic::Shr),
+        text::keyword("ashr").to(Mnemonic::Ashr),
     ));
 }
 
@@ -36,11 +36,11 @@ pub fn register_parser() -> impl Parser<char, Register, Error = Error> {
         text::keyword("r8").to(Register::R8),
         text::keyword("r9").to(Register::R9),
         text::keyword("r10").to(Register::R10),
-        text::keyword("fp").to(Register::FP),
-        text::keyword("status").to(Register::STATUS),
-        text::keyword("sp").to(Register::SP),
-        text::keyword("lr").to(Register::LR),
-        text::keyword("pc").to(Register::PC),
+        text::keyword("fp").to(Register::Fp),
+        text::keyword("status").to(Register::Status),
+        text::keyword("sp").to(Register::Sp),
+        text::keyword("lr").to(Register::Lr),
+        text::keyword("pc").to(Register::Pc),
     ));
 }
 
@@ -53,15 +53,15 @@ pub fn alu_modifier_parser() -> impl Parser<char, AluModifier, Error = Error> {
 
 pub fn condition_parser() -> impl Parser<char, Condition, Error = Error> {
     return choice((
-        text::keyword("eq").to(Condition::EQ),
-        text::keyword("ne").to(Condition::NE),
-        text::keyword("ltu").to(Condition::LTU),
-        text::keyword("gtu").to(Condition::GTU),
-        text::keyword("leu").to(Condition::LEU),
-        text::keyword("geu").to(Condition::GEU),
-        text::keyword("lts").to(Condition::LTS),
-        text::keyword("gts").to(Condition::GTS),
-        text::keyword("les").to(Condition::LES),
-        text::keyword("ges").to(Condition::GES),
+        text::keyword("eq").to(Condition::Eq),
+        text::keyword("ne").to(Condition::Ne),
+        text::keyword("ltu").to(Condition::Ltu),
+        text::keyword("gtu").to(Condition::Gtu),
+        text::keyword("leu").to(Condition::Leu),
+        text::keyword("geu").to(Condition::Geu),
+        text::keyword("lts").to(Condition::Lts),
+        text::keyword("gts").to(Condition::Gts),
+        text::keyword("les").to(Condition::Les),
+        text::keyword("ges").to(Condition::Ges),
     ));
 }

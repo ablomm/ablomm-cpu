@@ -17,7 +17,7 @@ impl<T> Spanned<T> {
 
     // converts &Spanned<T> to Spanned<&T>
     pub fn as_ref(&self) -> Spanned<&T> {
-        return Spanned::new(&self.val, self.span);
+        Spanned::new(&self.val, self.span)
     }
 }
 
@@ -25,7 +25,7 @@ impl<T> Spanned<T> {
 impl<T> Deref for Spanned<T> {
     type Target = T;
     fn deref(&self) -> &T {
-        return &self.val;
+        &self.val
     }
 }
 
@@ -87,29 +87,29 @@ pub struct FullMnemonic {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Mnemonic {
-    NOP = 0,
-    LD,
-    LDR,
-    LDI,
-    ST,
-    STR,
-    PUSH,
-    POP,
-    INT,
+    Nop = 0,
+    Ld,
+    Ldr,
+    Ldi,
+    St,
+    Str,
+    Push,
+    Pop,
+    Int,
     // alu ops start with 0xf*
-    PASS = 0xf0,
-    AND,
-    OR,
-    XOR,
-    NOT,
-    ADD,
-    ADDC,
-    SUB,
-    SUBB,
-    NEG,
-    SHL,
-    SHR,
-    ASHR,
+    Pass = 0xf0,
+    And,
+    Or,
+    Xor,
+    Not,
+    Add,
+    Addc,
+    Sub,
+    Subb,
+    Neg,
+    Shl,
+    Shr,
+    Ashr,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -120,17 +120,17 @@ pub enum Modifier {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Condition {
-    _NONE = 0, // not used, but for completeness
-    EQ,
-    NE,
-    LTU,
-    GTU,
-    LEU,
-    GEU,
-    LTS,
-    GTS,
-    LES,
-    GES,
+    _None = 0, // not used, but for completeness
+    Eq,
+    Ne,
+    Ltu,
+    Gtu,
+    Leu,
+    Geu,
+    Lts,
+    Gts,
+    Les,
+    Ges,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -168,9 +168,9 @@ pub enum Register {
     R8,
     R9,
     R10,
-    FP,
-    STATUS,
-    SP,
-    LR,
-    PC,
+    Fp,
+    Status,
+    Sp,
+    Lr,
+    Pc,
 }

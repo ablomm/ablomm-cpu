@@ -14,7 +14,7 @@ impl SymbolTable {
         Q: Eq + Hash + ?Sized,
         Intern<String>: std::borrow::Borrow<Q>,
     {
-        return self.table.contains_key(key);
+        self.table.contains_key(key)
     }
 
     pub fn contains_key_recursive<Q>(&self, key: &Q) -> bool
@@ -31,7 +31,7 @@ impl SymbolTable {
             return parent.borrow().contains_key_recursive(key);
         }
 
-        return false;
+        false
     }
 
     pub fn get<Q>(&self, key: &Q) -> Option<u32>
@@ -39,7 +39,7 @@ impl SymbolTable {
         Q: Eq + Hash + ?Sized,
         Intern<String>: std::borrow::Borrow<Q>,
     {
-        return self.table.get(key).copied();
+        self.table.get(key).copied()
     }
 
     pub fn get_recursive<Q>(&self, key: &Q) -> Option<u32>
@@ -56,10 +56,10 @@ impl SymbolTable {
             return parent.borrow().get_recursive(key);
         }
 
-        return None;
+        None
     }
 
     pub fn insert(&mut self, key: Intern<String>, value: u32) -> Option<u32> {
-        return self.table.insert(key, value);
+        self.table.insert(key, value)
     }
 }
