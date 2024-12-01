@@ -12,7 +12,6 @@ use internment::Intern;
 use nop::*;
 use std::fmt::Display;
 use std::ops::Range;
-use std::rc::Rc;
 
 mod alu_op;
 mod expression;
@@ -26,7 +25,6 @@ mod st;
 // cannot include span because blocks may span multiple different files
 pub fn compile_ast(ast: &Block) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
-    pre_process(ast, 0)?;
 
     let opcodes = ast.generate()?;
     for opcode in opcodes {
@@ -48,74 +46,6 @@ impl Block {
     }
 }
 
-// cannot include span because blocks may span multiple different files
-fn pre_process(block: &Block, start_address: u32) -> Result<u32, Error> {
-    let mut line_number: u32 = start_address;
-
-    for statement in &block.statements {
-        match &statement.val {
-            Statement::Label(label) => {
-                if block.symbol_table.borrow().contains_key(label) {
-                    return Err(Error::new("Identifier already defined", statement.span));
-                }
-                block.symbol_table.borrow_mut().insert(*label, line_number);
-            }
-            Statement::Assignment(identifier, expression) => {
-                if block.symbol_table.borrow().contains_key(&identifier.val) {
-                    return Err(Error::new("Identifier already defined", identifier.span));
-                }
-
-                // need to move the expression evaluation out of the symbol_table.insert() call
-                // to satisfy the borrow checker
-                let expression_val = expression.as_ref().eval(&block.symbol_table.borrow())?;
-
-                block
-                    .symbol_table
-                    .borrow_mut()
-                    .insert(identifier.val, expression_val);
-            }
-            Statement::Operation(_) => {
-                line_number += 1;
-            }
-            Statement::Literal(literal) => {
-                line_number += literal.num_lines();
-            }
-            Statement::Export(exports) => {
-                let symbol_table = &block.symbol_table.borrow();
-                match &symbol_table.parent {
-                    Some(parent_symbol_table) => {
-                        for export in exports {
-                            match symbol_table.get(&export.val) {
-                                Some(value) => {
-                                    parent_symbol_table.borrow_mut().insert(export.val, value);
-                                }
-                                None => {
-                                    return Err(Error::new(
-                                        "Could not find identifier",
-                                        export.span,
-                                    ));
-                                }
-                            }
-                        }
-                    }
-                    None => {
-                        return Err(Error::new(
-                            "No parent symbol table found in this scope",
-                            statement.span,
-                        ));
-                    }
-                }
-            }
-            Statement::Block(sub_block) => {
-                sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-                line_number = pre_process(&Spanned::new(sub_block, statement.span), line_number)?;
-            }
-            _ => (),
-        }
-    }
-
-    Ok(line_number)
-}
 
 fn seperate_modifiers(
     modifiers: &Vec<Spanned<Modifier>>,
@@ -201,7 +131,7 @@ impl Spanned<&Literal> {
     }
 }
 
-fn get_identifier(
+pub fn get_identifier(
     ident: &Spanned<&Intern<String>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
