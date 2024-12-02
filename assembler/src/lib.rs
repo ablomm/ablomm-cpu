@@ -95,14 +95,9 @@ fn generate_file_queue(
     for statement in &file.block.statements {
         match &statement.val {
             Statement::Import(import) => imports.push(import),
-            Statement::Operation(_) => {
-                end_address += 1;
-            }
-            Statement::Literal(literal) => {
-                end_address += literal.num_lines();
-            }
             _ => (),
         }
+        end_address += statement.num_lines();
     }
 
     // after finding correct addresses
@@ -198,7 +193,7 @@ fn fill_symbol_table(
     block: &Spanned<&Block>,
     start_address: u32,
     export_map: &mut HashMap<PathBuf, HashMap<Intern<String>, u32>>,
-) -> Result<u32, Error> {
+) -> Result<(), Error> {
     let mut address: u32 = start_address;
     let mut export_identifiers = Vec::new();
 
@@ -224,12 +219,6 @@ fn fill_symbol_table(
                     .borrow_mut()
                     .insert(identifier.val, expression_val);
             }
-            Statement::Operation(_) => {
-                address += 1;
-            }
-            Statement::Literal(literal) => {
-                address += literal.num_lines();
-            }
             Statement::Export(exports) => {
                 for export in exports {
                     export_identifiers.push(export);
@@ -252,7 +241,7 @@ fn fill_symbol_table(
             }
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-                address = fill_symbol_table(
+                fill_symbol_table(
                     src,
                     &Spanned::new(sub_block, statement.span),
                     address,
@@ -261,6 +250,7 @@ fn fill_symbol_table(
             }
             _ => (),
         }
+        address += statement.num_lines();
     }
 
     let mut exports = HashMap::new();
@@ -276,5 +266,5 @@ fn fill_symbol_table(
 
     export_map.insert(src.to_path_buf(), exports);
 
-    Ok(address)
+    Ok(())
 }

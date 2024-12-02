@@ -85,6 +85,34 @@ impl Literal {
     }
 }
 
+impl Operation {
+    pub fn num_lines(&self) -> u32 {
+        1
+    }
+}
+
+impl Block {
+    pub fn num_lines(&self) -> u32 {
+        let mut num_lines = 0;
+        for statement in &self.statements {
+            num_lines += statement.num_lines();
+        }
+
+        num_lines
+    }
+}
+
+impl Statement {
+    pub fn num_lines(&self) -> u32 {
+        match self {
+            Statement::Literal(literal) => literal.num_lines(),
+            Statement::Block(block) => block.num_lines(),
+            Statement::Operation(operation) => operation.num_lines(),
+            _ => 0,
+        }
+    }
+}
+
 impl Spanned<&Literal> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match &self.val {
