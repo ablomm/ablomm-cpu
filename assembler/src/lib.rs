@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
     rc::Rc,
@@ -42,7 +42,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     let src = Spanned::new(src, dummy_span);
 
     // file queue is order in which to generate symbol tables
-    let file_queue = match generate_file_queue(src, 0, &mut cache) {
+    let file_queue = match generate_file_queue(src, 0, &mut cache, &mut HashSet::new()) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err((error, sources(cache.into_iter()))),
     };
@@ -72,13 +72,17 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
 }
 
 // first pass of ast
-// takes in a file path, address, and cache and returns a queue of the order in which to
+// takes in a canonanical file path, address, and cache and returns a queue of the order in which to
 // generate the symbol tables / exports in order to satisfy import dependencies (i.e. post order)
 fn generate_file_queue(
     src: Spanned<PathBuf>,
     start_address: u32,
     cache: &mut HashMap<Intern<String>, String>,
+    import_set: &mut HashSet<Intern<String>>, // to detect cycles
 ) -> Result<Vec<Spanned<File>>, Vec<Error>> {
+    let src_intern = Intern::new(src.to_str().unwrap().to_string());
+    import_set.insert(src_intern);
+
     let mut end_address = start_address;
     let mut file_queue = Vec::new();
 
@@ -114,18 +118,38 @@ fn generate_file_queue(
             Err(error) => return Err(vec![Error::new(error.to_string(), import_src.span)]),
         };
 
-        let intern = Intern::new(import_src.to_str().unwrap().to_string());
-        if cache.contains_key(&intern) {
+        let import_intern = Intern::new(import_src.to_str().unwrap().to_string());
+
+        if import_set.contains(&import_intern) {
+            // circular dependency
+            return Err(vec![Error::new(
+                format!(
+                    "Circular dependency detected: '{}' (transitiviely) imports '{}' which imports '{}'",
+                    import_src.file_name().unwrap().to_str().unwrap(),
+                    src.file_name().unwrap().to_str().unwrap(),
+                    import_src.file_name().unwrap().to_str().unwrap()
+                ),
+                import_src.span,
+            )]);
+        }
+
+        if cache.contains_key(&import_intern) {
             // we already did this import, so skip it
             continue;
         }
 
-        file_queue.append(&mut generate_file_queue(import_src, end_address, cache)?);
+        file_queue.append(&mut generate_file_queue(
+            import_src,
+            end_address,
+            cache,
+            import_set,
+        )?);
     }
 
     // only add itself after imports are added (post order)
     file_queue.push(file);
 
+    import_set.remove(&src_intern);
     Ok(file_queue)
 }
 
@@ -175,7 +199,7 @@ fn fill_symbol_table(
     start_address: u32,
     export_map: &mut HashMap<PathBuf, HashMap<Intern<String>, u32>>,
 ) -> Result<u32, Error> {
-    let mut line_number: u32 = start_address;
+    let mut address: u32 = start_address;
     let mut export_identifiers = Vec::new();
 
     for statement in &block.statements {
@@ -184,7 +208,7 @@ fn fill_symbol_table(
                 if block.symbol_table.borrow().contains_key(label) {
                     return Err(Error::new("Identifier already defined", statement.span));
                 }
-                block.symbol_table.borrow_mut().insert(*label, line_number);
+                block.symbol_table.borrow_mut().insert(*label, address);
             }
             Statement::Assignment(identifier, expression) => {
                 if block.symbol_table.borrow().contains_key(&identifier.val) {
@@ -201,10 +225,10 @@ fn fill_symbol_table(
                     .insert(identifier.val, expression_val);
             }
             Statement::Operation(_) => {
-                line_number += 1;
+                address += 1;
             }
             Statement::Literal(literal) => {
-                line_number += literal.num_lines();
+                address += literal.num_lines();
             }
             Statement::Export(exports) => {
                 for export in exports {
@@ -216,7 +240,7 @@ fn fill_symbol_table(
                 for (export_key, export_val) in export_map.get(&import_src).into_iter().flatten() {
                     if block.symbol_table.borrow().contains_key(export_key) {
                         return Err(Error::new(
-                            "Import contains identifier that already exists in this scope",
+                            format!("Import contains identifier '{}', which that already exists in this scope", export_key),
                             import.span,
                         ));
                     }
@@ -228,10 +252,10 @@ fn fill_symbol_table(
             }
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-                line_number = fill_symbol_table(
+                address = fill_symbol_table(
                     src,
                     &Spanned::new(sub_block, statement.span),
-                    line_number,
+                    address,
                     export_map,
                 )?;
             }
@@ -252,5 +276,5 @@ fn fill_symbol_table(
 
     export_map.insert(src.to_path_buf(), exports);
 
-    Ok(line_number)
+    Ok(address)
 }

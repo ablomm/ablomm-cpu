@@ -9,7 +9,7 @@
 			"preLaunchTask": "cargo build",
 			"program": "target/debug/ablomm_asm",
 			"args": [
-				"../programs/hello_world2.asm"
+				"../programs/hello_world.asm"
 			],
 			"cwd": "${workspaceFolder}"
 		}

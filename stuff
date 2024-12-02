@@ -1,4 +1,5 @@
 rename "parameters" to "arguments" or maybe "operands"
+
 maybe have each operation allowed to generate multiple opcodes and have "push {r1, r2, r3}" and "pop {r1, r2, r3}" or "push r1, r2, r3", "pop r1, r2, r3" (could maybe be done in hardware)
 
 make string into expression
@@ -7,13 +8,8 @@ make memory clocked
 
 use verilator
 
-check register offset is correct bitlength
-
 maybe have parameters all be expressions
 
 expressions = arithemtic expression, string, register, register offset, indirect
 
 maybe combine register and register-offset, i.e. register + 0 = register
-
-make imports paths relative to the importees path instead of relative to where the assembler program is ran
-in lib.rs there is a bunch of clones for the cache, maybe possible to reduce it
