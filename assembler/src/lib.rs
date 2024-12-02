@@ -6,7 +6,7 @@ use std::{
 };
 
 use ariadne::{sources, Cache};
-use ast::{Ast, Block, File, Spanned, Statement};
+use ast::{Ast, Block, File, Literal, Operation, Spanned, Statement};
 use chumsky::prelude::*;
 
 use error::*;
@@ -89,19 +89,11 @@ fn generate_file_queue(
     // parse itself
     let file = parse_path(&src.as_ref(), start_address, cache)?;
 
-    let mut imports = Vec::new();
-
-    // find all imports and count addresses
-    for statement in &file.block.statements {
-        match &statement.val {
-            Statement::Import(import) => imports.push(import),
-            _ => (),
-        }
-        end_address += statement.num_lines();
-    }
+    // add imports to end of this file
+    end_address += file.block.num_lines();
 
     // after finding correct addresses
-    for import in imports {
+    for import in file.block.get_imports() {
         let import_src = Spanned::new(
             src.parent().unwrap().join(Path::new(&*import.val)),
             import.span,
@@ -250,6 +242,9 @@ fn fill_symbol_table(
             }
             _ => (),
         }
+
+        // technically we could count the lines in the loop above, but this is a bit more readable
+        // even though it requres another pass
         address += statement.num_lines();
     }
 
@@ -267,4 +262,55 @@ fn fill_symbol_table(
     export_map.insert(src.to_path_buf(), exports);
 
     Ok(())
+}
+
+impl Literal {
+    pub fn num_lines(&self) -> u32 {
+        match self {
+            Literal::String(string) => ((string.len() as f32) / 4.0).ceil() as u32,
+            _ => 1,
+        }
+    }
+}
+
+impl Operation {
+    pub fn num_lines(&self) -> u32 {
+        1
+    }
+}
+
+impl Block {
+    pub fn num_lines(&self) -> u32 {
+        let mut num_lines = 0;
+        for statement in &self.statements {
+            num_lines += statement.num_lines();
+        }
+
+        num_lines
+    }
+
+    pub fn get_imports(&self) -> Vec<&Spanned<String>> {
+        let mut imports = Vec::new();
+
+        for statement in &self.statements {
+            match &statement.val {
+                Statement::Import(import) => imports.push(import),
+                Statement::Block(block) => imports.append(&mut block.get_imports()),
+                _ => (),
+            }
+        }
+
+        imports
+    }
+}
+
+impl Statement {
+    pub fn num_lines(&self) -> u32 {
+        match self {
+            Statement::Literal(literal) => literal.num_lines(),
+            Statement::Block(block) => block.num_lines(),
+            Statement::Operation(operation) => operation.num_lines(),
+            _ => 0,
+        }
+    }
 }
