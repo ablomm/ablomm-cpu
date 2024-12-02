@@ -1,5 +1,4 @@
 import "defines.asm";
-export print;
 
 // params: r0 = string to be printed
 print: {
@@ -29,3 +28,5 @@ print: {
 		pop r1;
 		pop pc;
 }
+
+export print;
