@@ -1,4 +1,8 @@
-use super::*;
+use crate::{
+    ast::{Expression, Spanned},
+    symbol_table::{get_identifier, SymbolTable},
+    Error,
+};
 
 impl Spanned<&Expression> {
     pub fn eval(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {

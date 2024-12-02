@@ -1,7 +1,7 @@
 use internment::Intern;
 
 use crate::{symbol_table::SymbolTable, Span};
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
 
 // just a struct to hold a span for error messages
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -30,6 +30,24 @@ impl<T> Deref for Spanned<T> {
 }
 
 #[derive(Debug, Clone)]
+pub struct Ast {
+    pub files: Vec<Spanned<File>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct File {
+    pub src: PathBuf,
+    pub start_address: u32,
+    pub block: Block,
+}
+
+#[derive(Debug, Clone)]
+pub struct Block {
+    pub statements: Vec<Spanned<Statement>>,
+    pub symbol_table: Rc<RefCell<SymbolTable>>,
+}
+
+#[derive(Debug, Clone)]
 pub enum Statement {
     Block(Block),
     Operation(Operation),
@@ -39,12 +57,6 @@ pub enum Statement {
     Export(Vec<Spanned<Intern<String>>>),
     Import(Spanned<String>),
     Comment(String), // added because maybe it will be useful some day
-}
-
-#[derive(Debug, Clone)]
-pub struct Block {
-    pub statements: Vec<Spanned<Statement>>,
-    pub symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
 #[derive(Debug, Clone)]

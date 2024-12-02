@@ -62,7 +62,7 @@ fn generate_ld_reg_reg(
     register2: &Register,
 ) -> Result<u32, Error> {
     // MOV
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= generate_modifiers_alu(modifiers)?;
     opcode |= Mnemonic::Pass.generate();
     opcode |= register1.generate() << 12;
@@ -76,7 +76,7 @@ fn generate_ld_reg_num(
     number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     assert_range(number, 0..(1 << 16))?;
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::Ldi.generate();
     opcode |= register.generate() << 16;
@@ -119,7 +119,7 @@ fn generate_ld_reg_ireg(
     register1: &Register,
     register2: &Register,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::Ldr.generate();
     opcode |= register1.generate() << 16;
@@ -134,7 +134,8 @@ fn generate_ld_reg_ireg_offset(
     offset: &Spanned<i32>,
 ) -> Result<u32, Error> {
     assert_range(offset, (-1 << 11)..(1 << 11))?;
-    let mut opcode = generate_ld_reg_ireg(modifiers, register1, register2)?;
+    let mut opcode = 0;
+    opcode |= generate_ld_reg_ireg(modifiers, register1, register2)?;
     opcode |= offset.val as u32 & 0xfff;
     Ok(opcode)
 }
@@ -145,7 +146,7 @@ fn generate_ld_reg_inum(
     number: &Spanned<u32>,
 ) -> Result<u32, Error> {
     assert_range(number, 0..(1 << 16))?;
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::Ld.generate();
     opcode |= register.generate() << 16;
