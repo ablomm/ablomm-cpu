@@ -1,5 +1,4 @@
 use std::{
-    cell::RefCell,
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
@@ -7,7 +6,7 @@ use std::{
 };
 
 use ariadne::{sources, Cache};
-use ast::{Block, Spanned, Statement};
+use ast::{Ast, Block, File, Spanned, Statement};
 use chumsky::prelude::*;
 
 use error::*;
@@ -15,72 +14,81 @@ use generator::*;
 use internment::Intern;
 use parser::*;
 use span::*;
-use symbol_table::SymbolTable;
+use symbol_table::get_identifier;
 
 mod ast;
 pub mod error;
+mod expression;
 mod generator;
 mod parser;
 mod span;
 mod symbol_table;
 
+// return a string which is the machine code
+// error includes cache in order to print errors without re-reading files
 pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<String>>)> {
-    assert!(Path::new(src).exists(), "file: '{}' does not exist", src);
-    // should never fail?
-    let src = Path::new(src).canonicalize().expect("Error finding file");
-    let mut statements = Vec::new();
-    let mut export_map = HashMap::new();
-    let mut cache = HashMap::new();
+    // fails if file not found
+    // this is the root file, given in the comandline
+    let src = Path::new(src)
+        .canonicalize()
+        .expect("Error canonicalising file");
 
-    // create a dummy span because the assert before ""should"" guarantee no errors for that span
+    let mut cache = HashMap::new(); // cache of file name and corresponding file contents, used to
+                                    // print error messages and check if a file has already been parsed
+
+    // create a dummy span because there is no actual span for the root file, as it doesn't have a
+    // corresponding import statement
     let dummy_span = Span::new(Intern::new(src.to_str().unwrap().to_string()), 0..0);
     let src = Spanned::new(src, dummy_span);
 
+    // file queue is order in which to generate symbol tables
     let file_queue = match generate_file_queue(src, 0, &mut cache) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err((error, sources(cache.into_iter()))),
     };
 
-    for (src, block, address) in file_queue {
-        match pre_process(Some(src), &block, address, &mut export_map) {
+    let mut export_map = HashMap::new(); // holds every files' path along with it's exported
+                                         // symbols
+    for file in &file_queue {
+        // can't do map_err because of borrow checker
+        match fill_symbol_table(
+            &file.src,
+            &Spanned::new(&file.block, file.span),
+            file.start_address,
+            &mut export_map,
+        ) {
             Ok(_address) => (),
             Err(error) => return Err((vec![error], sources(cache.into_iter()))),
         }
-
-        statements.push(Spanned::new(Statement::Block(block.val), block.span));
     }
 
-    let root_symbol_table = Rc::new(RefCell::new(SymbolTable {
-        table: HashMap::new(),
-        parent: None,
-    }));
-
-    let ast = Block {
-        statements: statements.into_iter().rev().collect(),
-        symbol_table: root_symbol_table,
+    let ast = Ast {
+        // reverse order to get correct generation order, which is opposite of symbol table
+        // creation order (i.e. had to create imported file's symbol table before itself)
+        files: file_queue.into_iter().rev().collect(),
     };
 
     compile_ast(&ast).map_err(|error| (vec![error], sources(cache.into_iter())))
 }
 
-// first pass
+// first pass of ast
 // takes in a file path, address, and cache and returns a queue of the order in which to
-// generate the abstract syntax trees in order to satisfy import dependencies (i.e. post order)
+// generate the symbol tables / exports in order to satisfy import dependencies (i.e. post order)
 fn generate_file_queue(
     src: Spanned<PathBuf>,
     start_address: u32,
     cache: &mut HashMap<Intern<String>, String>,
-) -> Result<Vec<(PathBuf, Spanned<Block>, u32)>, Vec<Error>> {
+) -> Result<Vec<Spanned<File>>, Vec<Error>> {
     let mut end_address = start_address;
     let mut file_queue = Vec::new();
 
     // parse itself
-    let block = parse_path(&src.as_ref(), cache)?;
+    let file = parse_path(&src.as_ref(), start_address, cache)?;
 
     let mut imports = Vec::new();
 
     // find all imports and count addresses
-    for statement in &block.statements {
+    for statement in &file.block.statements {
         match &statement.val {
             Statement::Import(import) => imports.push(import),
             Statement::Operation(_) => {
@@ -115,20 +123,22 @@ fn generate_file_queue(
         file_queue.append(&mut generate_file_queue(import_src, end_address, cache)?);
     }
 
-    // only add itself after imports are added
-    file_queue.push((src.val, block, start_address));
+    // only add itself after imports are added (post order)
+    file_queue.push(file);
 
     Ok(file_queue)
 }
 
+// takes a path and parses it
 fn parse_path(
     path: &Spanned<&PathBuf>,
+    start_address: u32,
     cache: &mut HashMap<Intern<String>, String>,
-) -> Result<Spanned<Block>, Vec<Error>> {
+) -> Result<Spanned<File>, Vec<Error>> {
     let intern = Intern::new(path.to_str().unwrap().to_string());
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
-    let assembly_code = match fs::read_to_string(&*path.val) {
+    let assembly_code = match fs::read_to_string(path.val) {
         Ok(assembly_code) => assembly_code,
         Err(err) => return Err(vec![Error::new(err.to_string(), path.span)]),
     };
@@ -140,30 +150,33 @@ fn parse_path(
 
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
-    let block = match parser().parse(chumsky::Stream::from_iter(
+    let block = parser().parse(chumsky::Stream::from_iter(
         eoi,
         assembly_code
             .chars()
             .enumerate()
             .map(|(i, c)| (c, Span::new(intern, i..i + 1))),
-    )) {
-        Ok(block) => block,
-        Err(err) => return Err(err),
+    ))?;
+
+    let file = File {
+        src: path.val.to_path_buf(),
+        start_address,
+        block: block.val,
     };
 
-    Ok(block)
+    Ok(Spanned::new(file, block.span))
 }
 
 // second pass
-// cannot include span because blocks may span multiple different files
-fn pre_process(
-    src: Option<PathBuf>,
-    block: &Block,
+// generates symbol table for block and sub_block
+fn fill_symbol_table(
+    src: &PathBuf,
+    block: &Spanned<&Block>,
     start_address: u32,
     export_map: &mut HashMap<PathBuf, HashMap<Intern<String>, u32>>,
 ) -> Result<u32, Error> {
     let mut line_number: u32 = start_address;
-    let mut exports_list = Vec::new();
+    let mut export_identifiers = Vec::new();
 
     for statement in &block.statements {
         match &statement.val {
@@ -195,32 +208,28 @@ fn pre_process(
             }
             Statement::Export(exports) => {
                 for export in exports {
-                    exports_list.push(export);
+                    export_identifiers.push(export);
                 }
             }
             Statement::Import(import) => {
-                if let Some(src) = &src {
-                    let import_src = src.parent().unwrap().join(Path::new(&*import.val));
-                    for (export_key, export_val) in
-                        export_map.get(&import_src).into_iter().flatten()
-                    {
-                        if block.symbol_table.borrow().contains_key(export_key) {
-                            return Err(Error::new(
-                                "Import contains identifier that already exists in this scope",
-                                import.span,
-                            ));
-                        }
-                        block
-                            .symbol_table
-                            .borrow_mut()
-                            .insert(*export_key, *export_val);
+                let import_src = src.parent().unwrap().join(Path::new(&*import.val));
+                for (export_key, export_val) in export_map.get(&import_src).into_iter().flatten() {
+                    if block.symbol_table.borrow().contains_key(export_key) {
+                        return Err(Error::new(
+                            "Import contains identifier that already exists in this scope",
+                            import.span,
+                        ));
                     }
+                    block
+                        .symbol_table
+                        .borrow_mut()
+                        .insert(*export_key, *export_val);
                 }
             }
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-                line_number = pre_process(
-                    None,
+                line_number = fill_symbol_table(
+                    src,
                     &Spanned::new(sub_block, statement.span),
                     line_number,
                     export_map,
@@ -231,18 +240,17 @@ fn pre_process(
     }
 
     let mut exports = HashMap::new();
-    // need to do after so that we can ensure all symbols are in symbol table to eval
-    for export in exports_list {
-        if exports.contains_key(&export.val) {
-            return Err(Error::new("Identifier already exported", export.span));
+    // could technically do exports in the statements loop, but then exports need to come after
+    // assignments in the assembly code
+    for identifier in export_identifiers {
+        if exports.contains_key(&identifier.val) {
+            return Err(Error::new("Identifier already exported", identifier.span));
         }
-        let export_val = get_identifier(&export.as_ref(), &*block.symbol_table.borrow())?;
-        exports.insert(export.val, export_val);
+        let export_val = get_identifier(&identifier.as_ref(), &block.symbol_table.borrow())?;
+        exports.insert(identifier.val, export_val);
     }
 
-    if let Some(src) = src {
-        export_map.insert(src, exports);
-    }
+    export_map.insert(src.to_path_buf(), exports);
 
     Ok(line_number)
 }

@@ -2,6 +2,8 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
+use crate::{ast::Spanned, Error};
+
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
     pub table: HashMap<Intern<String>, u32>,
@@ -61,5 +63,17 @@ impl SymbolTable {
 
     pub fn insert(&mut self, key: Intern<String>, value: u32) -> Option<u32> {
         self.table.insert(key, value)
+    }
+}
+
+// some helper functions
+pub fn get_identifier(
+    ident: &Spanned<&Intern<String>>,
+    symbol_table: &SymbolTable,
+) -> Result<u32, Error> {
+    if let Some(label_line) = symbol_table.get_recursive(ident.val) {
+        Ok(label_line)
+    } else {
+        Err(Error::new("Could not find identifier", ident.span))
     }
 }

@@ -208,7 +208,7 @@ fn generate_alu_op_3_reg_reg_reg(
     register2: &Register,
     register3: &Register,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= mnemonic.generate();
     opcode |= generate_modifiers_alu(modifiers)?;
     opcode |= register1.generate() << 12;
@@ -224,7 +224,7 @@ fn generate_alu_op_3_reg_reg_num(
     register2: &Register,
     number: &Spanned<u32>,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     assert_range(number, 0..(1 << 8))?;
     opcode |= mnemonic.generate();
     opcode |= generate_modifiers_alu(modifiers)?;
@@ -257,7 +257,7 @@ fn generate_alu_op_3_reg_num_reg(
     number: &Spanned<u32>,
     register2: &Register,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register1, register2, number)?;
     opcode |= AluOpFlags::Reverse.generate();
     Ok(opcode)

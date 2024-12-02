@@ -23,7 +23,7 @@ fn generate_push_reg(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
 ) -> Result<u32, Error> {
-    let mut opcode: u32 = 0;
+    let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= Mnemonic::Push.generate();
     opcode |= register.generate() << 16;

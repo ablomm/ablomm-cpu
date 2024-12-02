@@ -8,13 +8,11 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
-use internment::Intern;
 use nop::*;
 use std::fmt::Display;
 use std::ops::Range;
 
 mod alu_op;
-mod expression;
 mod int;
 mod ld;
 mod nop;
@@ -23,7 +21,7 @@ mod push;
 mod st;
 
 // cannot include span because blocks may span multiple different files
-pub fn compile_ast(ast: &Block) -> Result<String, Error> {
+pub fn compile_ast(ast: &Ast) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
 
     let opcodes = ast.generate()?;
@@ -34,8 +32,20 @@ pub fn compile_ast(ast: &Block) -> Result<String, Error> {
     Ok(machine_code)
 }
 
-// cannot include span because blocks may span multiple different files
-impl Block {
+// no span because ast can span many different files
+impl Ast {
+    fn generate(&self) -> Result<Vec<u32>, Error> {
+        let mut opcodes = Vec::new();
+
+        for file in &self.files {
+            opcodes.append(&mut Spanned::new(&file.block, file.span).generate()?);
+        }
+
+        Ok(opcodes)
+    }
+}
+
+impl Spanned<&Block> {
     fn generate(&self) -> Result<Vec<u32>, Error> {
         let mut opcodes = Vec::new();
         for statement in &self.statements {
@@ -45,7 +55,6 @@ impl Block {
         Ok(opcodes)
     }
 }
-
 
 fn seperate_modifiers(
     modifiers: &Vec<Spanned<Modifier>>,
@@ -72,6 +81,31 @@ impl Literal {
         match self {
             Literal::String(string) => ((string.len() as f32) / 4.0).ceil() as u32,
             _ => 1,
+        }
+    }
+}
+
+impl Spanned<&Literal> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+        match &self.val {
+            Literal::String(string) => {
+                let mut opcodes = Vec::new();
+                // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
+                // addressible, not byte addressible)
+                for chunk in string.as_bytes().chunks(4) {
+                    let mut opcode: u32 = 0;
+                    // big endian, although not technically since it all exists in the same memory
+                    // address
+                    for (i, c) in chunk.iter().enumerate() {
+                        opcode |= (*c as u32) << (i * 8);
+                    }
+                    opcodes.push(opcode);
+                }
+                Ok(opcodes)
+            }
+            Literal::Expression(expression) => {
+                Ok(vec![Spanned::new(expression, self.span).eval(symbol_table)?])
+            }
         }
     }
 }
@@ -103,42 +137,6 @@ impl Spanned<&Operation> {
             _ => generate_alu_op(self, symbol_table),
         }
         .map(|opcode| vec![opcode])
-    }
-}
-
-impl Spanned<&Literal> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
-        match &self.val {
-            Literal::String(string) => {
-                let mut opcodes = Vec::new();
-                // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
-                // addressible, not byte addressible)
-                for chunk in string.as_bytes().chunks(4) {
-                    let mut opcode: u32 = 0;
-                    // big endian, although not technically since it all exists in the same memory
-                    // address
-                    for (i, c) in chunk.iter().enumerate() {
-                        opcode |= (*c as u32) << (i * 8);
-                    }
-                    opcodes.push(opcode);
-                }
-                Ok(opcodes)
-            }
-            Literal::Expression(expression) => {
-                Ok(vec![Spanned::new(expression, self.span).eval(symbol_table)?])
-            }
-        }
-    }
-}
-
-pub fn get_identifier(
-    ident: &Spanned<&Intern<String>>,
-    symbol_table: &SymbolTable,
-) -> Result<u32, Error> {
-    if let Some(label_line) = symbol_table.get_recursive(ident.val) {
-        Ok(label_line)
-    } else {
-        Err(Error::new("Could not find identifier", ident.span))
     }
 }
 
