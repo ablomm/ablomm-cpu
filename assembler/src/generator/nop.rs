@@ -4,7 +4,7 @@ use crate::Error;
 pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     if operation.parameters.len() != 0 {
         return Err(Error::new(
-            "Expected 0 parameters",
+            format!("Expected {} parameters", "0".fg(ATTENTION_COLOR)),
             operation.parameters.span,
         ));
     }

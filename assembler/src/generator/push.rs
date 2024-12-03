@@ -1,9 +1,11 @@
+use ariadne::Fmt;
+
 use crate::generator::*;
 
 pub fn generate_push(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     if operation.parameters.len() != 1 {
         return Err(Error::new(
-            "Expected 1 parameter",
+            format!("Expected {} parameter", "1".fg(ATTENTION_COLOR)),
             operation.parameters.span,
         ));
     }
@@ -13,7 +15,7 @@ pub fn generate_push(operation: &Spanned<&Operation>) -> Result<u32, Error> {
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
         _ => Err(Error::new(
-            "Expected a register",
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
             operation.parameters[0].span,
         )),
     }
