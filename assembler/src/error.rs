@@ -4,7 +4,7 @@ use crate::Span;
 use ariadne::{Color, Fmt};
 use internment::Intern;
 
-pub const ATTENTION_COLOR: Color = Color::Fixed(10);
+pub const ATTENTION_COLOR: Color = Color::Fixed(12); // blue
 
 #[derive(Debug)]
 pub struct Error {
@@ -26,15 +26,13 @@ impl Error {
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
-        let green = Color::Fixed(10);
-
         return Report::build(ReportKind::Error, self.span)
             .with_code(1)
             .with_message("Assembler Error")
             .with_label(
                 Label::new(self.span)
                     .with_message(&self.message)
-                    .with_color(green),
+                    .with_color(Color::Fixed(9)), // red
             )
             .finish()
             .write(cache, writer);
