@@ -45,6 +45,19 @@ impl Ast {
     }
 }
 
+impl Spanned<&Statement> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+        match &self.val {
+            Statement::Operation(operation) => {
+                Spanned::new(operation, self.span).generate(symbol_table)
+            }
+            Statement::Block(block) => Spanned::new(block, self.span).generate(),
+            Statement::Literal(literal) => Spanned::new(literal, self.span).generate(symbol_table),
+            _ => Ok(vec![]),
+        }
+    }
+}
+
 impl Spanned<&Block> {
     fn generate(&self) -> Result<Vec<u32>, Error> {
         let mut opcodes = Vec::new();
@@ -56,24 +69,21 @@ impl Spanned<&Block> {
     }
 }
 
-fn seperate_modifiers(
-    modifiers: &Vec<Spanned<Modifier>>,
-) -> (Vec<Spanned<Condition>>, Vec<Spanned<AluModifier>>) {
-    let mut conditions = Vec::new();
-    let mut alu_modifiers = Vec::new();
-
-    for modifier in modifiers {
-        match modifier.val {
-            Modifier::Condition(condition) => {
-                conditions.push(Spanned::new(condition, modifier.span))
-            }
-            Modifier::AluModifier(alu_modifier) => {
-                alu_modifiers.push(Spanned::new(alu_modifier, modifier.span))
-            }
+impl Spanned<&Operation> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+        match self.full_mnemonic.mnemonic.val {
+            Mnemonic::Nop => generate_nop(self),
+            Mnemonic::Ld => generate_ld(self, symbol_table),
+            Mnemonic::St => generate_st(self, symbol_table),
+            Mnemonic::Push => generate_push(self),
+            Mnemonic::Pop => generate_pop(self),
+            Mnemonic::Int => generate_int(self),
+            // alu ops
+            Mnemonic::Not | Mnemonic::Neg => generate_unary_alu_op(self, symbol_table),
+            _ => generate_alu_op(self, symbol_table),
         }
+        .map(|opcode| vec![opcode])
     }
-
-    (conditions, alu_modifiers)
 }
 
 impl Spanned<&Literal> {
@@ -101,34 +111,24 @@ impl Spanned<&Literal> {
     }
 }
 
-impl Spanned<&Statement> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
-        match &self.val {
-            Statement::Operation(operation) => {
-                Spanned::new(operation, self.span).generate(symbol_table)
-            }
-            Statement::Block(block) => Spanned::new(block, self.span).generate(),
-            Statement::Literal(literal) => Spanned::new(literal, self.span).generate(symbol_table),
-            _ => Ok(vec![]),
-        }
-    }
-}
+fn seperate_modifiers(
+    modifiers: &Vec<Spanned<Modifier>>,
+) -> (Vec<Spanned<Condition>>, Vec<Spanned<AluModifier>>) {
+    let mut conditions = Vec::new();
+    let mut alu_modifiers = Vec::new();
 
-impl Spanned<&Operation> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
-        match self.full_mnemonic.mnemonic.val {
-            Mnemonic::Nop => generate_nop(self),
-            Mnemonic::Ld => generate_ld(self, symbol_table),
-            Mnemonic::St => generate_st(self, symbol_table),
-            Mnemonic::Push => generate_push(self),
-            Mnemonic::Pop => generate_pop(self),
-            Mnemonic::Int => generate_int(self),
-            // alu ops
-            Mnemonic::Not | Mnemonic::Neg => generate_unary_alu_op(self, symbol_table),
-            _ => generate_alu_op(self, symbol_table),
+    for modifier in modifiers {
+        match modifier.val {
+            Modifier::Condition(condition) => {
+                conditions.push(Spanned::new(condition, modifier.span))
+            }
+            Modifier::AluModifier(alu_modifier) => {
+                alu_modifiers.push(Spanned::new(alu_modifier, modifier.span))
+            }
         }
-        .map(|opcode| vec![opcode])
     }
+
+    (conditions, alu_modifiers)
 }
 
 fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
@@ -191,15 +191,15 @@ pub trait Generatable {
     fn generate(&self) -> u32;
 }
 
-impl Generatable for Register {
-    fn generate(&self) -> u32 {
-        *self as u32
-    }
-}
-
 impl Generatable for Condition {
     fn generate(&self) -> u32 {
         (*self as u32) << 28
+    }
+}
+
+impl Generatable for Mnemonic {
+    fn generate(&self) -> u32 {
+        (*self as u32) << 20
     }
 }
 
@@ -209,12 +209,9 @@ impl Generatable for AluOpFlags {
     }
 }
 
-impl Generatable for AluModifier {
+impl Generatable for Register {
     fn generate(&self) -> u32 {
-        match self {
-            AluModifier::S => AluOpFlags::SetStatus.generate(),
-            AluModifier::T => AluOpFlags::Loadn.generate() | AluOpFlags::SetStatus.generate(),
-        }
+        *self as u32
     }
 }
 
@@ -223,6 +220,15 @@ impl Generatable for Modifier {
         match self {
             Modifier::Condition(condition) => condition.generate(),
             Modifier::AluModifier(alu_modifier) => alu_modifier.generate(),
+        }
+    }
+}
+
+impl Generatable for AluModifier {
+    fn generate(&self) -> u32 {
+        match self {
+            AluModifier::S => AluOpFlags::SetStatus.generate(),
+            AluModifier::T => AluOpFlags::Loadn.generate() | AluOpFlags::SetStatus.generate(),
         }
     }
 }
@@ -257,11 +263,5 @@ impl Generatable for Vec<Spanned<AluModifier>> {
         }
 
         opcode
-    }
-}
-
-impl Generatable for Mnemonic {
-    fn generate(&self) -> u32 {
-        (*self as u32) << 20
     }
 }
