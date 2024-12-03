@@ -1,9 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    hash::Hash,
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 

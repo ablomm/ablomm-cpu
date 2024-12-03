@@ -89,7 +89,7 @@ fn generate_file_queue(
     let file = parse_path(&src.as_ref(), start_address, cache)?;
 
     // add imports to end of this file
-    end_address += file.block.num_lines();
+    end_address += file.block.num_words();
 
     // after finding correct addresses
     for import in file.block.get_imports() {
@@ -238,7 +238,7 @@ fn fill_symbol_table(
 
         // technically we could count the lines in the loop above, but this is a bit more readable
         // even though it requres another pass
-        address += statement.num_lines();
+        address += statement.num_words();
     }
 
     // get exports from exports_map, create one if it doesn't exist
@@ -265,7 +265,7 @@ fn fill_symbol_table(
 }
 
 impl Literal {
-    pub fn num_lines(&self) -> u32 {
+    pub fn num_words(&self) -> u32 {
         match self {
             Literal::String(string) => ((string.len() as f32) / 4.0).ceil() as u32,
             _ => 1,
@@ -274,19 +274,19 @@ impl Literal {
 }
 
 impl Operation {
-    pub fn num_lines(&self) -> u32 {
+    pub fn num_words(&self) -> u32 {
         1
     }
 }
 
 impl Block {
-    pub fn num_lines(&self) -> u32 {
-        let mut num_lines = 0;
+    pub fn num_words(&self) -> u32 {
+        let mut num_words = 0;
         for statement in &self.statements {
-            num_lines += statement.num_lines();
+            num_words += statement.num_words();
         }
 
-        num_lines
+        num_words
     }
 
     pub fn get_imports(&self) -> Vec<&Spanned<String>> {
@@ -305,11 +305,11 @@ impl Block {
 }
 
 impl Statement {
-    pub fn num_lines(&self) -> u32 {
+    pub fn num_words(&self) -> u32 {
         match self {
-            Statement::Literal(literal) => literal.num_lines(),
-            Statement::Block(block) => block.num_lines(),
-            Statement::Operation(operation) => operation.num_lines(),
+            Statement::Literal(literal) => literal.num_words(),
+            Statement::Block(block) => block.num_words(),
+            Statement::Operation(operation) => operation.num_words(),
             _ => 0,
         }
     }

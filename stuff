@@ -16,6 +16,6 @@ maybe combine register and register-offset, i.e. register + 0 = register
 
 import aliasing
 
-exports with sub blocks
-
 change condition names from les -> slte
+
+make file cache key Intern<Pathbuf>
