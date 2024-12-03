@@ -19,3 +19,5 @@ import aliasing
 change condition names from les -> slte
 
 make file cache key Intern<Pathbuf>
+
+add notes to Error

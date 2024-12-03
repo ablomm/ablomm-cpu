@@ -1,7 +1,10 @@
 use std::io::Write;
 
 use crate::Span;
+use ariadne::{Color, Fmt};
 use internment::Intern;
+
+pub const ATTENTION_COLOR: Color = Color::Fixed(12); // blue
 
 #[derive(Debug)]
 pub struct Error {
@@ -26,7 +29,11 @@ impl Error {
         return Report::build(ReportKind::Error, self.span)
             .with_code(1)
             .with_message("Assembler Error")
-            .with_label(Label::new(self.span).with_message(&self.message))
+            .with_label(
+                Label::new(self.span)
+                    .with_message(&self.message)
+                    .with_color(Color::Fixed(9)), // red
+            )
             .finish()
             .write(cache, writer);
     }
@@ -49,16 +56,16 @@ impl chumsky::Error<char> for Error {
         expected: Iter,
         found: Option<char>,
     ) -> Self {
-        let message: String = format!(
-            "Expected one of {}, but found {}",
+        let message = format!(
+            "Expected {}, but found {}",
             expected
                 .into_iter()
                 .flatten()
-                .map(|e| format!("'{}'", e.escape_default()))
+                .map(|e| format!("'{}'", e.escape_default().fg(ATTENTION_COLOR)))
                 .collect::<Vec<_>>()
                 .join("or "),
             found
-                .map(|e| format!("'{}'", e.escape_default()))
+                .map(|e| format!("'{}'", e.escape_default().fg(ATTENTION_COLOR)))
                 .unwrap_or("nothing".to_string())
         );
         Self { message, span }

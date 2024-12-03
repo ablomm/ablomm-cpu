@@ -5,7 +5,7 @@ use std::{
     rc::Rc,
 };
 
-use ariadne::{sources, Cache};
+use ariadne::{sources, Cache, Fmt};
 use ast::{Ast, Block, File, Literal, Operation, Spanned, Statement};
 use chumsky::prelude::*;
 
@@ -111,9 +111,9 @@ fn generate_file_queue(
             return Err(vec![Error::new(
                 format!(
                     "Circular dependency detected: '{}' (transitiviely) imports '{}' which imports '{}'",
-                    import_src.file_name().unwrap().to_str().unwrap(),
-                    src.file_name().unwrap().to_str().unwrap(),
-                    import_src.file_name().unwrap().to_str().unwrap()
+                    import_src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR),
+                    src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR),
+                    import_src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR)
                 ),
                 import_src.span,
             )]);
@@ -219,7 +219,7 @@ fn fill_symbol_table(
                     file_exports_map.get(&import_src).into_iter().flatten()
                 {
                     block.symbol_table.borrow_mut().try_insert(*export_key, *export_val).map_err(|_| Error::new(
-                            format!("Import contains identifier '{}', which already exists in this scope", export_key),
+                            format!("Import contains identifier '{}', which already exists in this scope", export_key.fg(ATTENTION_COLOR)),
                             import.span,
                     ))?;
                 }

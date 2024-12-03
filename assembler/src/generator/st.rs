@@ -1,3 +1,5 @@
+use ariadne::Fmt;
+
 use crate::generator::*;
 
 pub fn generate_st(
@@ -6,7 +8,7 @@ pub fn generate_st(
 ) -> Result<u32, Error> {
     if operation.parameters.len() != 2 {
         return Err(Error::new(
-            "Expected 2 parameters",
+            format!("Expected {} parameters", "2".fg(ATTENTION_COLOR)),
             operation.parameters.span,
         ));
     }
@@ -20,7 +22,7 @@ pub fn generate_st(
         ),
 
         _ => Err(Error::new(
-            "Expected a register",
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
             operation.parameters[0].span,
         )),
     }
@@ -42,7 +44,11 @@ fn generate_st_reg(
         ),
 
         _ => Err(Error::new(
-            "Expected either an indirect or register",
+            format!(
+                "Expected either an {} or {}",
+                "register".fg(ATTENTION_COLOR),
+                "indirect".fg(ATTENTION_COLOR)
+            ),
             parameters[1].span,
         )),
     }
@@ -85,7 +91,12 @@ fn generate_st_reg_indirect(
             &Spanned::new(offset.as_ref().eval(symbol_table)? as i32, offset.span),
         ),
         _ => Err(Error::new(
-            "Expected either a register, expression, or register offset",
+            format!(
+                "Expected either a {}, {}, or {}",
+                "register".fg(ATTENTION_COLOR),
+                "expression".fg(ATTENTION_COLOR),
+                "register offset".fg(ATTENTION_COLOR)
+            ),
             parameter.span,
         )),
     }

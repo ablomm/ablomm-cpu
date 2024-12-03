@@ -1,3 +1,5 @@
+use ariadne::{Color, Fmt};
+
 use crate::generator::*;
 
 pub mod unary_alu_op;
@@ -22,7 +24,11 @@ pub fn generate_alu_op(
         )
     } else {
         Err(Error::new(
-            "Expected 2 or 3 parameters",
+            format!(
+                "Expected {} or {} parameters",
+                "2".fg(ATTENTION_COLOR),
+                "3".fg(ATTENTION_COLOR)
+            ),
             operation.parameters.span,
         ))
     }
@@ -49,7 +55,11 @@ fn generate_alu_op_2(
             parameters,
         ),
         _ => Err(Error::new(
-            "Expected either a register or expression",
+            format!(
+                "Expected either a {} or {}",
+                "register".fg(ATTENTION_COLOR),
+                "expression".fg(ATTENTION_COLOR)
+            ),
             parameters[0].span,
         )),
     }
@@ -77,7 +87,11 @@ fn generate_alu_op_2_reg(
             ),
         ),
         _ => Err(Error::new(
-            "Expected either a register or expression",
+            format!(
+                "Expected either a {} or {}",
+                "register".fg(ATTENTION_COLOR),
+                "expression".fg(ATTENTION_COLOR)
+            ),
             parameters[1].span,
         )),
     }
@@ -111,7 +125,10 @@ fn generate_alu_op_2_num(
         Parameter::Register(register) => {
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
-        _ => Err(Error::new("Expected a register", parameters[1].span)),
+        _ => Err(Error::new(
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            parameters[1].span,
+        )),
     }
 }
 
@@ -135,7 +152,10 @@ fn generate_alu_op_3(
         Parameter::Register(register) => {
             generate_alu_op_3_reg(mnemonic, modifiers, register, parameters, symbol_table)
         }
-        _ => Err(Error::new("Expected a register", parameters[0].span)),
+        _ => Err(Error::new(
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            parameters[0].span,
+        )),
     }
 }
 
@@ -166,7 +186,11 @@ fn generate_alu_op_3_reg(
             parameters,
         ),
         _ => Err(Error::new(
-            "Expected either a register or expression",
+            format!(
+                "Expected either a {} or {}",
+                "register".fg(ATTENTION_COLOR),
+                "expression".fg(ATTENTION_COLOR)
+            ),
             parameters[1].span,
         )),
     }
@@ -195,7 +219,11 @@ fn generate_alu_op_3_reg_reg(
             ),
         ),
         _ => Err(Error::new(
-            "Expected either a register or expression",
+            format!(
+                "Expected either a {} or {}",
+                "register".fg(ATTENTION_COLOR),
+                "expression".fg(ATTENTION_COLOR)
+            ),
             parameters[2].span,
         )),
     }
@@ -246,7 +274,10 @@ fn generate_alu_op_3_reg_num(
         Parameter::Register(register2) => {
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
-        _ => Err(Error::new("Expected a register", parameters[2].span)),
+        _ => Err(Error::new(
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            parameters[2].span,
+        )),
     }
 }
 

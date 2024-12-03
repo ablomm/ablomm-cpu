@@ -8,6 +8,7 @@ use crate::generator::pop::*;
 use crate::generator::push::*;
 use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
+use ariadne::Fmt;
 use nop::*;
 use std::fmt::Display;
 use std::ops::Range;
@@ -136,14 +137,20 @@ fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Re
 
     if conditions.len() > 1 {
         return Err(Error::new(
-            "Multiple conditions is not supported",
+            format!(
+                "Multiple {} is not supported",
+                "conditions".fg(ATTENTION_COLOR)
+            ),
             conditions[1].span,
         ));
     }
     if !alu_modifiers.is_empty() {
         return Err(Error::new(
-            "Alu modifiers is not supported on this instruction",
-            modifiers.span,
+            format!(
+                "{} is not supported on this instruction",
+                "Alu modifiers".fg(ATTENTION_COLOR)
+            ),
+            alu_modifiers[0].span,
         ));
     }
 
@@ -155,13 +162,19 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
 
     if conditions.len() > 1 {
         return Err(Error::new(
-            "Multiple conditions is not supported",
+            format!(
+                "Multiple {} is not supported",
+                "conditions".fg(ATTENTION_COLOR)
+            ),
             conditions[1].span,
         ));
     }
     if alu_modifiers.len() > 1 {
         return Err(Error::new(
-            "Multiple alu modifiers is not supported",
+            format!(
+                "Multiple {} is not supported",
+                "alu modifiers".fg(ATTENTION_COLOR)
+            ),
             alu_modifiers[1].span,
         ));
     }
@@ -177,8 +190,10 @@ fn assert_range<T: Display + PartialOrd>(
     if !range.contains(&number.val) {
         return Err(Error::new(
             format!(
-                "Only argument in range of [{}, {}) is supported, expression evaluates to {}",
-                range.start, range.end, number.val,
+                "Only argument in range of [{}, {}) is supported; expression evaluates to {}",
+                range.start.to_string().fg(ATTENTION_COLOR),
+                range.end.to_string().fg(ATTENTION_COLOR),
+                number.val.to_string().fg(ATTENTION_COLOR),
             ),
             number.span,
         ));

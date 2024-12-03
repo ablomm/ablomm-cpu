@@ -22,7 +22,11 @@ pub fn generate_unary_alu_op(
         )
     } else {
         Err(Error::new(
-            "Expected 1 or 2 parameters",
+            format!(
+                "Expected {} or {} parameters",
+                "1".fg(ATTENTION_COLOR),
+                "2".fg(ATTENTION_COLOR)
+            ),
             operation.parameters.span,
         ))
     }
@@ -37,7 +41,10 @@ fn generate_unary_alu_op_1(
         Parameter::Register(register) => {
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
-        _ => Err(Error::new("Expected a register", parameters[0].span)),
+        _ => Err(Error::new(
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            parameters[0].span,
+        )),
     }
 }
 
@@ -51,6 +58,9 @@ fn generate_unary_alu_op_2(
         Parameter::Register(register) => {
             generate_alu_op_2_reg(mnemonic, modifiers, register, parameters, symbol_table)
         }
-        _ => Err(Error::new("Expected a register", parameters[0].span)),
+        _ => Err(Error::new(
+            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            parameters[0].span,
+        )),
     }
 }
