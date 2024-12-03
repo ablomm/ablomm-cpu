@@ -47,15 +47,14 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
         Err(error) => return Err((error, sources(cache.into_iter()))),
     };
 
-    let mut export_map = HashMap::new(); // holds every files' path along with it's exported
-                                         // symbols
+    let mut file_exports_map = HashMap::new();
     for file in &file_queue {
         // can't do map_err because of borrow checker
         match fill_symbol_table(
             &file.src,
             &Spanned::new(&file.block, file.span),
             file.start_address,
-            &mut export_map,
+            &mut file_exports_map,
         ) {
             Ok(_address) => (),
             Err(error) => return Err((vec![error], sources(cache.into_iter()))),
@@ -94,15 +93,15 @@ fn generate_file_queue(
 
     // after finding correct addresses
     for import in file.block.get_imports() {
-        let import_src = Spanned::new(
-            src.parent().unwrap().join(Path::new(&*import.val)),
-            import.span,
-        );
-
         // conanicalize path
-        let import_src = match import_src.canonicalize() {
-            Ok(path) => Spanned::new(path, import_src.span),
-            Err(error) => return Err(vec![Error::new(error.to_string(), import_src.span)]),
+        let import_src = match src
+            .parent()
+            .unwrap()
+            .join(Path::new(&*import.val))
+            .canonicalize()
+        {
+            Ok(path) => Spanned::new(path, import.span),
+            Err(error) => return Err(vec![Error::new(error.to_string(), import.span)]),
         };
 
         let import_intern = Intern::new(import_src.to_str().unwrap().to_string());
@@ -184,7 +183,7 @@ fn fill_symbol_table(
     src: &PathBuf,
     block: &Spanned<&Block>,
     start_address: u32,
-    export_map: &mut HashMap<PathBuf, HashMap<Intern<String>, u32>>,
+    file_exports_map: &mut HashMap<PathBuf, HashMap<Intern<String>, u32>>,
 ) -> Result<(), Error> {
     let mut address: u32 = start_address;
     let mut export_identifiers = Vec::new();
@@ -192,24 +191,22 @@ fn fill_symbol_table(
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
-                if block.symbol_table.borrow().contains_key(label) {
-                    return Err(Error::new("Identifier already defined", statement.span));
-                }
-                block.symbol_table.borrow_mut().insert(*label, address);
+                block
+                    .symbol_table
+                    .borrow_mut()
+                    .try_insert(*label, address)
+                    .map_err(|_| Error::new("Identifier already defined", statement.span))?;
             }
             Statement::Assignment(identifier, expression) => {
-                if block.symbol_table.borrow().contains_key(&identifier.val) {
-                    return Err(Error::new("Identifier already defined", identifier.span));
-                }
-
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
-                let expression_val = expression.as_ref().eval(&block.symbol_table.borrow())?;
+                let expression = expression.as_ref().eval(&block.symbol_table.borrow())?;
 
                 block
                     .symbol_table
                     .borrow_mut()
-                    .insert(identifier.val, expression_val);
+                    .try_insert(identifier.val, expression)
+                    .map_err(|_| Error::new("Identifier already defined", identifier.span))?;
             }
             Statement::Export(exports) => {
                 for export in exports {
@@ -218,17 +215,13 @@ fn fill_symbol_table(
             }
             Statement::Import(import) => {
                 let import_src = src.parent().unwrap().join(Path::new(&*import.val));
-                for (export_key, export_val) in export_map.get(&import_src).into_iter().flatten() {
-                    if block.symbol_table.borrow().contains_key(export_key) {
-                        return Err(Error::new(
-                            format!("Import contains identifier '{}', which that already exists in this scope", export_key),
+                for (export_key, export_val) in
+                    file_exports_map.get(&import_src).into_iter().flatten()
+                {
+                    block.symbol_table.borrow_mut().try_insert(*export_key, *export_val).map_err(|_| Error::new(
+                            format!("Import contains identifier '{}', which already exists in this scope", export_key),
                             import.span,
-                        ));
-                    }
-                    block
-                        .symbol_table
-                        .borrow_mut()
-                        .insert(*export_key, *export_val);
+                    ))?;
                 }
             }
             Statement::Block(sub_block) => {
@@ -237,7 +230,7 @@ fn fill_symbol_table(
                     src,
                     &Spanned::new(sub_block, statement.span),
                     address,
-                    export_map,
+                    file_exports_map,
                 )?;
             }
             _ => (),
@@ -248,7 +241,16 @@ fn fill_symbol_table(
         address += statement.num_lines();
     }
 
-    let mut exports = HashMap::new();
+    // get exports from exports_map, create one if it doesn't exist
+    let exports = match file_exports_map.get_mut(src) {
+        Some(exports) => exports,
+        None => {
+            let exports = HashMap::new();
+            file_exports_map.insert(src.to_path_buf(), exports);
+
+            file_exports_map.get_mut(src).unwrap()
+        }
+    };
     // could technically do exports in the statements loop, but then exports need to come after
     // assignments in the assembly code
     for identifier in export_identifiers {
@@ -258,8 +260,6 @@ fn fill_symbol_table(
         let export_val = get_identifier(&identifier.as_ref(), &block.symbol_table.borrow())?;
         exports.insert(identifier.val, export_val);
     }
-
-    export_map.insert(src.to_path_buf(), exports);
 
     Ok(())
 }

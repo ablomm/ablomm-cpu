@@ -14,4 +14,8 @@ expressions = arithemtic expression, string, register, register offset, indirect
 
 maybe combine register and register-offset, i.e. register + 0 = register
 
-imports in block
+import aliasing
+
+exports with sub blocks
+
+change condition names from les -> slte

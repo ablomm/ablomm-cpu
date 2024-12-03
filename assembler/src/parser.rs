@@ -17,6 +17,7 @@ mod keywords;
 pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
     statement_parser()
         .map_with_span(Spanned::new)
+        .padded()
         .repeated()
         .then_ignore(end())
         .map(|statements| Block {
@@ -30,8 +31,8 @@ pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
 }
 
 fn comment_parser() -> impl Parser<char, String, Error = Error> {
-    let line_comment = just("//").ignore_then(take_until(just("\n")).padded());
-    let multiline_comment = just("/*").ignore_then(take_until(just("*/")).padded());
+    let line_comment = just("//").ignore_then(take_until(just("\n")));
+    let multiline_comment = just("/*").ignore_then(take_until(just("*/")));
 
     line_comment
         .or(multiline_comment)
@@ -64,8 +65,8 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
                     just('+').to(Expression::Pos as fn(_) -> _),
                     just('-').to(Expression::Neg as fn(_) -> _),
                 ))
-                .padded()
-                .map_with_span(Spanned::new),
+                .map_with_span(Spanned::new)
+                .padded(),
             )
             .then(expression_parser().map_with_span(Spanned::new))
             .map(|((register, op), expression)| {
@@ -147,8 +148,8 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
     recursive(|statement| {
         let block = statement
             .map_with_span(Spanned::new)
-            .repeated()
             .padded()
+            .repeated()
             .delimited_by(just('{'), just('}'))
             .map(|statements| Block {
                 statements,
@@ -159,19 +160,28 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
             });
 
         choice((
-            block.map(Statement::Block),
+            block.padded().map(Statement::Block),
             operation_parser()
                 .then_ignore(just(';'))
                 .map(Statement::Operation),
-            label.then_ignore(just(':')).map(Statement::Label),
+            label.padded().then_ignore(just(':')).map(Statement::Label),
             assignment
+                .padded()
                 .then_ignore(just(';'))
                 .map(|(ident, expr)| Statement::Assignment(ident, expr)),
-            literal.then_ignore(just(';')).map(Statement::Literal),
-            export.then_ignore(just(';')).map(Statement::Export),
-            import.then_ignore(just(';')).map(Statement::Import),
-            comment_parser().map(Statement::Comment),
+            literal
+                .padded()
+                .then_ignore(just(';'))
+                .map(Statement::Literal),
+            export
+                .padded()
+                .then_ignore(just(';'))
+                .map(Statement::Export),
+            import
+                .padded()
+                .then_ignore(just(';'))
+                .map(Statement::Import),
+            comment_parser().padded().map(Statement::Comment),
         ))
-        .padded()
     })
 }
