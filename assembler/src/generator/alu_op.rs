@@ -1,4 +1,4 @@
-use ariadne::{Color, Fmt};
+use ariadne::Fmt;
 
 use crate::generator::*;
 

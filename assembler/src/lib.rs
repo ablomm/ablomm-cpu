@@ -6,7 +6,7 @@ use std::{
 };
 
 use ariadne::{sources, Cache, Fmt};
-use ast::{Ast, Block, File, Literal, Operation, Spanned, Statement};
+use ast::{Ast, Block, File, Import, Literal, Operation, Spanned, Statement};
 use chumsky::prelude::*;
 
 use error::*;
@@ -97,11 +97,11 @@ fn generate_file_queue(
         let import_src = match src
             .parent()
             .unwrap()
-            .join(Path::new(&*import.val))
+            .join(Path::new(&*import.file.val))
             .canonicalize()
         {
-            Ok(path) => Spanned::new(path, import.span),
-            Err(error) => return Err(vec![Error::new(error.to_string(), import.span)]),
+            Ok(path) => Spanned::new(path, import.file.span),
+            Err(error) => return Err(vec![Error::new(error.to_string(), import.file.span)]),
         };
 
         let import_intern = Intern::new(import_src.to_str().unwrap().to_string());
@@ -214,14 +214,44 @@ fn fill_symbol_table(
                 }
             }
             Statement::Import(import) => {
-                let import_src = src.parent().unwrap().join(Path::new(&*import.val));
-                for (export_key, export_val) in
-                    file_exports_map.get(&import_src).into_iter().flatten()
-                {
-                    block.symbol_table.borrow_mut().try_insert(*export_key, *export_val).map_err(|_| Error::new(
-                            format!("Import contains identifier '{}', which already exists in this scope", export_key.fg(ATTENTION_COLOR)),
-                            import.span,
+                let import_src = src.parent().unwrap().join(Path::new(&*import.file.val));
+                let file_exports = file_exports_map.get(&import_src).ok_or(Error::new(
+                    "[Internal Error] Attempted to import when file has not yet been parsed",
+                    import.file.span,
+                ))?;
+                match &import.identifiers {
+                    // restricted import (i.e. import * [as *] from *
+                    Some(idents) => {
+                        for ident in &idents.val {
+                            let import_val =
+                                file_exports.get(&ident.identifier).ok_or(Error::new(
+                                    format!(
+                                        "Identifier is not exported in '{}'",
+                                        import.file.val.as_str().fg(ATTENTION_COLOR)
+                                    ),
+                                    ident.identifier.span,
+                                ))?;
+
+                            let import_key = &ident.alias.as_ref().unwrap_or(&ident.identifier);
+
+                            block
+                                .symbol_table
+                                .borrow_mut()
+                                .try_insert(import_key.val, *import_val)
+                                .map_err(|_| {
+                                    Error::new("Identifier already defines", import_key.span)
+                                })?;
+                        }
+                    }
+                    None => {
+                        // unrestricted import (i.e. import from *)
+                        for (import_key, import_val) in file_exports {
+                            block.symbol_table.borrow_mut().try_insert(*import_key, *import_val).map_err(|_| Error::new(
+                            format!("Import contains identifier '{}', which already exists in this scope", import_key.fg(ATTENTION_COLOR)),
+                            import.file.span,
                     ))?;
+                        }
+                    }
                 }
             }
             Statement::Block(sub_block) => {
@@ -289,7 +319,7 @@ impl Block {
         num_words
     }
 
-    pub fn get_imports(&self) -> Vec<&Spanned<String>> {
+    pub fn get_imports(&self) -> Vec<&Import> {
         let mut imports = Vec::new();
 
         for statement in &self.statements {

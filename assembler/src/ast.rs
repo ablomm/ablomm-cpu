@@ -55,8 +55,20 @@ pub enum Statement {
     Assignment(Spanned<Intern<String>>, Spanned<Expression>),
     Literal(Literal),
     Export(Vec<Spanned<Intern<String>>>),
-    Import(Spanned<String>),
+    Import(Import),
     Comment(String), // added because maybe it will be useful some day
+}
+
+#[derive(Debug, Clone)]
+pub struct Import {
+    pub file: Spanned<String>,
+    pub identifiers: Option<Spanned<Vec<ImportIdentifier>>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ImportIdentifier {
+    pub identifier: Spanned<Intern<String>>,
+    pub alias: Option<Spanned<Intern<String>>>,
 }
 
 #[derive(Debug, Clone)]
