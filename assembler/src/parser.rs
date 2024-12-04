@@ -143,8 +143,6 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
             .separated_by(just(',')),
     );
 
-    let import = just("import").ignore_then(string_parser().map_with_span(Spanned::new).padded());
-
     recursive(|statement| {
         let block = statement
             .map_with_span(Spanned::new)
@@ -177,11 +175,51 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Export),
-            import
+            import_parser()
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Import),
             comment_parser().padded().map(Statement::Comment),
         ))
     })
+}
+
+fn import_parser() -> impl Parser<char, Import, Error = Error> {
+    let unrestricted_import = just("import")
+        .ignore_then(string_parser().map_with_span(Spanned::new).padded())
+        .map(|file| Import {
+            file,
+            identifiers: None,
+        });
+
+    let import_identifier = text::ident()
+        .map(Intern::new)
+        .map_with_span(Spanned::new)
+        .padded()
+        .then(
+            just("as")
+                .ignore_then(
+                    text::ident()
+                        .map(Intern::new)
+                        .map_with_span(Spanned::new)
+                        .padded(),
+                )
+                .or_not(),
+        )
+        .map(|(identifier, alias)| ImportIdentifier { identifier, alias });
+
+    let restricted_import = just("import")
+        .ignore_then(
+            import_identifier
+                .separated_by(just(','))
+                .map_with_span(Spanned::new)
+                .padded(),
+        )
+        .then(just("from").ignore_then(string_parser().map_with_span(Spanned::new).padded()))
+        .map(|(identifiers, file)| Import {
+            file,
+            identifiers: Some(identifiers),
+        });
+
+    unrestricted_import.or(restricted_import)
 }
