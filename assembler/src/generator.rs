@@ -142,7 +142,8 @@ fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Re
                 "conditions".fg(ATTENTION_COLOR)
             ),
             conditions[1].span,
-        ));
+        )
+        .with_note("Try removing this condition"));
     }
     if !alu_modifiers.is_empty() {
         return Err(Error::new(
@@ -151,7 +152,8 @@ fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Re
                 "Alu modifiers".fg(ATTENTION_COLOR)
             ),
             alu_modifiers[0].span,
-        ));
+        )
+        .with_note("Try removing this modifier"));
     }
 
     Ok(conditions.generate())
@@ -167,7 +169,8 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
                 "conditions".fg(ATTENTION_COLOR)
             ),
             conditions[1].span,
-        ));
+        )
+        .with_note("Try removing this condition"));
     }
     if alu_modifiers.len() > 1 {
         return Err(Error::new(
@@ -176,7 +179,8 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
                 "alu modifiers".fg(ATTENTION_COLOR)
             ),
             alu_modifiers[1].span,
-        ));
+        )
+        .with_note("Try removing this modifier"));
     }
 
     Ok(conditions.generate() | alu_modifiers.generate())
@@ -196,7 +200,8 @@ fn assert_range<T: Display + PartialOrd>(
                 number.val.to_string().fg(ATTENTION_COLOR),
             ),
             number.span,
-        ));
+        )
+        .with_note("If you require a range larger than this, use a register instead"));
     }
 
     Ok(())

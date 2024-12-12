@@ -116,7 +116,7 @@ fn generate_file_queue(
                     import_src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR)
                 ),
                 import_src.span,
-            )]);
+            ).with_note("Try removing this import")]);
         }
 
         if cache.contains_key(&import_intern) {
@@ -195,7 +195,10 @@ fn fill_symbol_table(
                     .symbol_table
                     .borrow_mut()
                     .try_insert(*label, address)
-                    .map_err(|_| Error::new("Identifier already defined", statement.span))?;
+                    .map_err(|_| {
+                        Error::new("Identifier already defined", statement.span)
+                            .with_note("Try using a different name")
+                    })?;
             }
             Statement::Assignment(identifier, expression) => {
                 // need to move the expression evaluation out of the symbol_table.insert() call
@@ -206,7 +209,10 @@ fn fill_symbol_table(
                     .symbol_table
                     .borrow_mut()
                     .try_insert(identifier.val, expression)
-                    .map_err(|_| Error::new("Identifier already defined", identifier.span))?;
+                    .map_err(|_| {
+                        Error::new("Identifier already defined", identifier.span)
+                            .with_note("Try using a different name")
+                    })?;
             }
             Statement::Export(exports) => {
                 for export in exports {
@@ -215,10 +221,13 @@ fn fill_symbol_table(
             }
             Statement::Import(import) => {
                 let import_src = src.parent().unwrap().join(Path::new(&*import.file.val));
-                let file_exports = file_exports_map.get(&import_src).ok_or(Error::new(
-                    "[Internal Error] Attempted to import when file has not yet been parsed",
-                    import.file.span,
-                ))?;
+                let file_exports = file_exports_map.get(&import_src).ok_or(
+                    Error::new(
+                        "[Internal Error] Attempted to import when file has not yet been parsed",
+                        import.file.span,
+                    )
+                    .with_note("Do you have a circular dependency that somehow wasn't caught?"),
+                )?;
                 match &import.specifier.val {
                     // selective import (i.e. import <ident> [as <ident>][, ...] from <file>
                     ImportSpecifier::Named(idents) => {
@@ -239,7 +248,11 @@ fn fill_symbol_table(
                                 .borrow_mut()
                                 .try_insert(import_key.val, *import_val)
                                 .map_err(|_| {
-                                    Error::new("Identifier already defines", import_key.span)
+                                    Error::new("Identifier already defined", import_key.span)
+                                        .with_note(format!(
+                                            "Try aliasing the import by adding {}",
+                                            "as <new_name>".fg(ATTENTION_COLOR)
+                                        ))
                                 })?;
                         }
                     }
@@ -249,7 +262,8 @@ fn fill_symbol_table(
                             block.symbol_table.borrow_mut().try_insert(*import_key, *import_val).map_err(|_| Error::new(
                             format!("Import contains identifier '{}', which already exists in this scope", import_key.fg(ATTENTION_COLOR)),
                             import.specifier.span,
-                    ))?;
+                    ).with_note(format!("Try using named import aliases: {}{}", 
+                    import_key.fg(ATTENTION_COLOR), " as <new_name> ... <other imports>".fg(ATTENTION_COLOR))))?;
                         }
                     }
                 }
@@ -285,7 +299,8 @@ fn fill_symbol_table(
     // assignments in the assembly code
     for identifier in export_identifiers {
         if exports.contains_key(&identifier.val) {
-            return Err(Error::new("Identifier already exported", identifier.span));
+            return Err(Error::new("Identifier already exported", identifier.span)
+                .with_note("Try removing this export"));
         }
         let export_val = get_identifier(&identifier.as_ref(), &block.symbol_table.borrow())?;
         exports.insert(identifier.val, export_val);

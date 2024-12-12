@@ -26,14 +26,14 @@ impl Spanned<&Expression> {
             Expression::Div(a, b) => {
                 let denominator = (**b).as_ref().eval(symbol_table)?;
                 if denominator == 0 {
-                    return Err(Error::new("divison by 0 is undefined", b.span));
+                    return Err(Error::new("Divison by 0 is undefined", b.span));
                 }
                 Ok((**a).as_ref().eval(symbol_table)?.wrapping_div(denominator))
             }
             Expression::Remainder(a, b) => {
                 let denominator = (**b).as_ref().eval(symbol_table)?;
                 if denominator == 0 {
-                    return Err(Error::new("divison by 0 is undefined", b.span));
+                    return Err(Error::new("Divison by 0 is undefined", b.span));
                 }
                 Ok((**a).as_ref().eval(symbol_table)?.wrapping_rem(denominator))
             }
