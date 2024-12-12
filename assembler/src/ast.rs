@@ -62,11 +62,16 @@ pub enum Statement {
 #[derive(Debug, Clone)]
 pub struct Import {
     pub file: Spanned<String>,
-    pub identifiers: Option<Spanned<Vec<ImportIdentifier>>>,
+    pub specifier: Spanned<ImportSpecifier>,
 }
 
 #[derive(Debug, Clone)]
-pub struct ImportIdentifier {
+pub enum ImportSpecifier {
+    Named(Vec<Spanned<NamedImport>>), // import print as print2, thing from "lib/import.asm";
+    Blob,                           // import * from "lib/import.asm";
+}
+#[derive(Debug, Clone)]
+pub struct NamedImport {
     pub identifier: Spanned<Intern<String>>,
     pub alias: Option<Spanned<Intern<String>>>,
 }
