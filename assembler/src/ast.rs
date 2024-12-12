@@ -51,12 +51,25 @@ pub struct Block {
 pub enum Statement {
     Block(Block),
     Operation(Operation),
-    Label(Intern<String>),
-    Assignment(Spanned<Intern<String>>, Spanned<Expression>),
+    Label(Label),
+    Assignment(Assignment),
     Literal(Literal),
     Export(Vec<Spanned<Intern<String>>>),
     Import(Import),
     Comment(String), // added because maybe it will be useful some day
+}
+
+#[derive(Debug, Clone)]
+pub struct Label {
+    pub export: bool,
+    pub identifier: Spanned<Intern<String>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Assignment {
+    pub export: bool,
+    pub identifier: Spanned<Intern<String>>,
+    pub expression: Spanned<Expression>,
 }
 
 #[derive(Debug, Clone)]
@@ -68,7 +81,7 @@ pub struct Import {
 #[derive(Debug, Clone)]
 pub enum ImportSpecifier {
     Named(Vec<Spanned<NamedImport>>), // import print as print2, thing from "lib/import.asm";
-    Blob,                           // import * from "lib/import.asm";
+    Blob,                             // import * from "lib/import.asm";
 }
 #[derive(Debug, Clone)]
 pub struct NamedImport {

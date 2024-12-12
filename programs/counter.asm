@@ -1,4 +1,5 @@
-tty_addr = 0x4000;
+import tty_addr from "lib/defines.asm";
+
 	ld r0, '0';
 	ld r1, '\n';
 loop:
