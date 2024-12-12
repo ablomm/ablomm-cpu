@@ -10,6 +10,7 @@ pub const ATTENTION_COLOR: Color = Color::Fixed(12); // blue
 pub struct Error {
     message: String,
     span: Span,
+    note: Option<String>,
 }
 
 impl Error {
@@ -17,7 +18,13 @@ impl Error {
         Self {
             message: message.into(),
             span,
+            note: None,
         }
+    }
+
+    pub fn with_note(mut self, note: impl Into<String>) -> Self {
+        self.note = Some(note.into());
+        self
     }
 
     pub fn write(
@@ -26,16 +33,19 @@ impl Error {
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
-        return Report::build(ReportKind::Error, self.span)
+        let mut report = Report::build(ReportKind::Error, self.span)
             .with_code(1)
             .with_message("Assembler Error")
             .with_label(
                 Label::new(self.span)
                     .with_message(&self.message)
                     .with_color(Color::Fixed(9)), // red
-            )
-            .finish()
-            .write(cache, writer);
+            );
+
+        if let Some(note) = &self.note {
+            report = report.with_note(note);
+        }
+        report.finish().write(cache, writer)
     }
 
     pub fn eprint(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
@@ -68,7 +78,11 @@ impl chumsky::Error<char> for Error {
                 .map(|e| format!("'{}'", e.escape_default().fg(ATTENTION_COLOR)))
                 .unwrap_or("nothing".to_string())
         );
-        Self { message, span }
+        Self {
+            message,
+            span,
+            note: None,
+        }
     }
 
     // not implemented
