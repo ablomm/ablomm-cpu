@@ -185,14 +185,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
 }
 
 fn import_parser() -> impl Parser<char, Import, Error = Error> {
-    let unrestricted_import = just("import")
-        .ignore_then(string_parser().map_with_span(Spanned::new).padded())
-        .map(|file| Import {
-            file,
-            identifiers: None,
-        });
-
-    let import_identifier = text::ident()
+    let named_import = text::ident()
         .map(Intern::new)
         .map_with_span(Spanned::new)
         .padded()
@@ -206,20 +199,21 @@ fn import_parser() -> impl Parser<char, Import, Error = Error> {
                 )
                 .or_not(),
         )
-        .map(|(identifier, alias)| ImportIdentifier { identifier, alias });
+        .map(|(identifier, alias)| NamedImport { identifier, alias });
 
-    let restricted_import = just("import")
-        .ignore_then(
-            import_identifier
-                .separated_by(just(','))
+    just("import")
+        .ignore_then(choice((
+            just("*")
+                .to(ImportSpecifier::Blob)
                 .map_with_span(Spanned::new)
                 .padded(),
-        )
+            named_import
+                .map_with_span(Spanned::new)
+                .separated_by(just(','))
+                .map(ImportSpecifier::Named)
+                .map_with_span(Spanned::new)
+                .padded(),
+        )))
         .then(just("from").ignore_then(string_parser().map_with_span(Spanned::new).padded()))
-        .map(|(identifiers, file)| Import {
-            file,
-            identifiers: Some(identifiers),
-        });
-
-    unrestricted_import.or(restricted_import)
+        .map(|(specifier, file)| Import { file, specifier })
 }

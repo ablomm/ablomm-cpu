@@ -6,7 +6,7 @@ use std::{
 };
 
 use ariadne::{sources, Cache, Fmt};
-use ast::{Ast, Block, File, Import, Literal, Operation, Spanned, Statement};
+use ast::{Ast, Block, File, Import, ImportSpecifier, Literal, Operation, Spanned, Statement};
 use chumsky::prelude::*;
 
 use error::*;
@@ -219,10 +219,10 @@ fn fill_symbol_table(
                     "[Internal Error] Attempted to import when file has not yet been parsed",
                     import.file.span,
                 ))?;
-                match &import.identifiers {
-                    // restricted import (i.e. import * [as *] from *
-                    Some(idents) => {
-                        for ident in &idents.val {
+                match &import.specifier.val {
+                    // selective import (i.e. import <ident> [as <ident>][, ...] from <file>
+                    ImportSpecifier::Named(idents) => {
+                        for ident in idents {
                             let import_val =
                                 file_exports.get(&ident.identifier).ok_or(Error::new(
                                     format!(
@@ -243,12 +243,12 @@ fn fill_symbol_table(
                                 })?;
                         }
                     }
-                    None => {
-                        // unrestricted import (i.e. import from *)
+                    ImportSpecifier::Blob => {
+                        // unselective import (i.e. import * from <file>
                         for (import_key, import_val) in file_exports {
                             block.symbol_table.borrow_mut().try_insert(*import_key, *import_val).map_err(|_| Error::new(
                             format!("Import contains identifier '{}', which already exists in this scope", import_key.fg(ATTENTION_COLOR)),
-                            import.file.span,
+                            import.specifier.span,
                     ))?;
                         }
                     }
