@@ -122,18 +122,31 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
 }
 
 fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
-    let label = text::ident().map(Intern::new);
+    let label = just("export")
+        .padded()
+        .or_not()
+        .then(text::ident().map(Intern::new).map_with_span(Spanned::new))
+        .map(|(export, identifier)| Label {
+            export: export.is_some(),
+            identifier,
+        });
 
     let literal = choice((
         expression_parser().map(Literal::Expression),
         string_parser().map(Literal::String),
     ));
 
-    let assignment = text::ident()
-        .map(Intern::new)
-        .map_with_span(Spanned::new)
+    let assignment = just("export")
+        .padded()
+        .or_not()
+        .then(text::ident().map(Intern::new).map_with_span(Spanned::new))
         .then_ignore(just('=').padded())
-        .then(expression_parser().map_with_span(Spanned::new));
+        .then(expression_parser().map_with_span(Spanned::new))
+        .map(|((export, identifier), expression)| Assignment {
+            export: export.is_some(),
+            identifier,
+            expression,
+        });
 
     let export = just("export").ignore_then(
         text::ident()
@@ -166,7 +179,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
             assignment
                 .padded()
                 .then_ignore(just(';'))
-                .map(|(ident, expr)| Statement::Assignment(ident, expr)),
+                .map(Statement::Assignment),
             literal
                 .padded()
                 .then_ignore(just(';'))

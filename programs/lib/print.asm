@@ -1,7 +1,7 @@
 import * from "defines.asm";
 
 // params: r0 = string to be printed
-print: {
+export print: {
 		push lr;
 		push r1;
 		push r2;
@@ -28,5 +28,3 @@ print: {
 		pop r1;
 		pop pc;
 }
-
-export print;

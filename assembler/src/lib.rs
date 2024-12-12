@@ -194,25 +194,35 @@ fn fill_symbol_table(
                 block
                     .symbol_table
                     .borrow_mut()
-                    .try_insert(*label, address)
+                    .try_insert(label.identifier.val, address)
                     .map_err(|_| {
                         Error::new("Identifier already defined", statement.span)
                             .with_note("Try using a different name")
                     })?;
+                if label.export {
+                    export_identifiers.push(&label.identifier);
+                }
             }
-            Statement::Assignment(identifier, expression) => {
+            Statement::Assignment(assignment) => {
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
-                let expression = expression.as_ref().eval(&block.symbol_table.borrow())?;
+                let expression = assignment
+                    .expression
+                    .as_ref()
+                    .eval(&block.symbol_table.borrow())?;
 
                 block
                     .symbol_table
                     .borrow_mut()
-                    .try_insert(identifier.val, expression)
+                    .try_insert(assignment.identifier.val, expression)
                     .map_err(|_| {
-                        Error::new("Identifier already defined", identifier.span)
+                        Error::new("Identifier already defined", assignment.identifier.span)
                             .with_note("Try using a different name")
                     })?;
+
+                if assignment.export {
+                    export_identifiers.push(&assignment.identifier);
+                }
             }
             Statement::Export(exports) => {
                 for export in exports {
