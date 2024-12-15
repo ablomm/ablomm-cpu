@@ -1,1 +1,1 @@
-export tty_addr = 0x4000;
+export tty = [0x4000];

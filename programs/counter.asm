@@ -1,12 +1,16 @@
-import tty_addr from "lib/defines.asm";
+import tty from "lib/defines.asm";
+
+num = r0;
+new_line = r1;
 
 	ld r0, '0';
-	ld r1, '\n';
 loop:
-	st r0, [tty_addr];
-	add r0, 1;
-	sub.t r0, '9';
+	st num, tty;
+	add num, 1;
+	sub.t num, '9';
 	ld.leu pc, loop;
-	st r1, [tty_addr];
+
+	ld new_line, '\n';
+	st new_line, tty;
 end:
 	ld pc, end;

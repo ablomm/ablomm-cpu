@@ -1,6 +1,6 @@
 use ariadne::Fmt;
 
-use crate::generator::*;
+use crate::{expression::expression_result::ExpressionResult, generator::*};
 
 pub fn generate_ld(
     operation: &Spanned<&Operation>,
@@ -13,8 +13,8 @@ pub fn generate_ld(
         ));
     }
 
-    match &operation.parameters[0].val {
-        Parameter::Register(register) => generate_ld_reg(
+    match &operation.parameters[0].as_ref().eval(symbol_table)?.val {
+        ExpressionResult::Register(register) => generate_ld_reg(
             &operation.full_mnemonic.modifiers,
             register,
             &operation.parameters,
@@ -31,25 +31,23 @@ pub fn generate_ld(
 fn generate_ld_reg(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    parameters: &Spanned<Vec<Spanned<Parameter>>>,
+    parameters: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &parameters[1].val {
-        Parameter::Register(register2) => generate_ld_reg_reg(modifiers, register, register2),
+    match &parameters[1].as_ref().eval(symbol_table)?.val {
+        ExpressionResult::Register(register2) => {
+            generate_ld_reg_reg(modifiers, register, register2)
+        }
 
-        Parameter::Expression(expression) => generate_ld_reg_num(
+        ExpressionResult::Number(number) => generate_ld_reg_num(
             modifiers,
             register,
-            &Spanned::new(
-                Spanned::new(expression, parameters[1].span).eval(symbol_table)?,
-                parameters[1].span,
-            ),
+            &Spanned::new(*number, parameters[1].span),
         ),
-        Parameter::Indirect(parameter) => generate_ld_reg_indirect(
+        ExpressionResult::Indirect(parameter) => generate_ld_reg_indirect(
             modifiers,
             register,
             &Spanned::new(parameter, parameters[1].span),
-            symbol_table,
         ),
         _ => Err(Error::new(
             format!(
@@ -94,24 +92,20 @@ fn generate_ld_reg_num(
 fn generate_ld_reg_indirect(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    parameter: &Spanned<&Parameter>,
-    symbol_table: &SymbolTable,
+    parameter: &Spanned<&ExpressionResult>,
 ) -> Result<u32, Error> {
     match parameter.val {
-        Parameter::Register(register2) => generate_ld_reg_ireg(modifiers, register, register2),
-        Parameter::Expression(expression) => generate_ld_reg_inum(
-            modifiers,
-            register,
-            &Spanned::new(
-                Spanned::new(expression, parameter.span).eval(symbol_table)?,
-                parameter.span,
-            ),
-        ),
-        Parameter::RegisterOffset(register2, offset) => generate_ld_reg_ireg_offset(
+        ExpressionResult::Register(register2) => {
+            generate_ld_reg_ireg(modifiers, register, register2)
+        }
+        ExpressionResult::Number(number) => {
+            generate_ld_reg_inum(modifiers, register, &Spanned::new(*number, parameter.span))
+        }
+        ExpressionResult::RegisterOffset(register2, offset) => generate_ld_reg_ireg_offset(
             modifiers,
             register,
             register2,
-            &Spanned::new(offset.as_ref().eval(symbol_table)? as i32, offset.span),
+            &Spanned::new(*offset as i32, parameter.span),
         ),
         _ => Err(Error::new(
             format!(

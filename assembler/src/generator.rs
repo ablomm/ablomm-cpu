@@ -1,5 +1,6 @@
 use crate::ast::*;
 use crate::error::*;
+use crate::expression::expression_result::ExpressionResult;
 use crate::generator::alu_op::unary_alu_op::*;
 use crate::generator::alu_op::*;
 use crate::generator::int::*;
@@ -76,8 +77,8 @@ impl Spanned<&Operation> {
             Mnemonic::Nop => generate_nop(self),
             Mnemonic::Ld => generate_ld(self, symbol_table),
             Mnemonic::St => generate_st(self, symbol_table),
-            Mnemonic::Push => generate_push(self),
-            Mnemonic::Pop => generate_pop(self),
+            Mnemonic::Push => generate_push(self, symbol_table),
+            Mnemonic::Pop => generate_pop(self, symbol_table),
             Mnemonic::Int => generate_int(self),
             // alu ops
             Mnemonic::Not | Mnemonic::Neg => generate_unary_alu_op(self, symbol_table),
@@ -87,10 +88,10 @@ impl Spanned<&Operation> {
     }
 }
 
-impl Spanned<&Literal> {
+impl Spanned<&Expression> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
-        match &self.val {
-            Literal::String(string) => {
+        match self.eval(symbol_table)?.val {
+            ExpressionResult::String(string) => {
                 let mut opcodes = Vec::new();
                 // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
                 // addressible, not byte addressible)
@@ -105,9 +106,8 @@ impl Spanned<&Literal> {
                 }
                 Ok(opcodes)
             }
-            Literal::Expression(expression) => {
-                Ok(vec![Spanned::new(expression, self.span).eval(symbol_table)?])
-            }
+            ExpressionResult::Number(number) => Ok(vec![number]),
+            _ => Err(Error::new("Expected either {} or {}", self.span)),
         }
     }
 }

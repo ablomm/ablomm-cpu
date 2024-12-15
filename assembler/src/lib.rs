@@ -6,15 +6,16 @@ use std::{
 };
 
 use ariadne::{sources, Cache, Fmt};
-use ast::{Ast, Block, File, Import, ImportSpecifier, Literal, Operation, Spanned, Statement};
+use ast::{Ast, Block, Expression, File, Import, ImportSpecifier, Operation, Spanned, Statement};
 use chumsky::prelude::*;
 
 use error::*;
+use expression::expression_result::ExpressionResult;
 use generator::*;
 use internment::Intern;
 use parser::*;
 use span::*;
-use symbol_table::get_identifier;
+use symbol_table::{get_identifier, SymbolTable};
 
 mod ast;
 pub mod error;
@@ -88,8 +89,19 @@ fn generate_file_queue(
     // parse itself
     let file = parse_path(&src.as_ref(), start_address, cache)?;
 
+    // need to create an empty symbol table because a block has expressions, which could contain
+    // any value, and literals are expressions, which means a to know the size of a block
+    // requires knowing the value of symbols, but the symbol tables are filled in later, so this is
+    // an issue. Right now lets just ignore it by disallowing identifiers in literals
+    let dummy_table = SymbolTable {
+        table: HashMap::new(),
+        parent: None,
+    };
+
     // add imports to end of this file
-    end_address += file.block.num_words();
+    end_address += file.block.num_words(&dummy_table).map_err(|err| {
+        vec![err.with_note("Currently, identifiers is not supported in literals")]
+    })?;
 
     // after finding correct addresses
     for import in file.block.get_imports() {
@@ -183,7 +195,7 @@ fn fill_symbol_table(
     src: &PathBuf,
     block: &Spanned<&Block>,
     start_address: u32,
-    file_exports_map: &mut HashMap<PathBuf, HashMap<Intern<String>, u32>>,
+    file_exports_map: &mut HashMap<PathBuf, HashMap<Intern<String>, Spanned<ExpressionResult>>>,
 ) -> Result<(), Error> {
     let mut address: u32 = start_address;
     let mut export_identifiers = Vec::new();
@@ -194,7 +206,10 @@ fn fill_symbol_table(
                 block
                     .symbol_table
                     .borrow_mut()
-                    .try_insert(label.identifier.val, address)
+                    .try_insert(
+                        label.identifier.val,
+                        Spanned::new(ExpressionResult::Number(address), statement.span),
+                    )
                     .map_err(|_| {
                         Error::new("Identifier already defined", statement.span)
                             .with_note("Try using a different name")
@@ -256,7 +271,7 @@ fn fill_symbol_table(
                             block
                                 .symbol_table
                                 .borrow_mut()
-                                .try_insert(import_key.val, *import_val)
+                                .try_insert(import_key.val, import_val.clone())
                                 .map_err(|_| {
                                     Error::new("Identifier already defined", import_key.span)
                                         .with_note(format!(
@@ -269,7 +284,7 @@ fn fill_symbol_table(
                     ImportSpecifier::Blob => {
                         // unselective import (i.e. import * from <file>
                         for (import_key, import_val) in file_exports {
-                            block.symbol_table.borrow_mut().try_insert(*import_key, *import_val).map_err(|_| Error::new(
+                            block.symbol_table.borrow_mut().try_insert(*import_key, import_val.clone()).map_err(|_| Error::new(
                             format!("Import contains identifier '{}', which already exists in this scope", import_key.fg(ATTENTION_COLOR)),
                             import.specifier.span,
                     ).with_note(format!("Try using named import aliases: {}{}", 
@@ -292,7 +307,7 @@ fn fill_symbol_table(
 
         // technically we could count the lines in the loop above, but this is a bit more readable
         // even though it requres another pass
-        address += statement.num_words();
+        address += statement.as_ref().num_words(&block.symbol_table.borrow())?;
     }
 
     // get exports from exports_map, create one if it doesn't exist
@@ -319,29 +334,37 @@ fn fill_symbol_table(
     Ok(())
 }
 
-impl Literal {
-    pub fn num_words(&self) -> u32 {
-        match self {
-            Literal::String(string) => ((string.len() as f32) / 4.0).ceil() as u32,
-            _ => 1,
+impl Spanned<&Expression> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
+        match self.eval(symbol_table)?.val {
+            ExpressionResult::String(string) => Ok(((string.len() as f32) / 4.0).ceil() as u32),
+            ExpressionResult::Number(_number) => Ok(1),
+            _ => Err(Error::new(
+                format!(
+                    "expected either {} or {}",
+                    "string".fg(ATTENTION_COLOR),
+                    "number".fg(ATTENTION_COLOR)
+                ),
+                self.span,
+            )),
         }
     }
 }
 
 impl Operation {
-    pub fn num_words(&self) -> u32 {
-        1
+    pub fn num_words(&self) -> Result<u32, Error> {
+        Ok(1)
     }
 }
 
 impl Block {
-    pub fn num_words(&self) -> u32 {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         let mut num_words = 0;
         for statement in &self.statements {
-            num_words += statement.num_words();
+            num_words += statement.as_ref().num_words(symbol_table)?;
         }
 
-        num_words
+        Ok(num_words)
     }
 
     pub fn get_imports(&self) -> Vec<&Import> {
@@ -359,13 +382,13 @@ impl Block {
     }
 }
 
-impl Statement {
-    pub fn num_words(&self) -> u32 {
-        match self {
-            Statement::Literal(literal) => literal.num_words(),
-            Statement::Block(block) => block.num_words(),
+impl Spanned<&Statement> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
+        match self.val {
+            Statement::Literal(literal) => Spanned::new(literal, self.span).num_words(symbol_table),
+            Statement::Block(block) => block.num_words(symbol_table),
             Statement::Operation(operation) => operation.num_words(),
-            _ => 0,
+            _ => Ok(0),
         }
     }
 }
