@@ -21,3 +21,15 @@ change condition names from les -> slte
 make file cache key Intern<Pathbuf>
 
 add notes to Error
+
+combine ld and st to just mv
+
+i.e. 
+st r1, [addr];
+mv [addr], r1;
+
+ld r1, [addr];
+mv r1, [addr];
+
+have a cpu_mnomonic
+and a asm_mnomonic

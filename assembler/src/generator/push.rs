@@ -1,8 +1,8 @@
 use ariadne::Fmt;
 
-use crate::generator::*;
+use crate::{expression::expression_result::ExpressionResult, generator::*};
 
-pub fn generate_push(operation: &Spanned<&Operation>) -> Result<u32, Error> {
+pub fn generate_push(operation: &Spanned<&Operation>, symbol_table: &SymbolTable) -> Result<u32, Error> {
     if operation.parameters.len() != 1 {
         return Err(Error::new(
             format!("Expected {} parameter", "1".fg(ATTENTION_COLOR)),
@@ -10,8 +10,8 @@ pub fn generate_push(operation: &Spanned<&Operation>) -> Result<u32, Error> {
         ));
     }
 
-    match &operation.parameters[0].val {
-        Parameter::Register(register) => {
+    match &operation.parameters[0].as_ref().eval(symbol_table)?.val {
+        ExpressionResult::Register(register) => {
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
         _ => Err(Error::new(

@@ -12,6 +12,7 @@ pub fn generate_unary_alu_op(
             &operation.full_mnemonic.mnemonic,
             &operation.full_mnemonic.modifiers,
             &operation.parameters,
+            symbol_table,
         )
     } else if operation.parameters.len() == 2 {
         generate_unary_alu_op_2(
@@ -35,10 +36,11 @@ pub fn generate_unary_alu_op(
 fn generate_unary_alu_op_1(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    parameters: &Spanned<Vec<Spanned<Parameter>>>,
+    parameters: &Spanned<Vec<Spanned<Expression>>>,
+    symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &parameters[0].val {
-        Parameter::Register(register) => {
+    match &parameters[0].as_ref().eval(symbol_table)?.val {
+        ExpressionResult::Register(register) => {
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
         _ => Err(Error::new(
@@ -51,11 +53,11 @@ fn generate_unary_alu_op_1(
 fn generate_unary_alu_op_2(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    parameters: &Spanned<Vec<Spanned<Parameter>>>,
+    parameters: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &parameters[0].val {
-        Parameter::Register(register) => {
+    match &parameters[0].as_ref().eval(symbol_table)?.val {
+        ExpressionResult::Register(register) => {
             generate_alu_op_2_reg(mnemonic, modifiers, register, parameters, symbol_table)
         }
         _ => Err(Error::new(

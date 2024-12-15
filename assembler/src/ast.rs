@@ -4,7 +4,7 @@ use crate::{symbol_table::SymbolTable, Span};
 use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
 
 // just a struct to hold a span for error messages
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Spanned<T> {
     pub val: T,
     pub span: Span,
@@ -53,7 +53,7 @@ pub enum Statement {
     Operation(Operation),
     Label(Label),
     Assignment(Assignment),
-    Literal(Literal),
+    Literal(Expression),
     Export(Vec<Spanned<Intern<String>>>),
     Import(Import),
     Comment(String), // added because maybe it will be useful some day
@@ -90,13 +90,10 @@ pub struct NamedImport {
 }
 
 #[derive(Debug, Clone)]
-pub enum Literal {
-    Expression(Expression),
-    String(String),
-}
-
-#[derive(Debug, Clone)]
 pub enum Expression {
+    Register(Register),
+    String(String),
+    Indirect(Box<Expression>),
     Number(u32),
     Ident(Intern<String>),
     Pos(Box<Spanned<Expression>>),
@@ -118,7 +115,7 @@ pub enum Expression {
 #[derive(Debug, Clone)]
 pub struct Operation {
     pub full_mnemonic: Spanned<FullMnemonic>,
-    pub parameters: Spanned<Vec<Spanned<Parameter>>>,
+    pub parameters: Spanned<Vec<Spanned<Expression>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -187,14 +184,6 @@ pub enum AluOpFlags {
     Reverse = 1 << 2,
     Loadn = 1 << 1,
     SetStatus = 1 << 0,
-}
-
-#[derive(Debug, Clone)]
-pub enum Parameter {
-    Register(Register),
-    RegisterOffset(Spanned<Register>, Spanned<Expression>),
-    Expression(Expression),
-    Indirect(Box<Parameter>),
 }
 
 #[derive(Debug, Copy, Clone)]

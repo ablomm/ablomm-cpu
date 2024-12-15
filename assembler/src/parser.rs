@@ -57,36 +57,6 @@ fn string_parser() -> impl Parser<char, String, Error = Error> {
 }
 
 fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
-    let parameter = recursive(|parameter| {
-        let register_offset = register_parser()
-            .map_with_span(Spanned::new)
-            .then(
-                choice((
-                    just('+').to(Expression::Pos as fn(_) -> _),
-                    just('-').to(Expression::Neg as fn(_) -> _),
-                ))
-                .map_with_span(Spanned::new)
-                .padded(),
-            )
-            .then(expression_parser().map_with_span(Spanned::new))
-            .map(|((register, op), expression)| {
-                let span = op.span.union(&expression.span);
-                Parameter::RegisterOffset(
-                    register,
-                    Spanned::new(op(Box::new(Spanned::new(expression.val, span))), span),
-                )
-            });
-
-        let indirect = parameter.delimited_by(just('['), just(']'));
-
-        choice((
-            register_offset,
-            register_parser().map(Parameter::Register),
-            expression_parser().map(Parameter::Expression),
-            indirect.map(|i| Parameter::Indirect(Box::new(i))),
-        ))
-    });
-
     let modifier = just('.').ignore_then(choice((
         alu_modifier_parser().map(Modifier::AluModifier),
         condition_parser().map(Modifier::Condition),
@@ -109,7 +79,7 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
         .map_with_span(Spanned::new)
         .padded()
         .then(
-            parameter
+            expression_parser()
                 .map_with_span(Spanned::new)
                 .padded()
                 .separated_by(just(','))
@@ -130,11 +100,6 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
             export: export.is_some(),
             identifier,
         });
-
-    let literal = choice((
-        expression_parser().map(Literal::Expression),
-        string_parser().map(Literal::String),
-    ));
 
     let assignment = just("export")
         .padded()
@@ -180,7 +145,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Assignment),
-            literal
+            expression_parser()
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Literal),

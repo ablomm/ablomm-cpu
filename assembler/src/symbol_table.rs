@@ -2,12 +2,12 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{ast::Spanned, Error};
+use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Error};
 
 pub struct SymbolError;
 
 type Key = Intern<String>;
-type Value = u32;
+type Value = Spanned<ExpressionResult>;
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -41,22 +41,23 @@ impl SymbolTable {
         false
     }
 
-    pub fn get<Q>(&self, key: &Q) -> Option<u32>
+    pub fn get<Q>(&self, key: &Q) -> Option<&Value>
     where
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
     {
-        self.table.get(key).copied()
+        self.table.get(key)
     }
 
-    pub fn get_recursive<Q>(&self, key: &Q) -> Option<u32>
+    // owned value because parent may go out of scope while borrowed
+    pub fn get_recursive<Q>(&self, key: &Q) -> Option<Value>
     where
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
     {
         let value = self.get(key);
         if let Some(value) = value {
-            return Some(value);
+            return Some(value.clone());
         }
 
         if let Some(parent) = &self.parent {
@@ -66,7 +67,7 @@ impl SymbolTable {
         None
     }
 
-    pub fn insert(&mut self, key: Key, value: Value) -> Option<u32> {
+    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
@@ -85,7 +86,7 @@ impl SymbolTable {
 pub fn get_identifier(
     ident: &Spanned<&Intern<String>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, Error> {
+) -> Result<Value, Error> {
     if let Some(label_line) = symbol_table.get_recursive(ident.val) {
         Ok(label_line)
     } else {
