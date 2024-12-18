@@ -15,6 +15,7 @@ use generator::*;
 use internment::Intern;
 use parser::*;
 use span::*;
+use src::Src;
 use symbol_table::{get_identifier, SymbolTable};
 
 mod ast;
@@ -23,11 +24,12 @@ mod expression;
 mod generator;
 mod parser;
 mod span;
+mod src;
 mod symbol_table;
 
 // return a string which is the machine code
 // error includes cache in order to print errors without re-reading files
-pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<String>>)> {
+pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<Src>>)> {
     // fails if file not found
     // this is the root file, given in the comandline
     let src = Path::new(src)
@@ -39,7 +41,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
 
     // create a dummy span because there is no actual span for the root file, as it doesn't have a
     // corresponding import statement
-    let dummy_span = Span::new(Intern::new(src.to_str().unwrap().to_string()), 0..0);
+    let dummy_span = Span::new(Intern::new(Src(src.to_path_buf())), 0..0);
     let src = Spanned::new(src, dummy_span);
 
     // file queue is order in which to generate symbol tables
@@ -77,7 +79,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
 fn generate_file_queue(
     src: Spanned<PathBuf>,
     start_address: u32,
-    cache: &mut HashMap<Intern<String>, String>,
+    cache: &mut HashMap<Intern<Src>, String>,
     import_set: &mut HashSet<Intern<String>>, // to detect cycles
 ) -> Result<Vec<Spanned<File>>, Vec<Error>> {
     let src_intern = Intern::new(src.to_str().unwrap().to_string());
@@ -131,7 +133,8 @@ fn generate_file_queue(
             ).with_note("Try removing this import")]);
         }
 
-        if cache.contains_key(&import_intern) {
+        let key = Intern::new(Src(import_src.to_path_buf()));
+        if cache.contains_key(&key) {
             // we already did this import, so skip it
             continue;
         }
@@ -155,9 +158,8 @@ fn generate_file_queue(
 fn parse_path(
     path: &Spanned<&PathBuf>,
     start_address: u32,
-    cache: &mut HashMap<Intern<String>, String>,
+    cache: &mut HashMap<Intern<Src>, String>,
 ) -> Result<Spanned<File>, Vec<Error>> {
-    let intern = Intern::new(path.to_str().unwrap().to_string());
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
     let assembly_code = match fs::read_to_string(path.val) {
@@ -165,10 +167,11 @@ fn parse_path(
         Err(err) => return Err(vec![Error::new(err.to_string(), path.span)]),
     };
 
-    cache.insert(intern, assembly_code);
-    let assembly_code = cache.get(&intern).unwrap(); // can unwrap since we just inserted
+    let src = Intern::new(Src(path.to_path_buf()));
+    cache.insert(src, assembly_code);
+    let assembly_code = cache.get(&src).unwrap(); // can unwrap since we just inserted
     let len = assembly_code.chars().count();
-    let eoi = Span::new(intern, len..len);
+    let eoi = Span::new(src, len..len);
 
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
@@ -177,7 +180,7 @@ fn parse_path(
         assembly_code
             .chars()
             .enumerate()
-            .map(|(i, c)| (c, Span::new(intern, i..i + 1))),
+            .map(|(i, c)| (c, Span::new(src, i..i + 1))),
     ))?;
 
     let file = File {
