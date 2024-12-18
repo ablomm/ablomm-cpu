@@ -1,14 +1,16 @@
 use internment::Intern;
 use std::ops::Range;
 
+use crate::src::Src;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {
-    src: Intern<String>,
+    src: Intern<Src>,
     range: (usize, usize),
 }
 
 impl Span {
-    pub fn new(src: Intern<String>, range: Range<usize>) -> Self {
+    pub fn new(src: Intern<Src>, range: Range<usize>) -> Self {
         assert!(range.start <= range.end);
         Self {
             src,
@@ -16,7 +18,7 @@ impl Span {
         }
     }
 
-    pub fn src(&self) -> Intern<String> {
+    pub fn src(&self) -> Intern<Src> {
         self.src
     }
 
@@ -41,10 +43,10 @@ impl Span {
 }
 
 impl chumsky::Span for Span {
-    type Context = Intern<String>;
+    type Context = Intern<Src>;
     type Offset = usize;
 
-    fn new(src: Intern<String>, range: Range<usize>) -> Self {
+    fn new(src: Self::Context, range: Range<usize>) -> Self {
         assert!(range.start <= range.end);
         Self {
             src,
@@ -64,7 +66,7 @@ impl chumsky::Span for Span {
 }
 
 impl ariadne::Span for Span {
-    type SourceId = Intern<String>;
+    type SourceId = Intern<Src>;
 
     fn source(&self) -> &Self::SourceId {
         &self.src

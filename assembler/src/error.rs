@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use crate::Span;
+use crate::{src::Src, Span};
 use ariadne::{Color, Fmt};
 use internment::Intern;
 
@@ -29,7 +29,7 @@ impl Error {
 
     pub fn write(
         &self,
-        cache: impl ariadne::Cache<Intern<String>>,
+        cache: impl ariadne::Cache<Intern<Src>>,
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
@@ -48,11 +48,11 @@ impl Error {
         report.finish().write(cache, writer)
     }
 
-    pub fn eprint(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
+    pub fn eprint(&self, cache: impl ariadne::Cache<Intern<Src>>) -> Result<(), std::io::Error> {
         self.write(cache, std::io::stderr())
     }
 
-    pub fn print(&self, cache: impl ariadne::Cache<Intern<String>>) -> Result<(), std::io::Error> {
+    pub fn print(&self, cache: impl ariadne::Cache<Intern<Src>>) -> Result<(), std::io::Error> {
         self.write(cache, std::io::stdout())
     }
 }
