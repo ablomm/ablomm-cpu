@@ -80,9 +80,9 @@ fn generate_file_queue(
     src: Spanned<PathBuf>,
     start_address: u32,
     cache: &mut HashMap<Intern<Src>, String>,
-    import_set: &mut HashSet<Intern<String>>, // to detect cycles
+    import_set: &mut HashSet<Intern<Src>>, // to detect cycles
 ) -> Result<Vec<Spanned<File>>, Vec<Error>> {
-    let src_intern = Intern::new(src.to_str().unwrap().to_string());
+    let src_intern = Intern::new(Src(src.to_path_buf()));
     import_set.insert(src_intern);
 
     let mut end_address = start_address;
@@ -118,8 +118,7 @@ fn generate_file_queue(
             Err(error) => return Err(vec![Error::new(error.to_string(), import.file.span)]),
         };
 
-        let import_intern = Intern::new(import_src.to_str().unwrap().to_string());
-
+        let import_intern = Intern::new(Src(import_src.to_path_buf()));
         if import_set.contains(&import_intern) {
             // circular dependency
             return Err(vec![Error::new(
@@ -133,8 +132,7 @@ fn generate_file_queue(
             ).with_note("Try removing this import")]);
         }
 
-        let key = Intern::new(Src(import_src.to_path_buf()));
-        if cache.contains_key(&key) {
+        if cache.contains_key(&import_intern) {
             // we already did this import, so skip it
             continue;
         }
