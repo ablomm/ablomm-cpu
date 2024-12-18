@@ -1,6 +1,6 @@
 use internment::Intern;
 
-use crate::{symbol_table::SymbolTable, Span};
+use crate::{src::Src, symbol_table::SymbolTable, Span};
 use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
 
 // just a struct to hold a span for error messages
@@ -24,7 +24,7 @@ impl<T> Spanned<T> {
 // just for simplicity (i.e. removes ".val" everywhere)
 impl<T> Deref for Spanned<T> {
     type Target = T;
-    fn deref(&self) -> &T {
+    fn deref(&self) -> &Self::Target {
         &self.val
     }
 }
@@ -36,7 +36,7 @@ pub struct Ast {
 
 #[derive(Debug, Clone)]
 pub struct File {
-    pub src: PathBuf,
+    pub src: Src,
     pub start_address: u32,
     pub block: Block,
 }

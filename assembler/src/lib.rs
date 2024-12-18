@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fs,
-    path::{Path, PathBuf},
+    path::Path,
     rc::Rc,
 };
 
@@ -32,20 +32,21 @@ mod symbol_table;
 pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<Src>>)> {
     // fails if file not found
     // this is the root file, given in the comandline
-    let src = Path::new(src)
+    let src = Src(Path::new(src)
         .canonicalize()
-        .expect("Error canonicalising file");
+        .expect("Error canonicalising file")
+        .to_path_buf());
+
+    // create a dummy span because there is no actual span for the root file, as it doesn't have a
+    // corresponding import statement
+    let dummy_span = Span::new(Intern::new(src.clone()), 0..0);
+    let src = Spanned::new(src, dummy_span);
 
     let mut cache = HashMap::new(); // cache of file name and corresponding file contents, used to
                                     // print error messages and check if a file has already been parsed
 
-    // create a dummy span because there is no actual span for the root file, as it doesn't have a
-    // corresponding import statement
-    let dummy_span = Span::new(Intern::new(Src(src.to_path_buf())), 0..0);
-    let src = Spanned::new(src, dummy_span);
-
     // file queue is order in which to generate symbol tables
-    let file_queue = match generate_file_queue(src, 0, &mut cache, &mut HashSet::new()) {
+    let file_queue = match generate_file_queue(&src.as_ref(), 0, &mut cache, &mut HashSet::new()) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err((error, sources(cache.into_iter()))),
     };
@@ -77,19 +78,19 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
 // takes in a canonanical file path, address, and cache and returns a queue of the order in which to
 // generate the symbol tables / exports in order to satisfy import dependencies (i.e. post order)
 fn generate_file_queue(
-    src: Spanned<PathBuf>,
+    src: &Spanned<&Src>,
     start_address: u32,
     cache: &mut HashMap<Intern<Src>, String>,
     import_set: &mut HashSet<Intern<Src>>, // to detect cycles
 ) -> Result<Vec<Spanned<File>>, Vec<Error>> {
-    let src_intern = Intern::new(Src(src.to_path_buf()));
+    let src_intern = Intern::new(src.val.clone());
     import_set.insert(src_intern);
 
     let mut end_address = start_address;
     let mut file_queue = Vec::new();
 
     // parse itself
-    let file = parse_path(&src.as_ref(), start_address, cache)?;
+    let file = parse_path(src, start_address, cache)?;
 
     // need to create an empty symbol table because a block has expressions, which could contain
     // any value, and literals are expressions, which means a to know the size of a block
@@ -102,7 +103,7 @@ fn generate_file_queue(
 
     // add imports to end of this file
     end_address += file.block.num_words(&dummy_table).map_err(|err| {
-        vec![err.with_note("Currently, identifiers is not supported in literals")]
+        vec![err.with_note("Currently, identifiers is not supported in this statement")]
     })?;
 
     // after finding correct addresses
@@ -111,14 +112,14 @@ fn generate_file_queue(
         let import_src = match src
             .parent()
             .unwrap()
-            .join(Path::new(&*import.file.val))
+            .join(Path::new(&import.file.val))
             .canonicalize()
         {
-            Ok(path) => Spanned::new(path, import.file.span),
+            Ok(path) => Spanned::new(Src(path), import.file.span),
             Err(error) => return Err(vec![Error::new(error.to_string(), import.file.span)]),
         };
 
-        let import_intern = Intern::new(Src(import_src.to_path_buf()));
+        let import_intern = Intern::new(import_src.val.clone());
         if import_set.contains(&import_intern) {
             // circular dependency
             return Err(vec![Error::new(
@@ -138,7 +139,7 @@ fn generate_file_queue(
         }
 
         file_queue.append(&mut generate_file_queue(
-            import_src,
+            &import_src.as_ref(),
             end_address,
             cache,
             import_set,
@@ -154,22 +155,20 @@ fn generate_file_queue(
 
 // takes a path and parses it
 fn parse_path(
-    path: &Spanned<&PathBuf>,
+    src: &Spanned<&Src>,
     start_address: u32,
     cache: &mut HashMap<Intern<Src>, String>,
 ) -> Result<Spanned<File>, Vec<Error>> {
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
-    let assembly_code = match fs::read_to_string(path.val) {
+    let assembly_code = match fs::read_to_string(src.as_path()) {
         Ok(assembly_code) => assembly_code,
-        Err(err) => return Err(vec![Error::new(err.to_string(), path.span)]),
+        Err(err) => return Err(vec![Error::new(err.to_string(), src.span)]),
     };
 
-    let src = Intern::new(Src(path.to_path_buf()));
-    cache.insert(src, assembly_code);
-    let assembly_code = cache.get(&src).unwrap(); // can unwrap since we just inserted
+    let src_intern = Intern::new(src.val.clone());
     let len = assembly_code.chars().count();
-    let eoi = Span::new(src, len..len);
+    let eoi = Span::new(src_intern, len..len);
 
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
@@ -178,11 +177,13 @@ fn parse_path(
         assembly_code
             .chars()
             .enumerate()
-            .map(|(i, c)| (c, Span::new(src, i..i + 1))),
+            .map(|(i, c)| (c, Span::new(src_intern, i..i + 1))),
     ))?;
 
+    cache.insert(src_intern, assembly_code);
+
     let file = File {
-        src: path.val.to_path_buf(),
+        src: src.val.clone(),
         start_address,
         block: block.val,
     };
@@ -193,11 +194,12 @@ fn parse_path(
 // second pass
 // generates symbol table for block and sub_block
 fn fill_symbol_table(
-    src: &PathBuf,
+    src: &Src,
     block: &Spanned<&Block>,
     start_address: u32,
-    file_exports_map: &mut HashMap<PathBuf, HashMap<Intern<String>, Spanned<ExpressionResult>>>,
+    file_exports_map: &mut HashMap<Intern<Src>, HashMap<Intern<String>, Spanned<ExpressionResult>>>,
 ) -> Result<(), Error> {
+    let src_intern = Intern::new(src.clone());
     let mut address: u32 = start_address;
     let mut export_identifiers = Vec::new();
 
@@ -246,7 +248,8 @@ fn fill_symbol_table(
                 }
             }
             Statement::Import(import) => {
-                let import_src = src.parent().unwrap().join(Path::new(&*import.file.val));
+                let import_src =
+                    Intern::new(Src(src.parent().unwrap().join(Path::new(&import.file.val))));
                 let file_exports = file_exports_map.get(&import_src).ok_or(
                     Error::new(
                         "[Internal Error] Attempted to import when file has not yet been parsed",
@@ -282,8 +285,9 @@ fn fill_symbol_table(
                                 })?;
                         }
                     }
+
+                    // unselective import (i.e. import * from <file>
                     ImportSpecifier::Blob => {
-                        // unselective import (i.e. import * from <file>
                         for (import_key, import_val) in file_exports {
                             block.symbol_table.borrow_mut().try_insert(*import_key, import_val.clone()).map_err(|_| Error::new(
                             format!("Import contains identifier '{}', which already exists in this scope", import_key.fg(ATTENTION_COLOR)),
@@ -312,13 +316,14 @@ fn fill_symbol_table(
     }
 
     // get exports from exports_map, create one if it doesn't exist
-    let exports = match file_exports_map.get_mut(src) {
+    let exports = match file_exports_map.get_mut(&src_intern) {
         Some(exports) => exports,
         None => {
             let exports = HashMap::new();
-            file_exports_map.insert(src.to_path_buf(), exports);
+            // can use try_insert once it's released instead of two seperate calls
+            file_exports_map.insert(src_intern, exports);
 
-            file_exports_map.get_mut(src).unwrap()
+            file_exports_map.get_mut(&src_intern).unwrap()
         }
     };
     // could technically do exports in the statements loop, but then exports need to come after
