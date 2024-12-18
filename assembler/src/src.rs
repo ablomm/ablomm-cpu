@@ -1,22 +1,39 @@
 use core::fmt;
 use std::{
     env::current_dir,
+    ops::Deref,
     path::{Path, PathBuf},
 };
 
-#[derive(Eq, Hash, PartialEq, Debug)]
+// this struct is just to allow formatting error messages using relative paths and to combine all
+// src paths to a single struct
+#[derive(Eq, Hash, PartialEq, Debug, Clone)]
 pub struct Src(pub PathBuf);
 
+impl Deref for Src {
+    type Target = PathBuf;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl fmt::Display for Src {
+    // print the path relative to current directory (if it can, otherwise just print the
+    // original canonical path)
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            // print the path relative to current directory
-            path_relative_from(self.0.as_path(), current_dir().unwrap().as_path())
-                .unwrap()
-                .display()
-        )
+        // not sure if there is a better way, but need to have relative_path live long enough, so
+        // creating a variable here
+        let mut relative_path = None;
+        if let Ok(cwd) = current_dir() {
+            relative_path = Some(path_relative_from(self.0.as_path(), cwd.as_path())).flatten();
+        }
+
+        let path = match &relative_path {
+            Some(relative_path) => relative_path.as_path(),
+            None => self.0.as_path(),
+        };
+
+        write!(f, "{}", path.display())
     }
 }
 
