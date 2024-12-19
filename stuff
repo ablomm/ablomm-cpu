@@ -2,25 +2,11 @@ rename "parameters" to "arguments" or maybe "operands"
 
 maybe have each operation allowed to generate multiple opcodes and have "push {r1, r2, r3}" and "pop {r1, r2, r3}" or "push r1, r2, r3", "pop r1, r2, r3" (could maybe be done in hardware)
 
-make string into expression
-
 make memory clocked
 
 use verilator
 
-maybe have parameters all be expressions
-
-expressions = arithemtic expression, string, register, register offset, indirect
-
-maybe combine register and register-offset, i.e. register + 0 = register
-
-import aliasing
-
 change condition names from les -> slte
-
-make file cache key Intern<Pathbuf>
-
-add notes to Error
 
 combine ld and st to just mv
 
@@ -33,3 +19,5 @@ mv r1, [addr];
 
 have a cpu_mnomonic
 and a asm_mnomonic
+
+show an error for each statement that has it instead of the first error

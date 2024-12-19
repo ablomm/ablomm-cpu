@@ -36,7 +36,7 @@ pub struct Ast {
 
 #[derive(Debug, Clone)]
 pub struct File {
-    pub src: Src,
+    pub src: Intern<Src>,
     pub start_address: u32,
     pub block: Block,
 }
