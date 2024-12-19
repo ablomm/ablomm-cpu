@@ -21,3 +21,8 @@ have a cpu_mnomonic
 and a asm_mnomonic
 
 show an error for each statement that has it instead of the first error
+
+have times 1, and times 0 on register or register offset work and
+have divide by 1 for register and register offset work
+
+need to push lr in int, hwint, and error

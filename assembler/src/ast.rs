@@ -1,7 +1,7 @@
 use internment::Intern;
 
 use crate::{src::Src, symbol_table::SymbolTable, Span};
-use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 // just a struct to hold a span for error messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -56,7 +56,8 @@ pub enum Statement {
     Literal(Expression),
     Export(Vec<Spanned<Intern<String>>>),
     Import(Import),
-    Comment(String), // added because maybe it will be useful some day
+    #[allow(dead_code)]
+    Comment(String), // added because maybe it will be useful some day; not used
 }
 
 #[derive(Debug, Clone)]
@@ -97,7 +98,8 @@ pub enum Expression {
     Number(u32),
     Ident(Intern<String>),
     Pos(Box<Spanned<Expression>>),
-    Neg(Box<Spanned<Expression>>),
+    #[allow(dead_code)]
+    Neg(Box<Spanned<Expression>>), // not used, but may in future
     Not(Box<Spanned<Expression>>),
     Mul(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Div(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
@@ -159,7 +161,8 @@ pub enum Modifier {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Condition {
-    _None = 0, // not used, but for completeness
+    #[allow(dead_code)]
+    None = 0, // not used, but for completeness
     Eq,
     Ne,
     Ltu,

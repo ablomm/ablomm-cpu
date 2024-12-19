@@ -48,7 +48,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     // file queue is order in which to generate symbol tables
     let file_queue = match generate_file_queue(&src, 0, &mut cache, &mut HashSet::new()) {
         Ok(file_queue) => file_queue,
-        Err(error) => return Err((error, sources(cache.into_iter()))),
+        Err(error) => return Err((error, sources(cache))),
     };
 
     let mut file_exports_map = HashMap::new();
@@ -61,7 +61,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
             &mut file_exports_map,
         ) {
             Ok(_address) => (),
-            Err(error) => return Err((vec![error], sources(cache.into_iter()))),
+            Err(error) => return Err((vec![error], sources(cache))),
         }
     }
 
@@ -71,7 +71,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
         files: file_queue.into_iter().rev().collect(),
     };
 
-    compile_ast(&ast).map_err(|error| (vec![error], sources(cache.into_iter())))
+    compile_ast(&ast).map_err(|error| (vec![error], sources(cache)))
 }
 
 // first pass of ast
@@ -164,6 +164,10 @@ fn parse_path(
         Err(err) => return Err(vec![Error::new(err.to_string(), src.span)]),
     };
 
+    // need to insert before parsing so it can show parsing errors
+    cache.insert(src.val, assembly_code);
+    let assembly_code = cache.get(&src.val).unwrap(); // unwrap safe because we just inserted
+
     let len = assembly_code.chars().count();
     let eoi = Span::new(src.val, len..len);
 
@@ -177,10 +181,8 @@ fn parse_path(
             .map(|(i, c)| (c, Span::new(src.val, i..i + 1))),
     ))?;
 
-    cache.insert(src.val, assembly_code);
-
     let file = File {
-        src: src.val.clone(),
+        src: src.val,
         start_address,
         block: block.val,
     };

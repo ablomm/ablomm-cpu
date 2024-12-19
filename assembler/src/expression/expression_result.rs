@@ -78,7 +78,7 @@ impl Spanned<&ExpressionResult> {
                     self.span.union(&other.span),
                 )),
                 ExpressionResult::String(b) => Ok(Spanned::new(
-                    ExpressionResult::String(a.to_string() + &b),
+                    ExpressionResult::String(a.to_string() + b),
                     self.span.union(&other.span),
                 )),
                 ExpressionResult::Register(b) => {
@@ -125,7 +125,7 @@ impl Spanned<&ExpressionResult> {
                     self.span.union(&other.span),
                 )),
                 ExpressionResult::String(b) => Ok(Spanned::new(
-                    ExpressionResult::String(a.to_string() + &b),
+                    ExpressionResult::String(a.to_string() + b),
                     self.span.union(&other.span),
                 )),
                 _ => Err(Error::new(
