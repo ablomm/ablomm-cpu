@@ -7,6 +7,7 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
         .ignore_then(text::digits(8).map(|s: String| u32::from_str_radix(&s, 8).unwrap()));
     let hex_num = just("0x")
         .ignore_then(text::digits(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
+    #[allow(clippy::from_str_radix_10)]
     let dec_num = text::digits(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'

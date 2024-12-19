@@ -2,7 +2,10 @@ use ariadne::Fmt;
 
 use crate::{expression::expression_result::ExpressionResult, generator::*};
 
-pub fn generate_push(operation: &Spanned<&Operation>, symbol_table: &SymbolTable) -> Result<u32, Error> {
+pub fn generate_push(
+    operation: &Spanned<&Operation>,
+    symbol_table: &SymbolTable,
+) -> Result<u32, Error> {
     if operation.parameters.len() != 1 {
         return Err(Error::new(
             format!("Expected {} parameter", "1".fg(ATTENTION_COLOR)),
