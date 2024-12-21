@@ -106,7 +106,7 @@ impl Spanned<&Expression> {
                 }
                 Ok(opcodes)
             }
-            ExpressionResult::Number(number) => Ok(vec![number]),
+            ExpressionResult::Number(number) => Ok(vec![*number]),
             _ => Err(Error::new("Expected either {} or {}", self.span)),
         }
     }

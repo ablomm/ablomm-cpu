@@ -26,3 +26,9 @@ have times 1, and times 0 on register or register offset work and
 have divide by 1 for register and register offset work
 
 need to push lr in int, hwint, and error
+
+add ref operator & and maybe use c style deref operator *(r0 + 4)
+
+maybe have Src constructor conancolize to guarantee it is always cononical file
+
+make fp just another register, have fp be an alias to r13?

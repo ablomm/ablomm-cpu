@@ -9,14 +9,17 @@ export print: {
 	string_ptr = r0;
 	string_word = r1;
 	bytes_left = r2;
+
 	print_word:
 		ld string_word, [string_ptr];
 		ld bytes_left, 4; // 4 bytes in a word
+
 	/* 
 		since memory is only word addressible
 		we need to do some shifts to get each byte
 		individually
 	*/
+
 	print_byte:
 		and.t string_word, 0xff;
 		ld.eq pc, return; // i.e. lsb is null '\0'
