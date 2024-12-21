@@ -10,7 +10,7 @@ use ast::{Ast, Block, Expression, File, Import, ImportSpecifier, Operation, Span
 use chumsky::prelude::*;
 
 use error::*;
-use expression::expression_result::ExpressionResult;
+use expression::expression_result::{ExpressionResult, Number};
 use generator::*;
 use internment::Intern;
 use parser::*;
@@ -209,7 +209,7 @@ fn fill_symbol_table(
                     .borrow_mut()
                     .try_insert(
                         label.identifier.val,
-                        Spanned::new(ExpressionResult::Number(address), statement.span),
+                        Spanned::new(ExpressionResult::Number(Number(address)), statement.span),
                     )
                     .map_err(|_| {
                         Error::new("Identifier already defined", statement.span)

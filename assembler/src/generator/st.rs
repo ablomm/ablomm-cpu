@@ -79,13 +79,13 @@ fn generate_st_reg_indirect(
             generate_st_reg_ireg(modifiers, register, register2)
         }
         ExpressionResult::Number(number) => {
-            generate_st_reg_inum(modifiers, register, &Spanned::new(*number, parameter.span))
+            generate_st_reg_inum(modifiers, register, &Spanned::new(**number, parameter.span))
         }
-        ExpressionResult::RegisterOffset(register2, offset) => generate_st_reg_ireg_offset(
+        ExpressionResult::RegisterOffset(reg_offset) => generate_st_reg_ireg_offset(
             modifiers,
             register,
-            register2,
-            &Spanned::new(*offset as i32, parameter.span),
+            &reg_offset.reg,
+            &Spanned::new(reg_offset.offset as i32, parameter.span),
         ),
         _ => Err(Error::new(
             format!(

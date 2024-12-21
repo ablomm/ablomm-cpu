@@ -42,7 +42,7 @@ fn generate_ld_reg(
         ExpressionResult::Number(number) => generate_ld_reg_num(
             modifiers,
             register,
-            &Spanned::new(*number, parameters[1].span),
+            &Spanned::new(**number, parameters[1].span),
         ),
         ExpressionResult::Indirect(parameter) => generate_ld_reg_indirect(
             modifiers,
@@ -99,13 +99,13 @@ fn generate_ld_reg_indirect(
             generate_ld_reg_ireg(modifiers, register, register2)
         }
         ExpressionResult::Number(number) => {
-            generate_ld_reg_inum(modifiers, register, &Spanned::new(*number, parameter.span))
+            generate_ld_reg_inum(modifiers, register, &Spanned::new(**number, parameter.span))
         }
-        ExpressionResult::RegisterOffset(register2, offset) => generate_ld_reg_ireg_offset(
+        ExpressionResult::RegisterOffset(reg_offset) => generate_ld_reg_ireg_offset(
             modifiers,
             register,
-            register2,
-            &Spanned::new(*offset as i32, parameter.span),
+            &reg_offset.reg,
+            &Spanned::new(reg_offset.offset as i32, parameter.span),
         ),
         _ => Err(Error::new(
             format!(

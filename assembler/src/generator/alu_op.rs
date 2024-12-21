@@ -48,7 +48,7 @@ fn generate_alu_op_2(
         ExpressionResult::Number(number) => generate_alu_op_2_num(
             mnemonic,
             modifiers,
-            &Spanned::new(*number, parameters[0].span),
+            &Spanned::new(**number, parameters[0].span),
             parameters,
             symbol_table,
         ),
@@ -79,7 +79,7 @@ fn generate_alu_op_2_reg(
             mnemonic,
             modifiers,
             register,
-            &Spanned::new(*number, parameters[1].span),
+            &Spanned::new(**number, parameters[1].span),
         ),
         _ => Err(Error::new(
             format!(
@@ -175,7 +175,7 @@ fn generate_alu_op_3_reg(
             mnemonic,
             modifiers,
             register,
-            &Spanned::new(*number, parameters[1].span),
+            &Spanned::new(**number, parameters[1].span),
             parameters,
             symbol_table,
         ),
@@ -207,7 +207,7 @@ fn generate_alu_op_3_reg_reg(
             modifiers,
             register1,
             register2,
-            &Spanned::new(*number, parameters[2].span),
+            &Spanned::new(**number, parameters[2].span),
         ),
         _ => Err(Error::new(
             format!(
