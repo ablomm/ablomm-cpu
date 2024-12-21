@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
-    fs,
+    ffi::OsStr,
+    fs, io,
     path::Path,
     rc::Rc,
 };
@@ -32,10 +33,10 @@ mod symbol_table;
 pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<Src>>)> {
     // fails if file not found
     // this is the root file, given in the comandline
-    let src = Intern::new(Src(Path::new(src)
-        .canonicalize()
-        .expect("Error canonicalising file")
-        .to_path_buf()));
+    let src = Intern::new(
+        Src::new(Path::new(src).to_path_buf())
+            .unwrap_or_else(|error| panic!("Error finding file '{}': {}", src, error)),
+    );
 
     // create a dummy span because there is no actual span for the root file, as it doesn't have a
     // corresponding import statement
@@ -107,14 +108,8 @@ fn generate_file_queue(
 
     // after finding correct addresses
     for import in file.block.get_imports() {
-        // conanicalize path
-        let import_src = match src
-            .parent()
-            .unwrap() // since src should already be conanicalized, there should always be a parent
-            .join(Path::new(&import.file.val))
-            .canonicalize()
-        {
-            Ok(path) => Spanned::new(Intern::new(Src(path)), import.file.span),
+        let import_src = match get_import_src(src, import) {
+            Ok(import_src) => Spanned::new(import_src, import.file.span),
             Err(error) => return Err(vec![Error::new(error.to_string(), import.file.span)]),
         };
 
@@ -123,9 +118,9 @@ fn generate_file_queue(
             return Err(vec![Error::new(
                 format!(
                     "Circular dependency detected: '{}' (transitiviely) imports '{}' which imports '{}'",
-                    import_src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR),
-                    src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR),
-                    import_src.file_name().unwrap().to_str().unwrap().fg(ATTENTION_COLOR)
+                    import_src.file_name().unwrap_or(OsStr::new("?")).to_str().unwrap_or("?").fg(ATTENTION_COLOR),
+                    src.file_name().unwrap_or(OsStr::new("?")).to_str().unwrap_or("?").fg(ATTENTION_COLOR),
+                    import_src.file_name().unwrap_or(OsStr::new("?")).to_str().unwrap_or("?").fg(ATTENTION_COLOR)
                 ),
                 import_src.span,
             ).with_note("Try removing this import")]);
@@ -199,7 +194,11 @@ fn fill_symbol_table(
     file_exports_map: &mut HashMap<Intern<Src>, HashMap<Intern<String>, Spanned<ExpressionResult>>>,
 ) -> Result<(), Error> {
     let mut address: u32 = start_address;
-    let mut export_identifiers = Vec::new();
+
+    // this if statement makes the file_export_map.get_mut(src).unwrap() safe to unwrap
+    if !file_exports_map.contains_key(src) {
+        file_exports_map.insert(*src, HashMap::new());
+    }
 
     for statement in &block.statements {
         match &statement.val {
@@ -216,9 +215,14 @@ fn fill_symbol_table(
                             .with_note("Try using a different name")
                     })?;
                 if label.export {
-                    export_identifiers.push(&label.identifier);
+                    export(
+                        &label.identifier,
+                        &block.symbol_table.borrow(),
+                        file_exports_map.get_mut(src).unwrap(),
+                    )?;
                 }
             }
+
             Statement::Assignment(assignment) => {
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
@@ -237,65 +241,45 @@ fn fill_symbol_table(
                     })?;
 
                 if assignment.export {
-                    export_identifiers.push(&assignment.identifier);
+                    export(
+                        &assignment.identifier,
+                        &block.symbol_table.borrow(),
+                        file_exports_map.get_mut(src).unwrap(),
+                    )?;
                 }
             }
-            Statement::Export(exports) => {
-                for export in exports {
-                    export_identifiers.push(export);
+
+            Statement::Export(identifiers) => {
+                for identifier in identifiers {
+                    export(
+                        identifier,
+                        &block.symbol_table.borrow(),
+                        file_exports_map.get_mut(src).unwrap(),
+                    )?;
                 }
             }
-            Statement::Import(import) => {
-                let import_src =
-                    Intern::new(Src(src.parent().unwrap().join(Path::new(&import.file.val))));
-                let file_exports = file_exports_map.get(&import_src).ok_or(
-                    Error::new(
-                        "[Internal Error] Attempted to import when file has not yet been parsed",
-                        import.file.span,
+
+            Statement::Import(import_val) => {
+                let import_src = get_import_src(src, import_val).unwrap_or_else(|error| {
+                    // should not occur because should already have gotten this import in
+                    // generate_file_quueu()
+                    panic!(
+                        "Could not find import '{}' in file '{}': {}",
+                        import_val.file.val, src, error
                     )
-                    .with_note("Do you have a circular dependency that somehow wasn't caught?"),
-                )?;
-                match &import.specifier.val {
-                    // selective import (i.e. import <ident> [as <ident>][, ...] from <file>
-                    ImportSpecifier::Named(idents) => {
-                        for ident in idents {
-                            let import_val =
-                                file_exports.get(&ident.identifier).ok_or(Error::new(
-                                    format!(
-                                        "Identifier is not exported in '{}'",
-                                        import.file.val.as_str().fg(ATTENTION_COLOR)
-                                    ),
-                                    ident.identifier.span,
-                                ))?;
+                });
 
-                            let import_key = &ident.alias.as_ref().unwrap_or(&ident.identifier);
+                // the import files' exports
+                let exports = file_exports_map.get(&import_src).unwrap_or_else(||
+                    // should not occur because the order should ensure all dependencies are parsed
+                    panic!(
+                        "Attempted to import '{}' when file has not yet been parsed",
+                        import_src
+                    ));
 
-                            block
-                                .symbol_table
-                                .borrow_mut()
-                                .try_insert(import_key.val, import_val.clone())
-                                .map_err(|_| {
-                                    Error::new("Identifier already defined", import_key.span)
-                                        .with_note(format!(
-                                            "Try aliasing the import by adding {}",
-                                            "as <new_name>".fg(ATTENTION_COLOR)
-                                        ))
-                                })?;
-                        }
-                    }
-
-                    // unselective import (i.e. import * from <file>
-                    ImportSpecifier::Blob => {
-                        for (import_key, import_val) in file_exports {
-                            block.symbol_table.borrow_mut().try_insert(*import_key, import_val.clone()).map_err(|_| Error::new(
-                            format!("Import contains identifier '{}', which already exists in this scope", import_key.fg(ATTENTION_COLOR)),
-                            import.specifier.span,
-                    ).with_note(format!("Try using named import aliases: {}{}", 
-                    import_key.fg(ATTENTION_COLOR), " as <new_name> ... <other imports>".fg(ATTENTION_COLOR))))?;
-                        }
-                    }
-                }
+                import(import_val, &mut block.symbol_table.borrow_mut(), exports)?
             }
+
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
                 fill_symbol_table(
@@ -313,29 +297,90 @@ fn fill_symbol_table(
         address += statement.as_ref().num_words(&block.symbol_table.borrow())?;
     }
 
-    // get exports from exports_map, create one if it doesn't exist
-    let exports = match file_exports_map.get_mut(src) {
-        Some(exports) => exports,
-        None => {
-            let exports = HashMap::new();
-            // can use try_insert once it's released instead of two seperate calls
-            file_exports_map.insert(*src, exports);
+    Ok(())
+}
 
-            file_exports_map.get_mut(src).unwrap()
+fn export(
+    identifier: &Spanned<Intern<String>>,
+    symbol_table: &SymbolTable,
+    exports: &mut HashMap<Intern<String>, Spanned<ExpressionResult>>,
+) -> Result<(), Error> {
+    if exports.contains_key(&identifier.val) {
+        return Err(Error::new("Identifier already exported", identifier.span)
+            .with_note("Try removing this export"));
+    }
+
+    let export_val = get_identifier(&identifier.as_ref(), symbol_table)?;
+    exports.insert(identifier.val, export_val);
+
+    Ok(())
+}
+
+fn import(
+    import: &Import,
+    symbol_table: &mut SymbolTable,
+    exports: &HashMap<Intern<String>, Spanned<ExpressionResult>>,
+) -> Result<(), Error> {
+    match &import.specifier.val {
+        // selective import (i.e. import <ident> [as <ident>][, ...] from <file>
+        ImportSpecifier::Named(named_imports) => {
+            for named_import in named_imports {
+                let import_val = exports.get(&named_import.identifier).ok_or(Error::new(
+                    format!(
+                        "Identifier is not exported in '{}'",
+                        import.file.val.as_str().fg(ATTENTION_COLOR)
+                    ),
+                    named_import.identifier.span,
+                ))?;
+
+                let import_key = &named_import
+                    .alias
+                    .as_ref()
+                    .unwrap_or(&named_import.identifier);
+
+                symbol_table
+                    .try_insert(import_key.val, import_val.clone())
+                    .map_err(|_| {
+                        Error::new("Identifier already defined", import_key.span).with_note(
+                            format!(
+                                "Try aliasing the import by adding {}",
+                                "as <new_name>".fg(ATTENTION_COLOR)
+                            ),
+                        )
+                    })?;
+            }
         }
-    };
-    // could technically do exports in the statements loop, but then exports need to come after
-    // assignments in the assembly code
-    for identifier in export_identifiers {
-        if exports.contains_key(&identifier.val) {
-            return Err(Error::new("Identifier already exported", identifier.span)
-                .with_note("Try removing this export"));
+
+        // unselective import (i.e. import * from <file>
+        ImportSpecifier::Blob => {
+            for (import_key, import_val) in exports {
+                symbol_table
+                    .try_insert(*import_key, import_val.clone())
+                    .map_err(|_| {
+                        Error::new(
+                            format!(
+                                "Import contains identifier '{}', which already exists in this scope",
+                                import_key.fg(ATTENTION_COLOR)
+                            ),
+                            import.specifier.span,
+                        )
+                        .with_note(format!(
+                            "Try using named import aliases: {}{}",
+                            import_key.fg(ATTENTION_COLOR),
+                            " as <new_name> ... <other imports>".fg(ATTENTION_COLOR)
+                        ))
+                    })?;
+            }
         }
-        let export_val = get_identifier(&identifier.as_ref(), &block.symbol_table.borrow())?;
-        exports.insert(identifier.val, export_val);
     }
 
     Ok(())
+}
+
+fn get_import_src(importer: &Intern<Src>, import: &Import) -> io::Result<Intern<Src>> {
+    Ok(Intern::new(
+        importer.get_relative(Path::new(&import.file.val))?,
+    ))
 }
 
 impl Spanned<&Expression> {

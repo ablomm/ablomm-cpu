@@ -1,6 +1,7 @@
 use core::fmt;
 use std::{
     env::current_dir,
+    io,
     ops::Deref,
     path::{Path, PathBuf},
 };
@@ -8,7 +9,20 @@ use std::{
 // this struct is just to allow formatting error messages using relative paths and to combine all
 // src paths to a single struct
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
-pub struct Src(pub PathBuf);
+pub struct Src(PathBuf);
+
+impl Src {
+    pub fn new(pathbuf: PathBuf) -> io::Result<Self> {
+        let pathbuf = pathbuf.canonicalize()?;
+
+        Ok(Src(pathbuf))
+    }
+
+    pub fn get_relative(&self, relative_path: &Path) -> io::Result<Src> {
+        // should be safe to unwrap parent() here because it is canonical
+        Src::new(self.parent().unwrap().join(relative_path))
+    }
+}
 
 impl Deref for Src {
     type Target = PathBuf;
