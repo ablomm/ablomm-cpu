@@ -6,14 +6,14 @@ package cu_pkg;
     NONE = 4'h0,
     EQ,
     NE,
-    LTU,
-    GTU,
-    LEU,
-    GEU,
-    LTS,
-    GTS,
-    LES,
-    GES
+    ULT,
+    UGT,
+    ULE,
+    UGE,
+    SLT,
+    SGT,
+    SLE,
+    SGE
   } cond_e;
 
   typedef enum logic [7:0] {
@@ -41,7 +41,7 @@ package cu_pkg;
     reg_e reg_a;
     reg_e reg_b;
     logic [7:0] unknown;
-  } unknown_alu_op_t;
+  } unknown_alu_op_operands_t;
 
   typedef struct packed {
     alu_op_flags_t flags;
@@ -49,55 +49,55 @@ package cu_pkg;
     reg_e reg_b;
     reg_e reg_c;
     logic [3:0] unused;
-  } alu_op_params_t;
+  } alu_op_operands_t;
 
   typedef struct packed {
     alu_op_flags_t flags;
     reg_e reg_a;
     reg_e reg_b;
     logic [7:0] immediate;
-  } immediate_alu_op_params_t;
+  } immediate_alu_op_operands_t;
 
   typedef struct packed {
     reg_e reg_a;
     logic [15:0] address;
-  } register_address_params_t;
+  } register_address_operands_t;
 
   typedef struct packed {
     reg_e reg_a;
     logic [15:0] immediate;
-  } register_immediate_params_t;
+  } register_immediate_operands_t;
 
   typedef struct packed {
     reg_e reg_a;
     reg_e reg_b;
     logic signed [11:0] offset;
-  } register_register_offset_params_t;
+  } register_register_offset_operands_t;
 
   typedef struct packed {
     reg_e reg_a;
     logic [15:0] unused;
-  } register_params_t;
+  } register_operands_t;
 
   typedef union packed {
-    unknown_alu_op_t unknown_alu_op;
-    alu_op_params_t alu_op;
-    immediate_alu_op_params_t alu_op_i;
+    unknown_alu_op_operands_t unknown_alu_op;
+    alu_op_operands_t alu_op;
+    immediate_alu_op_operands_t alu_op_i;
 
-    register_address_params_t ld_params;
-    register_register_offset_params_t ldr_params;
-    register_immediate_params_t ldi_params;
-    register_address_params_t st_params;
-    register_register_offset_params_t str_params;
+    register_address_operands_t ld;
+    register_register_offset_operands_t ldr;
+    register_immediate_operands_t ldi;
+    register_address_operands_t st;
+    register_register_offset_operands_t str;
 
-    register_params_t push_params;
-    register_params_t pop_params;
-  } ir_params_t;
+    register_operands_t push;
+    register_operands_t pop;
+  } ir_operands_t;
 
   typedef struct packed {
     cond_e condition;
     instruction_e instruction;
-    ir_params_t params;
+    ir_operands_t operands;
   } ir_t;
 
 endpackage

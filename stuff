@@ -1,5 +1,3 @@
-rename "parameters" to "arguments" or maybe "operands"
-
 maybe have each operation allowed to generate multiple opcodes and have "push {r1, r2, r3}" and "pop {r1, r2, r3}" or "push r1, r2, r3", "pop r1, r2, r3" (could maybe be done in hardware)
 
 make memory clocked
@@ -29,6 +27,4 @@ need to push lr in int, hwint, and error
 
 add ref operator & and maybe use c style deref operator *(r0 + 4)
 
-maybe have Src constructor conancolize to guarantee it is always cononical file
-
-make fp just another register, have fp be an alias to r13?
+progress bar

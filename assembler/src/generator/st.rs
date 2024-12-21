@@ -6,24 +6,24 @@ pub fn generate_st(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    if operation.parameters.len() != 2 {
+    if operation.operands.len() != 2 {
         return Err(Error::new(
-            format!("Expected {} parameters", "2".fg(ATTENTION_COLOR)),
-            operation.parameters.span,
+            format!("Expected {} operands", "2".fg(ATTENTION_COLOR)),
+            operation.operands.span,
         ));
     }
 
-    match &operation.parameters[0].as_ref().eval(symbol_table)?.val {
+    match &operation.operands[0].as_ref().eval(symbol_table)?.val {
         ExpressionResult::Register(register) => generate_st_reg(
             &operation.full_mnemonic.modifiers,
             register,
-            &operation.parameters,
+            &operation.operands,
             symbol_table,
         ),
 
         _ => Err(Error::new(
             format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
-            operation.parameters[0].span,
+            operation.operands[0].span,
         )),
     }
 }
@@ -31,17 +31,17 @@ pub fn generate_st(
 fn generate_st_reg(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    parameters: &Spanned<Vec<Spanned<Expression>>>,
+    operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &parameters[1].as_ref().eval(symbol_table)?.val {
+    match &operands[1].as_ref().eval(symbol_table)?.val {
         ExpressionResult::Register(register2) => {
             generate_st_reg_reg(modifiers, register, register2)
         }
-        ExpressionResult::Indirect(parameter) => generate_st_reg_indirect(
+        ExpressionResult::Indirect(operand) => generate_st_reg_indirect(
             modifiers,
             register,
-            &Spanned::new(parameter, parameters[1].span),
+            &Spanned::new(operand, operands[1].span),
         ),
 
         _ => Err(Error::new(
@@ -50,7 +50,7 @@ fn generate_st_reg(
                 "register".fg(ATTENTION_COLOR),
                 "indirect".fg(ATTENTION_COLOR)
             ),
-            parameters[1].span,
+            operands[1].span,
         )),
     }
 }
@@ -72,20 +72,20 @@ fn generate_st_reg_reg(
 fn generate_st_reg_indirect(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-    parameter: &Spanned<&ExpressionResult>,
+    operand: &Spanned<&ExpressionResult>,
 ) -> Result<u32, Error> {
-    match parameter.val {
+    match operand.val {
         ExpressionResult::Register(register2) => {
             generate_st_reg_ireg(modifiers, register, register2)
         }
         ExpressionResult::Number(number) => {
-            generate_st_reg_inum(modifiers, register, &Spanned::new(**number, parameter.span))
+            generate_st_reg_inum(modifiers, register, &Spanned::new(**number, operand.span))
         }
         ExpressionResult::RegisterOffset(reg_offset) => generate_st_reg_ireg_offset(
             modifiers,
             register,
             &reg_offset.reg,
-            &Spanned::new(reg_offset.offset as i32, parameter.span),
+            &Spanned::new(reg_offset.offset as i32, operand.span),
         ),
         _ => Err(Error::new(
             format!(
@@ -94,7 +94,7 @@ fn generate_st_reg_indirect(
                 "expression".fg(ATTENTION_COLOR),
                 "register offset".fg(ATTENTION_COLOR)
             ),
-            parameter.span,
+            operand.span,
         )),
     }
 }

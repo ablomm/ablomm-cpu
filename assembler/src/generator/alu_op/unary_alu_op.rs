@@ -7,28 +7,28 @@ pub fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    if operation.parameters.len() == 1 {
+    if operation.operands.len() == 1 {
         generate_unary_alu_op_1(
             &operation.full_mnemonic.mnemonic,
             &operation.full_mnemonic.modifiers,
-            &operation.parameters,
+            &operation.operands,
             symbol_table,
         )
-    } else if operation.parameters.len() == 2 {
+    } else if operation.operands.len() == 2 {
         generate_unary_alu_op_2(
             &operation.full_mnemonic.mnemonic,
             &operation.full_mnemonic.modifiers,
-            &operation.parameters,
+            &operation.operands,
             symbol_table,
         )
     } else {
         Err(Error::new(
             format!(
-                "Expected {} or {} parameters",
+                "Expected {} or {} operands",
                 "1".fg(ATTENTION_COLOR),
                 "2".fg(ATTENTION_COLOR)
             ),
-            operation.parameters.span,
+            operation.operands.span,
         ))
     }
 }
@@ -36,16 +36,16 @@ pub fn generate_unary_alu_op(
 fn generate_unary_alu_op_1(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    parameters: &Spanned<Vec<Spanned<Expression>>>,
+    operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &parameters[0].as_ref().eval(symbol_table)?.val {
+    match &operands[0].as_ref().eval(symbol_table)?.val {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
         _ => Err(Error::new(
             format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
-            parameters[0].span,
+            operands[0].span,
         )),
     }
 }
@@ -53,16 +53,16 @@ fn generate_unary_alu_op_1(
 fn generate_unary_alu_op_2(
     mnemonic: &Spanned<Mnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    parameters: &Spanned<Vec<Spanned<Expression>>>,
+    operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &parameters[0].as_ref().eval(symbol_table)?.val {
+    match &operands[0].as_ref().eval(symbol_table)?.val {
         ExpressionResult::Register(register) => {
-            generate_alu_op_2_reg(mnemonic, modifiers, register, parameters, symbol_table)
+            generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(Error::new(
             format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
-            parameters[0].span,
+            operands[0].span,
         )),
     }
 }

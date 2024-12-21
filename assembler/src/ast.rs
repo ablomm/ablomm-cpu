@@ -19,6 +19,10 @@ impl<T> Spanned<T> {
     pub fn as_ref(&self) -> Spanned<&T> {
         Spanned::new(&self.val, self.span)
     }
+
+    pub fn span_to<V>(&self, to: V) -> Spanned<V> {
+        Spanned::new(to, self.span)
+    }
 }
 
 // just for simplicity (i.e. removes ".val" everywhere)
@@ -117,7 +121,7 @@ pub enum Expression {
 #[derive(Debug, Clone)]
 pub struct Operation {
     pub full_mnemonic: Spanned<FullMnemonic>,
-    pub parameters: Spanned<Vec<Spanned<Expression>>>,
+    pub operands: Spanned<Vec<Spanned<Expression>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -165,14 +169,14 @@ pub enum Condition {
     None = 0, // not used, but for completeness
     Eq,
     Ne,
-    Ltu,
-    Gtu,
-    Leu,
-    Geu,
-    Lts,
-    Gts,
-    Les,
-    Ges,
+    Ult,
+    Ugt,
+    Ule,
+    Uge,
+    Slt,
+    Sgt,
+    Sle,
+    Sge,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -202,7 +206,7 @@ pub enum Register {
     R8,
     R9,
     R10,
-    Fp,
+    R11,
     Status,
     Sp,
     Lr,

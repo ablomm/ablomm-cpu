@@ -24,7 +24,7 @@ package reg_pkg;
     R8,
     R9,
     R10,
-    FP,
+    R11,
     STATUS,
     SP,
     LR,

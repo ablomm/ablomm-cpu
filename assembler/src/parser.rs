@@ -85,9 +85,9 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
                 .separated_by(just(','))
                 .map_with_span(Spanned::new),
         )
-        .map(|(full_mnemonic, parameters)| Operation {
+        .map(|(full_mnemonic, operands)| Operation {
             full_mnemonic,
-            parameters,
+            operands,
         })
 }
 

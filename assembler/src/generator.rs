@@ -26,8 +26,7 @@ mod st;
 pub fn compile_ast(ast: &Ast) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
 
-    let opcodes = ast.generate()?;
-    for opcode in opcodes {
+    for opcode in ast.generate()? {
         machine_code.push_str(&format!("{:0>8x}\n", opcode));
     }
 
@@ -47,6 +46,17 @@ impl Ast {
     }
 }
 
+impl Spanned<&Block> {
+    fn generate(&self) -> Result<Vec<u32>, Error> {
+        let mut opcodes = Vec::new();
+        for statement in &self.statements {
+            opcodes.append(&mut statement.as_ref().generate(&self.symbol_table.borrow())?);
+        }
+
+        Ok(opcodes)
+    }
+}
+
 impl Spanned<&Statement> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match &self.val {
@@ -57,17 +67,6 @@ impl Spanned<&Statement> {
             Statement::Literal(literal) => Spanned::new(literal, self.span).generate(symbol_table),
             _ => Ok(vec![]),
         }
-    }
-}
-
-impl Spanned<&Block> {
-    fn generate(&self) -> Result<Vec<u32>, Error> {
-        let mut opcodes = Vec::new();
-        for statement in &self.statements {
-            opcodes.append(&mut statement.as_ref().generate(&self.symbol_table.borrow())?);
-        }
-
-        Ok(opcodes)
     }
 }
 

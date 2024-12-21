@@ -97,13 +97,13 @@ module cu_tb;
     begin
       ir.condition = NONE;
       ir.instruction = op_in | 8'hf0;  // alu ops start with 0xf*
-      ir.params.alu_op.flags.immediate = 0;
-      ir.params.alu_op.flags.reverse = reverse_in;
-      ir.params.alu_op.flags.loadn = loadn_in;
-      ir.params.alu_op.flags.set_status = set_status_in;
-      ir.params.alu_op.reg_a = reg_a_in;
-      ir.params.alu_op.reg_b = reg_b_in;
-      ir.params.alu_op.reg_c = reg_c_in;
+      ir.operands.alu_op.flags.immediate = 0;
+      ir.operands.alu_op.flags.reverse = reverse_in;
+      ir.operands.alu_op.flags.loadn = loadn_in;
+      ir.operands.alu_op.flags.set_status = set_status_in;
+      ir.operands.alu_op.reg_a = reg_a_in;
+      ir.operands.alu_op.reg_b = reg_b_in;
+      ir.operands.alu_op.reg_c = reg_c_in;
 
       clk = 1;
       #1;
