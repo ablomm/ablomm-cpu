@@ -8,7 +8,7 @@ loop:
 	st num, tty;
 	add num, 1;
 	sub.t num, '9';
-	ld.leu pc, loop;
+	ld.ule pc, loop;
 
 	ld new_line, '\n';
 	st new_line, tty;

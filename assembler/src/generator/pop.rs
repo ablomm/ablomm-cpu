@@ -6,20 +6,25 @@ pub fn generate_pop(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    if operation.parameters.len() != 1 {
+    if operation.operands.len() != 1 {
         return Err(Error::new(
-            format!("Expected {} parameter", "1".fg(ATTENTION_COLOR)),
-            operation.parameters.span,
+            format!("Expected {} operands", "1".fg(ATTENTION_COLOR)),
+            operation.operands.span,
         ));
     }
 
-    match &operation.parameters[0].as_ref().eval(symbol_table)?.val {
+    let operand = operation.operands[0].as_ref().eval(symbol_table)?;
+    match &operand {
         ExpressionResult::Register(register) => {
             generate_pop_reg(&operation.full_mnemonic.modifiers, register)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
-            operation.parameters[0].span,
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.fg(ATTENTION_COLOR)
+            ),
+            operation.operands[0].span,
         )),
     }
 }

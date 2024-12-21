@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    ffi::OsStr,
     fs, io,
     path::Path,
     rc::Rc,
@@ -47,6 +46,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
                                     // print error messages and check if a file has already been parsed
 
     // file queue is order in which to generate symbol tables
+    // can't do map_err because of borrow checker
     let file_queue = match generate_file_queue(&src, 0, &mut cache, &mut HashSet::new()) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err((error, sources(cache))),
@@ -57,7 +57,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
         // can't do map_err because of borrow checker
         match fill_symbol_table(
             &file.src,
-            &Spanned::new(&file.block, file.span),
+            &file.span_to(&file.block),
             file.start_address,
             &mut file_exports_map,
         ) {
@@ -109,7 +109,7 @@ fn generate_file_queue(
     // after finding correct addresses
     for import in file.block.get_imports() {
         let import_src = match get_import_src(src, import) {
-            Ok(import_src) => Spanned::new(import_src, import.file.span),
+            Ok(import_src) => import.file.span_to(import_src),
             Err(error) => return Err(vec![Error::new(error.to_string(), import.file.span)]),
         };
 
@@ -118,9 +118,9 @@ fn generate_file_queue(
             return Err(vec![Error::new(
                 format!(
                     "Circular dependency detected: '{}' (transitiviely) imports '{}' which imports '{}'",
-                    import_src.file_name().unwrap_or(OsStr::new("?")).to_str().unwrap_or("?").fg(ATTENTION_COLOR),
-                    src.file_name().unwrap_or(OsStr::new("?")).to_str().unwrap_or("?").fg(ATTENTION_COLOR),
-                    import_src.file_name().unwrap_or(OsStr::new("?")).to_str().unwrap_or("?").fg(ATTENTION_COLOR)
+                    import_src.fg(ATTENTION_COLOR),
+                    src.fg(ATTENTION_COLOR),
+                    import_src.fg(ATTENTION_COLOR)
                 ),
                 import_src.span,
             ).with_note("Try removing this import")]);
@@ -154,10 +154,8 @@ fn parse_path(
 ) -> Result<Spanned<File>, Vec<Error>> {
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
-    let assembly_code = match fs::read_to_string(src.as_path()) {
-        Ok(assembly_code) => assembly_code,
-        Err(err) => return Err(vec![Error::new(err.to_string(), src.span)]),
-    };
+    let assembly_code = fs::read_to_string(src.as_path())
+        .map_err(|error| vec![Error::new(error.to_string(), src.span)])?;
 
     // need to insert before parsing so it can show parsing errors
     cache.insert(src.val, assembly_code);
@@ -166,8 +164,6 @@ fn parse_path(
     let len = assembly_code.chars().count();
     let eoi = Span::new(src.val, len..len);
 
-    // need to do a match here because map_err causes the borrow checker to think that cache is
-    // moved into the map_err closure
     let block = parser().parse(chumsky::Stream::from_iter(
         eoi,
         assembly_code
@@ -182,7 +178,7 @@ fn parse_path(
         block: block.val,
     };
 
-    Ok(Spanned::new(file, block.span))
+    Ok(block.span.spanned(file))
 }
 
 // second pass
@@ -208,10 +204,12 @@ fn fill_symbol_table(
                     .borrow_mut()
                     .try_insert(
                         label.identifier.val,
-                        Spanned::new(ExpressionResult::Number(Number(address)), statement.span),
+                        label
+                            .identifier
+                            .span_to(ExpressionResult::Number(Number(address))),
                     )
                     .map_err(|_| {
-                        Error::new("Identifier already defined", statement.span)
+                        Error::new("Identifier already defined", label.identifier.span)
                             .with_note("Try using a different name")
                     })?;
                 if label.export {
@@ -226,15 +224,17 @@ fn fill_symbol_table(
             Statement::Assignment(assignment) => {
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
-                let expression = assignment
-                    .expression
-                    .as_ref()
-                    .eval(&block.symbol_table.borrow())?;
+                let value = assignment.expression.span_to(
+                    assignment
+                        .expression
+                        .as_ref()
+                        .eval(&block.symbol_table.borrow())?,
+                );
 
                 block
                     .symbol_table
                     .borrow_mut()
-                    .try_insert(assignment.identifier.val, expression)
+                    .try_insert(assignment.identifier.val, value)
                     .map_err(|_| {
                         Error::new("Identifier already defined", assignment.identifier.span)
                             .with_note("Try using a different name")
@@ -273,7 +273,7 @@ fn fill_symbol_table(
                 let exports = file_exports_map.get(&import_src).unwrap_or_else(||
                     // should not occur because the order should ensure all dependencies are parsed
                     panic!(
-                        "Attempted to import '{}' when file has not yet been parsed",
+                        "Attempted to import '{}' when the importee's symbol table has not been filled",
                         import_src
                     ));
 
@@ -284,7 +284,7 @@ fn fill_symbol_table(
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
                 fill_symbol_table(
                     src,
-                    &Spanned::new(sub_block, statement.span),
+                    &statement.span_to(sub_block),
                     address,
                     file_exports_map,
                 )?;
@@ -383,29 +383,6 @@ fn get_import_src(importer: &Intern<Src>, import: &Import) -> io::Result<Intern<
     ))
 }
 
-impl Spanned<&Expression> {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
-        match self.eval(symbol_table)?.val {
-            ExpressionResult::String(string) => Ok(((string.len() as f32) / 4.0).ceil() as u32),
-            ExpressionResult::Number(_number) => Ok(1),
-            _ => Err(Error::new(
-                format!(
-                    "expected either {} or {}",
-                    "string".fg(ATTENTION_COLOR),
-                    "number".fg(ATTENTION_COLOR)
-                ),
-                self.span,
-            )),
-        }
-    }
-}
-
-impl Operation {
-    pub fn num_words(&self) -> Result<u32, Error> {
-        Ok(1)
-    }
-}
-
 impl Block {
     pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         let mut num_words = 0;
@@ -434,10 +411,33 @@ impl Block {
 impl Spanned<&Statement> {
     pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         match self.val {
-            Statement::Literal(literal) => Spanned::new(literal, self.span).num_words(symbol_table),
+            Statement::Literal(literal) => self.span_to(literal).num_words(symbol_table),
             Statement::Block(block) => block.num_words(symbol_table),
             Statement::Operation(operation) => operation.num_words(),
             _ => Ok(0),
         }
+    }
+}
+
+impl Spanned<&Expression> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
+        match self.eval(symbol_table)? {
+            ExpressionResult::String(string) => Ok(((string.len() as f32) / 4.0).ceil() as u32),
+            ExpressionResult::Number(_number) => Ok(1),
+            _ => Err(Error::new(
+                format!(
+                    "expected a {} or {}",
+                    "string".fg(ATTENTION_COLOR),
+                    "number".fg(ATTENTION_COLOR)
+                ),
+                self.span,
+            )),
+        }
+    }
+}
+
+impl Operation {
+    pub fn num_words(&self) -> Result<u32, Error> {
+        Ok(1)
     }
 }

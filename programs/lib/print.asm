@@ -11,7 +11,7 @@ export print: {
 	bytes_left = r2;
 
 	print_word:
-		ld string_word, [string_ptr];
+		ld string_word, *string_ptr;
 		ld bytes_left, 4; // 4 bytes in a word
 
 	/* 

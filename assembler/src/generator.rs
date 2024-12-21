@@ -26,8 +26,7 @@ mod st;
 pub fn compile_ast(ast: &Ast) -> Result<String, Error> {
     let mut machine_code: String = "".to_owned();
 
-    let opcodes = ast.generate()?;
-    for opcode in opcodes {
+    for opcode in ast.generate()? {
         machine_code.push_str(&format!("{:0>8x}\n", opcode));
     }
 
@@ -40,23 +39,10 @@ impl Ast {
         let mut opcodes = Vec::new();
 
         for file in &self.files {
-            opcodes.append(&mut Spanned::new(&file.block, file.span).generate()?);
+            opcodes.append(&mut file.span_to(&file.block).generate()?);
         }
 
         Ok(opcodes)
-    }
-}
-
-impl Spanned<&Statement> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
-        match &self.val {
-            Statement::Operation(operation) => {
-                Spanned::new(operation, self.span).generate(symbol_table)
-            }
-            Statement::Block(block) => Spanned::new(block, self.span).generate(),
-            Statement::Literal(literal) => Spanned::new(literal, self.span).generate(symbol_table),
-            _ => Ok(vec![]),
-        }
     }
 }
 
@@ -68,6 +54,17 @@ impl Spanned<&Block> {
         }
 
         Ok(opcodes)
+    }
+}
+
+impl Spanned<&Statement> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+        match &self.val {
+            Statement::Operation(operation) => self.span_to(operation).generate(symbol_table),
+            Statement::Block(block) => self.span_to(block).generate(),
+            Statement::Literal(literal) => self.span_to(literal).generate(symbol_table),
+            _ => Ok(vec![]),
+        }
     }
 }
 
@@ -90,7 +87,9 @@ impl Spanned<&Operation> {
 
 impl Spanned<&Expression> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
-        match self.eval(symbol_table)?.val {
+        let result = self.eval(symbol_table)?;
+        match &result {
+            ExpressionResult::Number(number) => Ok(vec![**number]),
             ExpressionResult::String(string) => {
                 let mut opcodes = Vec::new();
                 // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
@@ -106,8 +105,15 @@ impl Spanned<&Expression> {
                 }
                 Ok(opcodes)
             }
-            ExpressionResult::Number(number) => Ok(vec![*number]),
-            _ => Err(Error::new("Expected either {} or {}", self.span)),
+            _ => Err(Error::new(
+                format!(
+                    "Expected a {} or {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    "string".fg(ATTENTION_COLOR),
+                    result.fg(ATTENTION_COLOR)
+                ),
+                self.span,
+            )),
         }
     }
 }
@@ -120,11 +126,9 @@ fn seperate_modifiers(
 
     for modifier in modifiers {
         match modifier.val {
-            Modifier::Condition(condition) => {
-                conditions.push(Spanned::new(condition, modifier.span))
-            }
+            Modifier::Condition(condition) => conditions.push(modifier.span_to(condition)),
             Modifier::AluModifier(alu_modifier) => {
-                alu_modifiers.push(Spanned::new(alu_modifier, modifier.span))
+                alu_modifiers.push(modifier.span_to(alu_modifier))
             }
         }
     }

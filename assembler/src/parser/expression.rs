@@ -27,16 +27,10 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
     let number = choice((bin_num, oct_num, hex_num, dec_num, char_num));
 
     let expr = recursive(|expression| {
-        let indirect = expression
-            .clone()
-            .delimited_by(just('['), just(']'))
-            .boxed();
-
         let atom = choice((
             register_parser().map(Expression::Register),
             string_parser().map(Expression::String),
             number.map(Expression::Number),
-            indirect.map(|indirect| Expression::Indirect(Box::new(indirect))),
             text::ident().map(Intern::new).map(Expression::Ident),
             expression.delimited_by(just('('), just(')')),
         ))
@@ -44,7 +38,8 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
         .boxed();
 
         let unary = choice((
-            just('+').to(Expression::Pos as fn(_) -> _),
+            just('&').to(Expression::Ref as fn(_) -> _),
+            just('*').to(Expression::Deref as fn(_) -> _),
             // purposely disallow negatives, as everything should be unsigned
             // (negatives are still used in register offsets, as the cpu treats that as signed)
             // just('-').to(Expression::Neg as fn(_) -> _),

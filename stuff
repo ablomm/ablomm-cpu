@@ -1,12 +1,8 @@
-rename "parameters" to "arguments" or maybe "operands"
-
 maybe have each operation allowed to generate multiple opcodes and have "push {r1, r2, r3}" and "pop {r1, r2, r3}" or "push r1, r2, r3", "pop r1, r2, r3" (could maybe be done in hardware)
 
 make memory clocked
 
 use verilator
-
-change condition names from les -> slte
 
 combine ld and st to just mv
 
@@ -25,10 +21,9 @@ show an error for each statement that has it instead of the first error
 have times 1, and times 0 on register or register offset work and
 have divide by 1 for register and register offset work
 
-need to push lr in int, hwint, and error
+progress bar
 
-add ref operator & and maybe use c style deref operator *(r0 + 4)
+fix span in expressionresult
 
-maybe have Src constructor conancolize to guarantee it is always cononical file
-
-make fp just another register, have fp be an alias to r13?
+push has 4 bit for number of operands,
+if number is 0, then treat rest as immediate

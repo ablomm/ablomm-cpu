@@ -2,10 +2,10 @@ use crate::generator::*;
 use crate::Error;
 
 pub fn generate_int(operation: &Spanned<&Operation>) -> Result<u32, Error> {
-    if operation.parameters.len() != 0 {
+    if operation.operands.len() != 0 {
         return Err(Error::new(
-            format!("Expected {} parameters", "0".fg(ATTENTION_COLOR)),
-            operation.parameters.span,
+            format!("Expected {} operands", "0".fg(ATTENTION_COLOR)),
+            operation.operands.span,
         ));
     }
 

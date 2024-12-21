@@ -36,7 +36,8 @@ pub fn register_parser() -> impl Parser<char, Register, Error = Error> {
         text::keyword("r8").to(Register::R8),
         text::keyword("r9").to(Register::R9),
         text::keyword("r10").to(Register::R10),
-        text::keyword("fp").to(Register::Fp),
+        text::keyword("r11").to(Register::R11),
+        text::keyword("fp").to(Register::R11), // just an alias
         text::keyword("status").to(Register::Status),
         text::keyword("sp").to(Register::Sp),
         text::keyword("lr").to(Register::Lr),
@@ -55,13 +56,13 @@ pub fn condition_parser() -> impl Parser<char, Condition, Error = Error> {
     return choice((
         text::keyword("eq").to(Condition::Eq),
         text::keyword("ne").to(Condition::Ne),
-        text::keyword("ltu").to(Condition::Ltu),
-        text::keyword("gtu").to(Condition::Gtu),
-        text::keyword("leu").to(Condition::Leu),
-        text::keyword("geu").to(Condition::Geu),
-        text::keyword("lts").to(Condition::Lts),
-        text::keyword("gts").to(Condition::Gts),
-        text::keyword("les").to(Condition::Les),
-        text::keyword("ges").to(Condition::Ges),
+        text::keyword("ult").to(Condition::Ult),
+        text::keyword("ugt").to(Condition::Ugt),
+        text::keyword("ule").to(Condition::Ule),
+        text::keyword("uge").to(Condition::Uge),
+        text::keyword("slt").to(Condition::Slt),
+        text::keyword("sgt").to(Condition::Sgt),
+        text::keyword("sle").to(Condition::Sle),
+        text::keyword("sge").to(Condition::Sge),
     ));
 }
