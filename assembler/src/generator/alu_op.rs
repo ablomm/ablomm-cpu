@@ -40,22 +40,24 @@ fn generate_alu_op_2(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[0].as_ref().eval(symbol_table)?.val {
+    let operand = operands[0].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         ExpressionResult::Number(number) => generate_alu_op_2_num(
             mnemonic,
             modifiers,
-            &Spanned::new(**number, operands[0].span),
+            &operands[0].span_to(**number),
             operands,
             symbol_table,
         ),
         _ => Err(Error::new(
             format!(
-                "Expected either a {} or {}",
+                "Expected a {} or {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                "expression".fg(ATTENTION_COLOR)
+                "expression".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
             ),
             operands[0].span,
         )),
@@ -69,7 +71,8 @@ fn generate_alu_op_2_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[1].as_ref().eval(symbol_table)?.val {
+    let operand = operands[1].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register2) => {
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
@@ -77,13 +80,14 @@ fn generate_alu_op_2_reg(
             mnemonic,
             modifiers,
             register,
-            &Spanned::new(**number, operands[1].span),
+            &operands[1].span_to(**number),
         ),
         _ => Err(Error::new(
             format!(
-                "Expected either a {} or {}",
+                "Expected a {} or {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                "expression".fg(ATTENTION_COLOR)
+                "expression".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
             ),
             operands[1].span,
         )),
@@ -115,12 +119,17 @@ fn generate_alu_op_2_num(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[1].as_ref().eval(symbol_table)?.val {
+    let operand = operands[1].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
+            ),
             operands[1].span,
         )),
     }
@@ -141,12 +150,17 @@ fn generate_alu_op_3(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[0].as_ref().eval(symbol_table)?.val {
+    let operand = operands[0].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register) => {
             generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
+            ),
             operands[0].span,
         )),
     }
@@ -159,7 +173,8 @@ fn generate_alu_op_3_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[1].as_ref().eval(symbol_table)?.val {
+    let operand = operands[1].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register2) => generate_alu_op_3_reg_reg(
             mnemonic,
             modifiers,
@@ -172,15 +187,16 @@ fn generate_alu_op_3_reg(
             mnemonic,
             modifiers,
             register,
-            &Spanned::new(**number, operands[1].span),
+            &operands[1].span_to(**number),
             operands,
             symbol_table,
         ),
         _ => Err(Error::new(
             format!(
-                "Expected either a {} or {}",
+                "Expected a {} or {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                "expression".fg(ATTENTION_COLOR)
+                "expression".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
             ),
             operands[1].span,
         )),
@@ -195,7 +211,8 @@ fn generate_alu_op_3_reg_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[2].as_ref().eval(symbol_table)?.val {
+    let operand = operands[2].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register3) => {
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
         }
@@ -204,13 +221,14 @@ fn generate_alu_op_3_reg_reg(
             modifiers,
             register1,
             register2,
-            &Spanned::new(**number, operands[2].span),
+            &operands[2].span_to(**number),
         ),
         _ => Err(Error::new(
             format!(
-                "Expected either a {} or {}",
+                "Expected a {} or {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                "expression".fg(ATTENTION_COLOR)
+                "expression".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
             ),
             operands[2].span,
         )),
@@ -259,12 +277,17 @@ fn generate_alu_op_3_reg_num(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[2].as_ref().eval(symbol_table)?.val {
+    let operand = operands[2].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register2) => {
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
+            ),
             operands[2].span,
         )),
     }

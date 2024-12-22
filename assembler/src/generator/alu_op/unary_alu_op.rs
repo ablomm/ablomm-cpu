@@ -39,12 +39,17 @@ fn generate_unary_alu_op_1(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[0].as_ref().eval(symbol_table)?.val {
+    let operand = operands[0].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
+            ),
             operands[0].span,
         )),
     }
@@ -56,12 +61,17 @@ fn generate_unary_alu_op_2(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match &operands[0].as_ref().eval(symbol_table)?.val {
+    let operand = operands[0].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
+            ),
             operands[0].span,
         )),
     }

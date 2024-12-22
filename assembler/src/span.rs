@@ -1,7 +1,7 @@
 use internment::Intern;
 use std::ops::Range;
 
-use crate::src::Src;
+use crate::{ast::Spanned, src::Src};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {
@@ -16,6 +16,10 @@ impl Span {
             src,
             range: (range.start, range.end),
         }
+    }
+
+    pub fn spanned<T>(self, val: T) -> Spanned<T> {
+        Spanned::new(val, self)
     }
 
     pub fn src(&self) -> Intern<Src> {

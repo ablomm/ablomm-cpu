@@ -13,12 +13,17 @@ pub fn generate_push(
         ));
     }
 
-    match &operation.operands[0].as_ref().eval(symbol_table)?.val {
+    let operand = operation.operands[0].as_ref().eval(symbol_table)?;
+    match &operand.val {
         ExpressionResult::Register(register) => {
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
         _ => Err(Error::new(
-            format!("Expected a {}", "register".fg(ATTENTION_COLOR)),
+            format!(
+                "Expected a {}, but found {}",
+                "register".fg(ATTENTION_COLOR),
+                operand.val.fg(ATTENTION_COLOR)
+            ),
             operation.operands[0].span,
         )),
     }

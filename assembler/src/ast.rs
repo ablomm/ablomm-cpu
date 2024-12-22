@@ -98,10 +98,11 @@ pub struct NamedImport {
 pub enum Expression {
     Register(Register),
     String(String),
-    Indirect(Box<Expression>),
     Number(u32),
     Ident(Intern<String>),
     Pos(Box<Spanned<Expression>>),
+    Ref(Box<Spanned<Expression>>),
+    Deref(Box<Spanned<Expression>>),
     #[allow(dead_code)]
     Neg(Box<Spanned<Expression>>), // not used, but may in future
     Not(Box<Spanned<Expression>>),

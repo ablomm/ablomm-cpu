@@ -1,7 +1,11 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Deref, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, BitAnd, BitOr, BitXor, Deref, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub},
+};
 
 use super::*;
 
+mod indirect;
 mod number;
 mod register;
 mod register_offset;
@@ -52,7 +56,36 @@ impl Deref for Indirect {
     }
 }
 
+impl Display for ExpressionResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            ExpressionResult::Number(_) => "number",
+            ExpressionResult::String(_) => "string",
+            ExpressionResult::Register(_) => "register",
+            ExpressionResult::RegisterOffset(_) => "register offset",
+            ExpressionResult::Indirect(indirect) => &format!("{} {}", "indirect", **indirect),
+        };
+
+        write!(f, "{}", string)
+    }
+}
+
 // operations that are not in rust std::op
+
+// asmref to make it clear this is different from rust ref
+pub trait AsmRef {
+    type Output;
+
+    fn asm_ref(self) -> Self::Output;
+}
+
+// asmref to make it clear this is different from rust deref
+pub trait AsmDeref {
+    type Output;
+
+    fn asm_deref(self) -> Self::Output;
+}
+
 pub trait Pos {
     type Output;
 
@@ -63,6 +96,32 @@ pub trait Ashr<Rhs = Self> {
     type Output;
 
     fn ashr(self, rhs: Rhs) -> Self::Output;
+}
+
+impl AsmRef for &Spanned<&ExpressionResult> {
+    type Output = Result<Spanned<ExpressionResult>, Error>;
+
+    fn asm_ref(self) -> Self::Output {
+        match self.val {
+            ExpressionResult::Indirect(indirect) => Spanned::new(indirect, self.span).asm_ref(),
+            _ => Err(Error::new(
+                format!("Expected {}", "indirect".fg(ATTENTION_COLOR)),
+                self.span,
+            )
+            .with_note("You can only take a reference of a value was previously dereferenced")),
+        }
+    }
+}
+
+impl AsmDeref for &Spanned<&ExpressionResult> {
+    type Output = Result<Spanned<ExpressionResult>, Error>;
+
+    fn asm_deref(self) -> Self::Output {
+        Ok(Spanned::new(
+            ExpressionResult::Indirect(Indirect(Box::new(self.val.clone()))),
+            self.span,
+        ))
+    }
 }
 
 impl Pos for &Spanned<&ExpressionResult> {

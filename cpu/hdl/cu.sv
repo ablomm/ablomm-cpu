@@ -53,12 +53,19 @@ module cu (
   // CU states (multi-clock instructions)
   typedef enum {
     STOP,
+
     HWINT1,
     HWINT2,
+    HWINT3,
+
     SWINT1,
     SWINT2,
+    SWINT3,
+
     EXCEPT1,
     EXCEPT2,
+    EXCEPT3,
+
     FETCH,
     NOT,
     LD,
@@ -120,9 +127,16 @@ module cu (
           endcase
         end
       end
+
       SWINT1: state <= SWINT2;
+      SWINT2: state <= SWINT3;
+
       HWINT1: state <= HWINT2;
+      HWINT2: state <= HWINT3;
+
       EXCEPT1: state <= EXCEPT2;
+      EXCEPT2: state <= EXCEPT3;
+
       STOP: if (start) state <= FETCH;
       default: state <= FETCH;
     endcase
@@ -323,10 +337,20 @@ module cu (
         mem_wr = 1;
       end
 
+      // push LR
+      SWINT2, HWINT2, EXCEPT2: begin
+        pre_dec_sp = 1;
+        sel_a_reg = reg_pkg::R11;
+        oe_a_reg = 1;
+        sel_b_reg = reg_pkg::LR;
+        oe_b_reg = 1;
+        mem_wr = 1;
+      end
+
       // PC <- 00000001
       // imask <- 0
       // mode <- SUPERVISOR
-      HWINT2: begin
+      HWINT3: begin
         sel_b_reg = reg_e'(4'h1);
         oe_b_consts = 1;
         alu_op = alu_pkg::PASS;
@@ -342,7 +366,7 @@ module cu (
       // PC <- 00000002
       // imask <- 0
       // mode <- SUPERVISOR
-      SWINT2: begin
+      SWINT3: begin
         sel_b_reg = reg_e'(4'h2);
         oe_b_consts = 1;
         alu_op = alu_pkg::PASS;
@@ -357,7 +381,7 @@ module cu (
 
       // pc <- 00000003
       // mode <- SUPERVISOR
-      EXCEPT2: begin
+      EXCEPT3: begin
         sel_b_reg = reg_e'(4'h3);
         oe_b_consts = 1;
         alu_op = alu_pkg::PASS;

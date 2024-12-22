@@ -1,5 +1,5 @@
 use ariadne::Fmt;
-use expression_result::{Ashr, ExpressionResult, Indirect, Number, Pos, String};
+use expression_result::{Ashr, AsmDeref, AsmRef, ExpressionResult, Number, Pos, String};
 
 use crate::{
     ast::{Expression, Register, Spanned},
@@ -11,30 +11,25 @@ pub mod expression_result;
 
 impl Spanned<&Expression> {
     pub fn eval(&self, symbol_table: &SymbolTable) -> Result<Spanned<ExpressionResult>, Error> {
-        match &self.val {
+        match self.val {
             // there is a bunch of deref's here (i.e. **a) because a and b are a Box, which has
             // it's own as_ref() function, but we really need the Spanned::as_ref() function. No
             // deref's are needed if the Spanned::as_ref() method is named differently, but I
             // didn't like that
-            Expression::Register(reg) => {
-                Ok(Spanned::new(ExpressionResult::Register(*reg), self.span))
+            Expression::Register(reg) => Ok(self.span_to(ExpressionResult::Register(*reg))),
+            Expression::String(string) => {
+                Ok(self.span_to(ExpressionResult::String(String(string.clone()))))
             }
-            Expression::String(string) => Ok(Spanned::new(
-                ExpressionResult::String(String(string.clone())),
-                self.span,
-            )),
-            Expression::Indirect(indirect) => {
-                let indirect_inner = Spanned::new(&**indirect, self.span).eval(symbol_table)?;
-                Ok(Spanned::new(
-                    ExpressionResult::Indirect(Indirect(Box::new(indirect_inner.val))),
-                    self.span,
-                ))
+            Expression::Number(a) => Ok(self.span_to(ExpressionResult::Number(Number(*a)))),
+            Expression::Ident(a) => Ok(get_identifier(&self.span_to(a), symbol_table)?),
+            Expression::Ref(expression) => {
+                let a = (**expression).as_ref().eval(symbol_table)?;
+                a.as_ref().asm_ref()
             }
-            Expression::Number(a) => Ok(Spanned::new(
-                ExpressionResult::Number(Number(*a)),
-                self.span,
-            )),
-            Expression::Ident(a) => Ok(get_identifier(&Spanned::new(a, self.span), symbol_table)?),
+            Expression::Deref(expression) => {
+                let a = (**expression).as_ref().eval(symbol_table)?;
+                a.as_ref().asm_deref()
+            }
             Expression::Pos(a) => {
                 let a = (**a).as_ref().eval(symbol_table)?;
                 a.as_ref().pos()
