@@ -46,6 +46,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
                                     // print error messages and check if a file has already been parsed
 
     // file queue is order in which to generate symbol tables
+    // can't do map_err because of borrow checker
     let file_queue = match generate_file_queue(&src, 0, &mut cache, &mut HashSet::new()) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err((error, sources(cache))),
@@ -223,10 +224,12 @@ fn fill_symbol_table(
             Statement::Assignment(assignment) => {
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
-                let value = assignment
-                    .expression
-                    .as_ref()
-                    .eval(&block.symbol_table.borrow())?;
+                let value = assignment.expression.span_to(
+                    assignment
+                        .expression
+                        .as_ref()
+                        .eval(&block.symbol_table.borrow())?,
+                );
 
                 block
                     .symbol_table
@@ -418,7 +421,7 @@ impl Spanned<&Statement> {
 
 impl Spanned<&Expression> {
     pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
-        match self.eval(symbol_table)?.val {
+        match self.eval(symbol_table)? {
             ExpressionResult::String(string) => Ok(((string.len() as f32) / 4.0).ceil() as u32),
             ExpressionResult::Number(_number) => Ok(1),
             _ => Err(Error::new(

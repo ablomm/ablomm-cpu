@@ -14,7 +14,7 @@ pub fn generate_pop(
     }
 
     let operand = operation.operands[0].as_ref().eval(symbol_table)?;
-    match &operand.val {
+    match &operand {
         ExpressionResult::Register(register) => {
             generate_pop_reg(&operation.full_mnemonic.modifiers, register)
         }
@@ -22,7 +22,7 @@ pub fn generate_pop(
             format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                operand.val.fg(ATTENTION_COLOR)
+                operand.fg(ATTENTION_COLOR)
             ),
             operation.operands[0].span,
         )),

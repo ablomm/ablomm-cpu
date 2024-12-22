@@ -88,7 +88,7 @@ impl Spanned<&Operation> {
 impl Spanned<&Expression> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         let result = self.eval(symbol_table)?;
-        match &result.val {
+        match &result {
             ExpressionResult::Number(number) => Ok(vec![**number]),
             ExpressionResult::String(string) => {
                 let mut opcodes = Vec::new();
@@ -110,7 +110,7 @@ impl Spanned<&Expression> {
                     "Expected a {} or {}, but found {}",
                     "number".fg(ATTENTION_COLOR),
                     "string".fg(ATTENTION_COLOR),
-                    result.val.fg(ATTENTION_COLOR)
+                    result.fg(ATTENTION_COLOR)
                 ),
                 self.span,
             )),

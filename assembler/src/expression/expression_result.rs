@@ -86,12 +86,6 @@ pub trait AsmDeref {
     fn asm_deref(self) -> Self::Output;
 }
 
-pub trait Pos {
-    type Output;
-
-    fn pos(self) -> Self::Output;
-}
-
 pub trait Ashr<Rhs = Self> {
     type Output;
 
@@ -99,7 +93,7 @@ pub trait Ashr<Rhs = Self> {
 }
 
 impl AsmRef for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn asm_ref(self) -> Self::Output {
         match self.val {
@@ -114,41 +108,17 @@ impl AsmRef for &Spanned<&ExpressionResult> {
 }
 
 impl AsmDeref for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn asm_deref(self) -> Self::Output {
-        Ok(Spanned::new(
-            ExpressionResult::Indirect(Indirect(Box::new(self.val.clone()))),
-            self.span,
-        ))
-    }
-}
-
-impl Pos for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
-
-    fn pos(self) -> Self::Output {
-        match self.val {
-            ExpressionResult::Number(number) => Spanned::new(number, self.span).pos(),
-            ExpressionResult::Register(register) => Spanned::new(register, self.span).pos(),
-            ExpressionResult::RegisterOffset(register_offset) => {
-                Spanned::new(register_offset, self.span).pos()
-            }
-            _ => Err(Error::new(
-                format!(
-                    "Expected {}, {}, or {}",
-                    "number".fg(ATTENTION_COLOR),
-                    "register".fg(ATTENTION_COLOR),
-                    "register offset".fg(ATTENTION_COLOR)
-                ),
-                self.span,
-            )),
-        }
+        Ok(ExpressionResult::Indirect(Indirect(Box::new(
+            self.val.clone(),
+        ))))
     }
 }
 
 impl Neg for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn neg(self) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => -&Spanned::new(number, self.span),
@@ -161,7 +131,7 @@ impl Neg for &Spanned<&ExpressionResult> {
 }
 
 impl Not for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn not(self) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => !&Spanned::new(number, self.span),
@@ -174,7 +144,7 @@ impl Not for &Spanned<&ExpressionResult> {
 }
 
 impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn mul(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) * rhs,
@@ -187,7 +157,7 @@ impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Div<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn div(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) / rhs,
@@ -200,7 +170,7 @@ impl Div<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn rem(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) % rhs,
@@ -213,7 +183,7 @@ impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) + rhs,
@@ -237,7 +207,7 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) - rhs,
@@ -259,7 +229,7 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn shl(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) << rhs,
@@ -272,7 +242,7 @@ impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn shr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) >> rhs,
@@ -285,7 +255,7 @@ impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn ashr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => Spanned::new(number, self.span).ashr(rhs),
@@ -298,7 +268,7 @@ impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn bitand(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) & rhs,
@@ -311,7 +281,7 @@ impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn bitor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) | rhs,
@@ -324,7 +294,7 @@ impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl BitXor<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
     fn bitxor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &Spanned::new(number, self.span) ^ rhs,

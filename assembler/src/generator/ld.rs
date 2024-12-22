@@ -14,7 +14,7 @@ pub fn generate_ld(
     }
 
     let operand = operation.operands[0].as_ref().eval(symbol_table)?;
-    match &operand.val {
+    match &operand {
         ExpressionResult::Register(register) => generate_ld_reg(
             &operation.full_mnemonic.modifiers,
             register,
@@ -26,7 +26,7 @@ pub fn generate_ld(
             format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                operand.val.fg(ATTENTION_COLOR)
+                operand.fg(ATTENTION_COLOR)
             ),
             operation.operands[0].span,
         )),
@@ -40,7 +40,7 @@ fn generate_ld_reg(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     let operand = operands[1].as_ref().eval(symbol_table)?;
-    match &operand.val {
+    match &operand {
         ExpressionResult::Register(register2) => {
             generate_ld_reg_reg(modifiers, register, register2)
         }
@@ -57,7 +57,7 @@ fn generate_ld_reg(
                 "register".fg(ATTENTION_COLOR),
                 "expression".fg(ATTENTION_COLOR),
                 "indirect".fg(ATTENTION_COLOR),
-                operand.val.fg(ATTENTION_COLOR)
+                operand.fg(ATTENTION_COLOR)
             ),
             operands[1].span,
         )),
@@ -116,7 +116,7 @@ fn generate_ld_reg_indirect(
                 "register".fg(ATTENTION_COLOR),
                 "expression".fg(ATTENTION_COLOR),
                 "register offset".fg(ATTENTION_COLOR),
-                operand.val.fg(ATTENTION_COLOR)
+                operand.fg(ATTENTION_COLOR)
             ),
             operand.span,
         )),

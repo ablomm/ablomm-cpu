@@ -40,7 +40,7 @@ fn generate_unary_alu_op_1(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     let operand = operands[0].as_ref().eval(symbol_table)?;
-    match &operand.val {
+    match &operand {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
@@ -48,7 +48,7 @@ fn generate_unary_alu_op_1(
             format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                operand.val.fg(ATTENTION_COLOR)
+                operand.fg(ATTENTION_COLOR)
             ),
             operands[0].span,
         )),
@@ -62,7 +62,7 @@ fn generate_unary_alu_op_2(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     let operand = operands[0].as_ref().eval(symbol_table)?;
-    match &operand.val {
+    match &operand {
         ExpressionResult::Register(register) => {
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
@@ -70,7 +70,7 @@ fn generate_unary_alu_op_2(
             format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
-                operand.val.fg(ATTENTION_COLOR)
+                operand.fg(ATTENTION_COLOR)
             ),
             operands[0].span,
         )),

@@ -1,9 +1,9 @@
 use super::*;
 
 impl AsmRef for &Spanned<&Indirect> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn asm_ref(self) -> Self::Output {
-        Ok(Spanned::new((***self.val).clone(), self.span))
+        Ok((***self.val).clone())
     }
 }

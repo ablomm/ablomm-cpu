@@ -1,18 +1,7 @@
 use super::*;
 
-impl Pos for &Spanned<&RegisterOffset> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
-
-    fn pos(self) -> Self::Output {
-        Ok(Spanned::new(
-            ExpressionResult::RegisterOffset(*self.val),
-            self.span,
-        ))
-    }
-}
-
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&RegisterOffset> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
@@ -26,30 +15,24 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&RegisterOffset> {
 }
 
 impl Add<&Spanned<&Number>> for &Spanned<&RegisterOffset> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Number>) -> Self::Output {
         let new_offset = self.offset.wrapping_add(**rhs.val);
 
         if new_offset == 0 {
-            return Ok(Spanned::new(
-                ExpressionResult::Register(*self.reg),
-                self.reg.span,
-            ));
+            return Ok(ExpressionResult::Register(*self.reg));
         }
 
-        Ok(Spanned::new(
-            ExpressionResult::RegisterOffset(RegisterOffset {
-                reg: Spanned::new(*self.reg, self.reg.span),
-                offset: new_offset,
-            }),
-            self.span.union(&rhs.span),
-        ))
+        Ok(ExpressionResult::RegisterOffset(RegisterOffset {
+            reg: Spanned::new(*self.reg, self.reg.span),
+            offset: new_offset,
+        }))
     }
 }
 
 impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&RegisterOffset> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
@@ -63,24 +46,18 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&RegisterOffset> {
 }
 
 impl Sub<&Spanned<&Number>> for &Spanned<&RegisterOffset> {
-    type Output = Result<Spanned<ExpressionResult>, Error>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&Number>) -> Self::Output {
         let new_offset = self.offset.wrapping_sub(**rhs.val);
 
         if new_offset == 0 {
-            return Ok(Spanned::new(
-                ExpressionResult::Register(*self.reg),
-                self.reg.span,
-            ));
+            return Ok(ExpressionResult::Register(*self.reg));
         }
 
-        Ok(Spanned::new(
-            ExpressionResult::RegisterOffset(RegisterOffset {
-                reg: Spanned::new(*self.reg, self.reg.span),
-                offset: new_offset,
-            }),
-            self.span.union(&rhs.span),
-        ))
+        Ok(ExpressionResult::RegisterOffset(RegisterOffset {
+            reg: Spanned::new(*self.reg, self.reg.span),
+            offset: new_offset,
+        }))
     }
 }

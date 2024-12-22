@@ -100,7 +100,6 @@ pub enum Expression {
     String(String),
     Number(u32),
     Ident(Intern<String>),
-    Pos(Box<Spanned<Expression>>),
     Ref(Box<Spanned<Expression>>),
     Deref(Box<Spanned<Expression>>),
     #[allow(dead_code)]
