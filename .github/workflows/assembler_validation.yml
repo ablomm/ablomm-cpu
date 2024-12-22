@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./assembler
+        working-directory: assembler/
 
     steps:
     - uses: actions/checkout@v4
