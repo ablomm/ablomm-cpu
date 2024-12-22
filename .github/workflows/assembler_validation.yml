@@ -18,12 +18,13 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./assembler
 
     steps:
     - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
-      working-directory: assembler/
     - name: Run tests
       run: cargo test --verbose
-      working-directory: assember/
