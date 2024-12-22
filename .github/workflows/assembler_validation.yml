@@ -1,4 +1,4 @@
-name: Assember Validation
+name: Assembler Validation
 
 on:
   workflow_dispatch:
