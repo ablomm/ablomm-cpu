@@ -18,7 +18,7 @@ impl Add<&Spanned<&Number>> for &Spanned<&RegisterOffset> {
     type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Number>) -> Self::Output {
-        let new_offset = self.offset.wrapping_add(**rhs.val);
+        let new_offset = (self.offset as u32).wrapping_add(**rhs.val) as i32;
 
         if new_offset == 0 {
             return Ok(ExpressionResult::Register(*self.reg));
@@ -49,7 +49,7 @@ impl Sub<&Spanned<&Number>> for &Spanned<&RegisterOffset> {
     type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&Number>) -> Self::Output {
-        let new_offset = self.offset.wrapping_sub(**rhs.val);
+        let new_offset = (self.offset as u32).wrapping_sub(**rhs.val) as i32;
 
         if new_offset == 0 {
             return Ok(ExpressionResult::Register(*self.reg));

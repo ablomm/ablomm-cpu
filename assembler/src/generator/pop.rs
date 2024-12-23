@@ -6,6 +6,11 @@ pub fn generate_pop(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
+    assert!(matches!(
+        operation.full_mnemonic.mnemonic.val,
+        AsmMnemonic::Pop
+    ));
+
     if operation.operands.len() != 1 {
         return Err(Error::new(
             format!("Expected {} operands", "1".fg(ATTENTION_COLOR)),
@@ -35,7 +40,7 @@ fn generate_pop_reg(
 ) -> Result<u32, Error> {
     let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
-    opcode |= Mnemonic::Pop.generate();
+    opcode |= CpuMnemonic::Pop.generate();
     opcode |= register.generate() << 16;
     Ok(opcode)
 }

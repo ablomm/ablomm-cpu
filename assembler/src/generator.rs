@@ -7,7 +7,6 @@ use crate::generator::int::*;
 use crate::generator::ld::*;
 use crate::generator::pop::*;
 use crate::generator::push::*;
-use crate::generator::st::*;
 use crate::symbol_table::SymbolTable;
 use ariadne::Fmt;
 use nop::*;
@@ -20,7 +19,6 @@ mod ld;
 mod nop;
 mod pop;
 mod push;
-mod st;
 
 // cannot include span because blocks may span multiple different files
 pub fn compile_ast(ast: &Ast) -> Result<String, Error> {
@@ -71,15 +69,13 @@ impl Spanned<&Statement> {
 impl Spanned<&Operation> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
-            Mnemonic::Nop => generate_nop(self),
-            Mnemonic::Ld => generate_ld(self, symbol_table),
-            Mnemonic::St => generate_st(self, symbol_table),
-            Mnemonic::Push => generate_push(self, symbol_table),
-            Mnemonic::Pop => generate_pop(self, symbol_table),
-            Mnemonic::Int => generate_int(self),
-            // alu ops
-            Mnemonic::Not | Mnemonic::Neg => generate_unary_alu_op(self, symbol_table),
-            _ => generate_alu_op(self, symbol_table),
+            AsmMnemonic::Nop => generate_nop(self),
+            AsmMnemonic::Ld => generate_ld(self, symbol_table),
+            AsmMnemonic::Push => generate_push(self, symbol_table),
+            AsmMnemonic::Pop => generate_pop(self, symbol_table),
+            AsmMnemonic::Int => generate_int(self),
+            AsmMnemonic::UnaryAlu(_) => generate_unary_alu_op(self, symbol_table),
+            AsmMnemonic::BinaryAlu(_) => generate_alu_op(self, symbol_table),
         }
         .map(|opcode| vec![opcode])
     }
@@ -221,7 +217,7 @@ impl Generatable for Condition {
     }
 }
 
-impl Generatable for Mnemonic {
+impl Generatable for CpuMnemonic {
     fn generate(&self) -> u32 {
         (*self as u32) << 20
     }

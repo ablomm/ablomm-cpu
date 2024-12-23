@@ -43,7 +43,7 @@ impl Deref for String {
 #[derive(Debug, Clone, Copy)]
 pub struct RegisterOffset {
     pub reg: Spanned<Register>,
-    pub offset: u32,
+    pub offset: i32,
 }
 
 #[derive(Debug, Clone)]
