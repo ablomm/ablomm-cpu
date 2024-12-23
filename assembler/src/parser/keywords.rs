@@ -1,25 +1,24 @@
 use super::*;
 
-pub fn mnemonic_parser() -> impl Parser<char, Mnemonic, Error = Error> {
+pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = Error> {
     return choice((
-        text::keyword("nop").to(Mnemonic::Nop),
-        text::keyword("ld").to(Mnemonic::Ld),
-        text::keyword("st").to(Mnemonic::St),
-        text::keyword("push").to(Mnemonic::Push),
-        text::keyword("pop").to(Mnemonic::Pop),
-        text::keyword("int").to(Mnemonic::Int),
-        text::keyword("and").to(Mnemonic::And),
-        text::keyword("or").to(Mnemonic::Or),
-        text::keyword("xor").to(Mnemonic::Xor),
-        text::keyword("not").to(Mnemonic::Not),
-        text::keyword("add").to(Mnemonic::Add),
-        text::keyword("addc").to(Mnemonic::Addc),
-        text::keyword("sub").to(Mnemonic::Sub),
-        text::keyword("subb").to(Mnemonic::Subb),
-        text::keyword("neg").to(Mnemonic::Neg),
-        text::keyword("shl").to(Mnemonic::Shl),
-        text::keyword("shr").to(Mnemonic::Shr),
-        text::keyword("ashr").to(Mnemonic::Ashr),
+        text::keyword("nop").to(AsmMnemonic::Nop),
+        text::keyword("ld").to(AsmMnemonic::Ld),
+        text::keyword("push").to(AsmMnemonic::Push),
+        text::keyword("pop").to(AsmMnemonic::Pop),
+        text::keyword("int").to(AsmMnemonic::Int),
+        text::keyword("and").to(AsmMnemonic::BinaryAlu(CpuMnemonic::And)),
+        text::keyword("or").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Or)),
+        text::keyword("xor").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Xor)),
+        text::keyword("not").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Not)),
+        text::keyword("add").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Add)),
+        text::keyword("addc").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Addc)),
+        text::keyword("sub").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Sub)),
+        text::keyword("subb").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Subb)),
+        text::keyword("neg").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Neg)),
+        text::keyword("shl").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shl)),
+        text::keyword("shr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shr)),
+        text::keyword("ashr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ashr)),
     ));
 }
 

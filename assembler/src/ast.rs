@@ -126,12 +126,23 @@ pub struct Operation {
 
 #[derive(Debug, Clone)]
 pub struct FullMnemonic {
-    pub mnemonic: Spanned<Mnemonic>,
+    pub mnemonic: Spanned<AsmMnemonic>,
     pub modifiers: Spanned<Vec<Spanned<Modifier>>>,
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum Mnemonic {
+pub enum AsmMnemonic {
+    Nop,
+    Ld,
+    Push,
+    Pop,
+    Int,
+    UnaryAlu(CpuMnemonic),
+    BinaryAlu(CpuMnemonic),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum CpuMnemonic {
     Nop = 0,
     Ld,
     Ldr,

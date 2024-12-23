@@ -7,16 +7,22 @@ pub fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
+    let mnemonic = if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
+        operation.full_mnemonic.mnemonic.span_to(mnemonic)
+    } else {
+        panic!("Function must be called with AsmMnemonic::UnaryAlu");
+    };
+
     if operation.operands.len() == 1 {
         generate_unary_alu_op_1(
-            &operation.full_mnemonic.mnemonic,
+            &mnemonic,
             &operation.full_mnemonic.modifiers,
             &operation.operands,
             symbol_table,
         )
     } else if operation.operands.len() == 2 {
         generate_unary_alu_op_2(
-            &operation.full_mnemonic.mnemonic,
+            &mnemonic,
             &operation.full_mnemonic.modifiers,
             &operation.operands,
             symbol_table,
@@ -34,7 +40,7 @@ pub fn generate_unary_alu_op(
 }
 
 fn generate_unary_alu_op_1(
-    mnemonic: &Spanned<Mnemonic>,
+    mnemonic: &Spanned<CpuMnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -56,7 +62,7 @@ fn generate_unary_alu_op_1(
 }
 
 fn generate_unary_alu_op_2(
-    mnemonic: &Spanned<Mnemonic>,
+    mnemonic: &Spanned<CpuMnemonic>,
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,

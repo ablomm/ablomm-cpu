@@ -5,12 +5,12 @@ new_line = r1;
 
 	ld r0, '0';
 loop:
-	st num, tty;
+	ld tty, num;
 	add num, 1;
 	sub.t num, '9';
 	ld.ule pc, loop;
 
 	ld new_line, '\n';
-	st new_line, tty;
+	ld tty, new_line;
 end:
 	ld pc, end;

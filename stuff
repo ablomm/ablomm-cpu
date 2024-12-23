@@ -23,7 +23,7 @@ have divide by 1 for register and register offset work
 
 progress bar
 
-fix span in expressionresult
-
 push has 4 bit for number of operands,
 if number is 0, then treat rest as immediate
+
+fix error when there is nothing in found

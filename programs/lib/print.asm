@@ -23,7 +23,7 @@ export print: {
 	print_byte:
 		and.t string_word, 0xff;
 		ld.eq pc, return; // i.e. lsb is null '\0'
-		st string_word, tty;
+		ld tty, string_word;
 		shr string_word, 8;
 		sub.s bytes_left, 1;
 		ld.ne pc, print_byte;
