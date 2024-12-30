@@ -35,7 +35,11 @@ impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self * &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -63,7 +67,11 @@ impl Div<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self / &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -74,9 +82,20 @@ impl Div<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
     type Output = Result<ExpressionResult, Error>;
 
     fn div(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
-        if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
+        if let (Some(lhs), Some(rhs_val)) = (self.val, rhs.val) {
+            let rhs = rhs.span_to(rhs_val);
+            if **rhs.val == 0 {
+                return Err(Error::new(
+                    format!(
+                        "Cannot divide by {}, and expression evaluates to {}",
+                        "0".fg(ATTENTION_COLOR),
+                        "0".fg(ATTENTION_COLOR)
+                    ),
+                    rhs.span,
+                ));
+            }
             Ok(ExpressionResult::Number(Some(Number(
-                lhs.wrapping_div(**rhs),
+                lhs.wrapping_div(**rhs.val),
             ))))
         } else {
             Ok(ExpressionResult::Number(None))
@@ -91,7 +110,11 @@ impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self % &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -102,9 +125,20 @@ impl Rem<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
     type Output = Result<ExpressionResult, Error>;
 
     fn rem(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
-        if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
+        if let (Some(lhs), Some(rhs_val)) = (self.val, rhs.val) {
+            let rhs = rhs.span_to(rhs_val);
+            if **rhs.val == 0 {
+                return Err(Error::new(
+                    format!(
+                        "Cannot take remainder by {}, and expression evaluates to {}",
+                        "0".fg(ATTENTION_COLOR),
+                        "0".fg(ATTENTION_COLOR)
+                    ),
+                    rhs.span,
+                ));
+            }
             Ok(ExpressionResult::Number(Some(Number(
-                lhs.wrapping_rem(**rhs),
+                lhs.wrapping_rem(**rhs.val),
             ))))
         } else {
             Ok(ExpressionResult::Number(None))
@@ -123,11 +157,12 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
             ExpressionResult::RegisterOffset(reg_offset) => self + &rhs.span_to(reg_offset),
             _ => Err(Error::new(
                 format!(
-                    "Expected {}, {}, {}, or {}",
+                    "Expected {}, {}, {}, or {}, but found {}",
                     "number".fg(ATTENTION_COLOR),
                     "string".fg(ATTENTION_COLOR),
                     "register".fg(ATTENTION_COLOR),
-                    "register offset".fg(ATTENTION_COLOR)
+                    "register offset".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
                 ),
                 rhs.span,
             )),
@@ -188,7 +223,11 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -216,7 +255,11 @@ impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self << &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -244,7 +287,11 @@ impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self >> &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -272,7 +319,11 @@ impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self.ashr(&rhs.span_to(number)),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -300,7 +351,11 @@ impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self & &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -326,7 +381,11 @@ impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self | &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -352,7 +411,11 @@ impl BitXor<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
         match rhs.val {
             ExpressionResult::Number(number) => self ^ &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }

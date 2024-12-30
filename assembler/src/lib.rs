@@ -31,7 +31,7 @@ mod symbol_table;
 // error includes cache in order to print errors without re-reading files
 pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<Src>>)> {
     // fails if file not found
-    // this is the root file, given in the comandline
+    // this is the root file, given in the comandline argument
     let src = Intern::new(
         Src::new(Path::new(src).to_path_buf())
             .unwrap_or_else(|error| panic!("Error finding file '{}': {}", src, error)),
@@ -42,28 +42,35 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     let dummy_span = Span::new(src, 0..0);
     let src = Spanned::new(src, dummy_span);
 
-    let mut cache = HashMap::new(); // cache of file name and corresponding file contents, used to
-                                    // print error messages and check if a file has already been parsed
+    // cache of file name and corresponding file contents, used to
+    // print error messages and check if a file has already been parsed
+    let mut cache = HashMap::new();
 
     // file queue is order in which to generate symbol tables
     // can't do map_err because of borrow checker
-    let file_queue = match generate_file_queue(&src, 0, &mut cache, &mut HashSet::new()) {
+    let mut file_queue = match generate_file_queue(&src, &mut cache, &mut HashSet::new()) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err((error, sources(cache))),
     };
 
-    let mut file_exports_map = HashMap::new();
-    for file in &file_queue {
-        // can't do map_err because of borrow checker
-        match fill_symbol_table(
-            &file.src,
-            &file.span_to(&file.block),
-            file.start_address,
-            &mut file_exports_map,
-        ) {
-            Ok(_address) => (),
-            Err(error) => return Err((vec![error], sources(cache))),
-        }
+    // needed to get types (and as much values as possible without addresses) because the number of
+    // words for a statement may depend on the type and value of symbols
+    match fill_symbol_tables(&file_queue) {
+        Ok(_) => (),
+        Err(error) => return Err((vec![error], sources(cache))),
+    }
+
+    // get file addresses (also technically does labels and assignments (but not imports / exports), but this is overwritten in the final
+    // fill_symbol_tables pass)
+    match calculate_addresses(&mut file_queue) {
+        Ok(_) => (),
+        Err(error) => return Err((vec![error], sources(cache))),
+    }
+
+    // final fill after all addresses are calculated, all values should be filled in this pass
+    match fill_symbol_tables(&file_queue) {
+        Ok(_) => (),
+        Err(error) => return Err((vec![error], sources(cache))),
     }
 
     let ast = Ast {
@@ -75,36 +82,19 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     compile_ast(&ast).map_err(|error| (vec![error], sources(cache)))
 }
 
-// first pass of ast
 // takes in a canonanical file path, address, and cache and returns a queue of the order in which to
 // generate the symbol tables / exports in order to satisfy import dependencies (i.e. post order)
 fn generate_file_queue(
     src: &Spanned<Intern<Src>>,
-    start_address: u32,
     cache: &mut HashMap<Intern<Src>, String>,
     import_set: &mut HashSet<Intern<Src>>, // to detect cycles
 ) -> Result<Vec<Spanned<File>>, Vec<Error>> {
     import_set.insert(src.val);
 
-    let mut end_address = start_address;
     let mut file_queue = Vec::new();
 
     // parse itself
-    let file = parse_path(src, start_address, cache)?;
-
-    // need to create an empty symbol table because a block has expressions, which could contain
-    // any value, and literals are expressions, which means a to know the size of a block
-    // requires knowing the value of symbols, but the symbol tables are filled in later, so this is
-    // an issue. Right now lets just ignore it by disallowing identifiers in literals
-    let dummy_table = SymbolTable {
-        table: HashMap::new(),
-        parent: None,
-    };
-
-    // add imports to end of this file
-    end_address += file.block.num_words(&dummy_table).map_err(|err| {
-        vec![err.with_note("Currently, identifiers is not supported in this statement")]
-    })?;
+    let file = parse_path(src, cache)?;
 
     // after finding correct addresses
     for import in file.block.get_imports() {
@@ -131,12 +121,7 @@ fn generate_file_queue(
             continue;
         }
 
-        file_queue.append(&mut generate_file_queue(
-            &import_src,
-            end_address,
-            cache,
-            import_set,
-        )?);
+        file_queue.append(&mut generate_file_queue(&import_src, cache, import_set)?);
     }
 
     // only add itself after imports are added (post order)
@@ -149,7 +134,6 @@ fn generate_file_queue(
 // takes a path and parses it
 fn parse_path(
     src: &Spanned<Intern<Src>>,
-    start_address: u32,
     cache: &mut HashMap<Intern<Src>, String>,
 ) -> Result<Spanned<File>, Vec<Error>> {
     // need to do a match here because map_err causes the borrow checker to think that cache is
@@ -174,22 +158,40 @@ fn parse_path(
 
     let file = File {
         src: src.val,
-        start_address,
+        start_address: None,
         block: block.val,
     };
 
     Ok(block.span.spanned(file))
 }
 
-// second pass
+fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), Error> {
+    let mut file_exports_map = HashMap::new();
+    for file in file_queue {
+        // can't do map_err because of borrow checker
+        fill_symbol_table(
+            &file.src,
+            &file.span_to(&file.block),
+            file.start_address,
+            &mut file_exports_map,
+        )?
+    }
+    Ok(())
+}
+
 // generates symbol table for block and sub_block
 fn fill_symbol_table(
     src: &Intern<Src>,
     block: &Spanned<&Block>,
-    start_address: u32,
+    // if start_address is None, it will simply fill the symbol_table to the best of it's ability
+    // without any addresses
+    start_address: Option<u32>,
     file_exports_map: &mut HashMap<Intern<Src>, HashMap<Intern<String>, Spanned<ExpressionResult>>>,
 ) -> Result<(), Error> {
-    let mut address: u32 = start_address;
+    // start from scratch to prevent duplicate errors (yes technically not as fast as it could be,
+    // but much easier to reason about)
+    block.symbol_table.borrow_mut().table.clear();
+    let mut address = start_address;
 
     // this if statement makes the file_export_map.get_mut(src).unwrap() safe to unwrap
     if !file_exports_map.contains_key(src) {
@@ -206,7 +208,7 @@ fn fill_symbol_table(
                         label.identifier.val,
                         label
                             .identifier
-                            .span_to(ExpressionResult::Number(Some(Number(address)))),
+                            .span_to(ExpressionResult::Number(address.map(Number))),
                     )
                     .map_err(|_| {
                         Error::new("Identifier already defined", label.identifier.span)
@@ -294,7 +296,59 @@ fn fill_symbol_table(
 
         // technically we could count the lines in the loop above, but this is a bit more readable
         // even though it requres another pass
-        address += statement.as_ref().num_words(&block.symbol_table.borrow())?;
+        if let Some(mut address_val) = address {
+            address_val += statement.as_ref().num_words(&block.symbol_table.borrow())?;
+            address = Some(address_val);
+        }
+    }
+
+    Ok(())
+}
+
+// needed because some future imports symbols depend on the size of the importer's length (yeah, I
+// know, it's confusing)
+// assume file_queue in in post_order
+fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
+    let mut address = 0;
+    for file in file_queue.iter_mut().rev() {
+        file.val.start_address = Some(address);
+        for statment in &file.block.statements {
+            match &statment.val {
+                // we now are able to calculate labels, which gives more values that can be used in
+                // num_words()
+                Statement::Label(label) => {
+                    file.block.symbol_table.borrow_mut().insert(
+                        label.identifier.val,
+                        label
+                            .identifier
+                            .span_to(ExpressionResult::Number(Some(Number(address)))),
+                    );
+                }
+
+                // now that the labels are known, we need to re-evaluate assignments, which may
+                // depend on the label values
+                // don't worry about exports, as the file_queue is in post_order which guarntees
+                // all importers have already been parsed, so no one will use the new exports
+                Statement::Assignment(assignment) => {
+                    let value = assignment.expression.span_to(
+                        assignment
+                            .expression
+                            .as_ref()
+                            .eval(&file.block.symbol_table.borrow())?,
+                    );
+
+                    file.block
+                        .symbol_table
+                        .borrow_mut()
+                        .insert(assignment.identifier.val, value);
+                }
+                _ => (),
+            }
+
+            address += statment
+                .as_ref()
+                .num_words(&file.block.symbol_table.borrow())?;
+        }
     }
 
     Ok(())
