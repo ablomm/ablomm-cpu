@@ -16,9 +16,11 @@ impl Spanned<&Expression> {
             // it's own as_ref() function, but we really need the Spanned::as_ref() function. No
             // deref's are needed if the Spanned::as_ref() method is named differently, but I
             // didn't like that
-            Expression::Register(reg) => Ok(ExpressionResult::Register(*reg)),
-            Expression::String(string) => Ok(ExpressionResult::String(String(string.clone()))),
-            Expression::Number(a) => Ok(ExpressionResult::Number(Number(*a))),
+            Expression::Register(reg) => Ok(ExpressionResult::Register(Some(*reg))),
+            Expression::String(string) => {
+                Ok(ExpressionResult::String(Some(String(string.clone()))))
+            }
+            Expression::Number(a) => Ok(ExpressionResult::Number(Some(Number(*a)))),
             Expression::Ident(a) => Ok(get_identifier(&self.span_to(a), symbol_table)?.val),
             Expression::Ref(a) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);

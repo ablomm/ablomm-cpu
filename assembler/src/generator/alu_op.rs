@@ -48,14 +48,18 @@ fn generate_alu_op_2(
 ) -> Result<u32, Error> {
     let operand = operands[0].as_ref().eval(symbol_table)?;
     match &operand {
-        ExpressionResult::Number(number) => generate_alu_op_2_num(
-            mnemonic,
-            modifiers,
-            &operands[0].span_to(**number),
-            operands,
-            symbol_table,
-        ),
+        ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
+            generate_alu_op_2_num(
+                mnemonic,
+                modifiers,
+                &operands[0].span_to(**number),
+                operands,
+                symbol_table,
+            )
+        }
         ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(Error::new(
@@ -79,13 +83,17 @@ fn generate_alu_op_2_reg(
 ) -> Result<u32, Error> {
     let operand = operands[1].as_ref().eval(symbol_table)?;
     match &operand {
-        ExpressionResult::Number(number) => generate_alu_op_2_reg_num(
-            mnemonic,
-            modifiers,
-            register,
-            &operands[1].span_to(**number),
-        ),
+        ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
+            generate_alu_op_2_reg_num(
+                mnemonic,
+                modifiers,
+                register,
+                &operands[1].span_to(**number),
+            )
+        }
         ExpressionResult::Register(register2) => {
+            let register2 = &register2.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
         _ => Err(Error::new(
@@ -128,6 +136,7 @@ fn generate_alu_op_2_num(
     let operand = operands[1].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
         _ => Err(Error::new(
@@ -159,6 +168,7 @@ fn generate_alu_op_3(
     let operand = operands[0].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
             generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(Error::new(
@@ -181,22 +191,28 @@ fn generate_alu_op_3_reg(
 ) -> Result<u32, Error> {
     let operand = operands[1].as_ref().eval(symbol_table)?;
     match &operand {
-        ExpressionResult::Number(number) => generate_alu_op_3_reg_num(
-            mnemonic,
-            modifiers,
-            register,
-            &operands[1].span_to(**number),
-            operands,
-            symbol_table,
-        ),
-        ExpressionResult::Register(register2) => generate_alu_op_3_reg_reg(
-            mnemonic,
-            modifiers,
-            register,
-            register2,
-            operands,
-            symbol_table,
-        ),
+        ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
+            generate_alu_op_3_reg_num(
+                mnemonic,
+                modifiers,
+                register,
+                &operands[1].span_to(**number),
+                operands,
+                symbol_table,
+            )
+        }
+        ExpressionResult::Register(register2) => {
+            let register2 = &register2.unwrap();
+            generate_alu_op_3_reg_reg(
+                mnemonic,
+                modifiers,
+                register,
+                register2,
+                operands,
+                symbol_table,
+            )
+        }
         _ => Err(Error::new(
             format!(
                 "Expected a {} or {}, but found {}",
@@ -219,14 +235,18 @@ fn generate_alu_op_3_reg_reg(
 ) -> Result<u32, Error> {
     let operand = operands[2].as_ref().eval(symbol_table)?;
     match &operand {
-        ExpressionResult::Number(number) => generate_alu_op_3_reg_reg_num(
-            mnemonic,
-            modifiers,
-            register1,
-            register2,
-            &operands[2].span_to(**number),
-        ),
+        ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
+            generate_alu_op_3_reg_reg_num(
+                mnemonic,
+                modifiers,
+                register1,
+                register2,
+                &operands[2].span_to(**number),
+            )
+        }
         ExpressionResult::Register(register3) => {
+            let register3 = &register3.unwrap();
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
         }
         _ => Err(Error::new(
@@ -286,6 +306,7 @@ fn generate_alu_op_3_reg_num(
     let operand = operands[2].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register2) => {
+            let register2 = &register2.unwrap();
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
         _ => Err(Error::new(

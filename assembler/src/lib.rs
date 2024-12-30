@@ -206,7 +206,7 @@ fn fill_symbol_table(
                         label.identifier.val,
                         label
                             .identifier
-                            .span_to(ExpressionResult::Number(Number(address))),
+                            .span_to(ExpressionResult::Number(Some(Number(address)))),
                     )
                     .map_err(|_| {
                         Error::new("Identifier already defined", label.identifier.span)
@@ -422,7 +422,14 @@ impl Spanned<&Statement> {
 impl Spanned<&Expression> {
     pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         match self.eval(symbol_table)? {
-            ExpressionResult::String(string) => Ok(((string.len() as f32) / 4.0).ceil() as u32),
+            ExpressionResult::String(string) => {
+                let string = string.ok_or(Error::new(
+                    "Expression is required to be knowable at this point, but it is not",
+                    self.span,
+                ))?;
+
+                Ok(((string.len() as f32) / 4.0).ceil() as u32)
+            }
             ExpressionResult::Number(_number) => Ok(1),
             _ => Err(Error::new(
                 format!(

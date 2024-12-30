@@ -13,10 +13,10 @@ mod string;
 
 #[derive(Debug, Clone)]
 pub enum ExpressionResult {
-    Number(Number),
-    String(String),
-    Register(Register),
-    RegisterOffset(RegisterOffset),
+    Number(Option<Number>),
+    String(Option<String>),
+    Register(Option<Register>),
+    RegisterOffset(Option<RegisterOffset>),
     Indirect(Indirect),
 }
 

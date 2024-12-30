@@ -1,12 +1,12 @@
 use super::*;
 
-impl Add<&Spanned<&ExpressionResult>> for &Spanned<&String> {
+impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<String>> {
     type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
-            ExpressionResult::Number(number) => self + &Spanned::new(number, rhs.span),
-            ExpressionResult::String(string) => self + &Spanned::new(string, rhs.span),
+            ExpressionResult::Number(number) => self + &rhs.span_to(number),
+            ExpressionResult::String(string) => self + &rhs.span_to(string),
             _ => Err(Error::new(
                 format!("Expected {}", "string".fg(ATTENTION_COLOR),),
                 rhs.span,
@@ -15,20 +15,30 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&String> {
     }
 }
 
-impl Add<&Spanned<&Number>> for &Spanned<&String> {
+impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<String>> {
     type Output = Result<ExpressionResult, Error>;
 
-    fn add(self, rhs: &Spanned<&Number>) -> Self::Output {
-        Ok(ExpressionResult::String(String(
-            self.to_string() + &rhs.to_string(),
-        )))
+    fn add(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
+        if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
+            Ok(ExpressionResult::String(Some(String(
+                lhs.to_string() + &rhs.to_string(),
+            ))))
+        } else {
+            Ok(ExpressionResult::String(None))
+        }
     }
 }
 
-impl Add<&Spanned<&String>> for &Spanned<&String> {
+impl Add<&Spanned<&Option<String>>> for &Spanned<&Option<String>> {
     type Output = Result<ExpressionResult, Error>;
 
-    fn add(self, rhs: &Spanned<&String>) -> Self::Output {
-        Ok(ExpressionResult::String(String(self.to_string() + rhs)))
+    fn add(self, rhs: &Spanned<&Option<String>>) -> Self::Output {
+        if let (Some(val), Some(rhs)) = (self.val, rhs.val) {
+            Ok(ExpressionResult::String(Some(String(
+                val.to_string() + rhs,
+            ))))
+        } else {
+            Ok(ExpressionResult::String(None))
+        }
     }
 }

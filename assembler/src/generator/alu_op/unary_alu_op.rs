@@ -48,6 +48,7 @@ fn generate_unary_alu_op_1(
     let operand = operands[0].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
         _ => Err(Error::new(
@@ -70,6 +71,7 @@ fn generate_unary_alu_op_2(
     let operand = operands[0].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(Error::new(
