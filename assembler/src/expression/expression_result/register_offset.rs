@@ -7,7 +7,11 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<RegisterOffset>> {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }
@@ -38,7 +42,11 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<RegisterOffset>> {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
             _ => Err(Error::new(
-                format!("Expected {}", "number".fg(ATTENTION_COLOR),),
+                format!(
+                    "Expected {}, but found {}",
+                    "number".fg(ATTENTION_COLOR),
+                    rhs.fg(ATTENTION_COLOR)
+                ),
                 rhs.span,
             )),
         }

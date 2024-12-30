@@ -40,57 +40,57 @@ impl Spanned<&Expression> {
             }
             Expression::Mul(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() * &b.as_ref()
             }
             Expression::Div(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() / &b.as_ref()
             }
             Expression::Remainder(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() % &b.as_ref()
             }
             Expression::Add(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() + &b.as_ref()
             }
             Expression::Sub(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() - &b.as_ref()
             }
             Expression::Shl(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() << &b.as_ref()
             }
             Expression::Shr(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() >> &b.as_ref()
             }
             Expression::Ashr(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 a.as_ref().ashr(&b.as_ref())
             }
             Expression::And(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() & &b.as_ref()
             }
             Expression::Or(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() | &b.as_ref()
             }
             Expression::Xor(a, b) => {
                 let a = a.span_to((**a).as_ref().eval(symbol_table)?);
-                let b = a.span_to((**b).as_ref().eval(symbol_table)?);
+                let b = b.span_to((**b).as_ref().eval(symbol_table)?);
                 &a.as_ref() ^ &b.as_ref()
             }
         }

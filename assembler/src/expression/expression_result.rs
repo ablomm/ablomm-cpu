@@ -11,6 +11,8 @@ mod register;
 mod register_offset;
 mod string;
 
+// the Option<T> is used to allow evaluating expressions in order to get it's type, without knowing
+// the concrete value; useful for calculating the number of words of some statements
 #[derive(Debug, Clone)]
 pub enum ExpressionResult {
     Number(Option<Number>),
