@@ -190,7 +190,7 @@ fn generate_ld_indirect(
         ),
         ExpressionResult::Register(register) => generate_ld_ireg(
             modifiers,
-            &operand.span_to(register),
+            register,
             operands,
             symbol_table,
         ),
