@@ -84,9 +84,22 @@ impl Spanned<&Operation> {
 impl Spanned<&Expression> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         let result = self.eval(symbol_table)?;
-        match &result {
-            ExpressionResult::Number(number) => Ok(vec![**number]),
+        match result {
+            ExpressionResult::Number(number) => {
+                // unwrap?
+                let number = number.ok_or(Error::new(
+                    "Expression is required to be knowable at this point, but it is not",
+                    self.span,
+                ))?;
+                Ok(vec![*number])
+            }
             ExpressionResult::String(string) => {
+                // unwrap?
+                let string = string.ok_or(Error::new(
+                    "Expression is required to be knowable at this point, but it is not",
+                    self.span,
+                ))?;
+
                 let mut opcodes = Vec::new();
                 // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
                 // addressible, not byte addressible)

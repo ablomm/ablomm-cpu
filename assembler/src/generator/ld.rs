@@ -23,12 +23,15 @@ pub fn generate_ld(
 
     let operand = operation.operands[0].as_ref().eval(symbol_table)?;
     match &operand {
-        ExpressionResult::Register(register) => generate_ld_reg(
-            &operation.full_mnemonic.modifiers,
-            register,
-            &operation.operands,
-            symbol_table,
-        ),
+        ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
+            generate_ld_reg(
+                &operation.full_mnemonic.modifiers,
+                register,
+                &operation.operands,
+                symbol_table,
+            )
+        }
         ExpressionResult::Indirect(indirect) => generate_ld_indirect(
             &operation.full_mnemonic.modifiers,
             &operation.operands[0].span_to(indirect),
@@ -56,9 +59,11 @@ fn generate_ld_reg(
     let operand = operands[1].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
             generate_ld_reg_num(modifiers, register, &operands[1].span_to(**number))
         }
         ExpressionResult::Register(register2) => {
+            let register2 = &register2.unwrap();
             generate_ld_reg_reg(modifiers, register, register2)
         }
         ExpressionResult::Indirect(indirect) => {
@@ -112,12 +117,15 @@ fn generate_ld_reg_indirect(
 ) -> Result<u32, Error> {
     match indirect.val {
         ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
             generate_ld_reg_inum(modifiers, register, &indirect.span_to(**number))
         }
         ExpressionResult::Register(register2) => {
+            let register2 = &register2.unwrap();
             generate_ld_reg_ireg(modifiers, register, register2)
         }
         ExpressionResult::RegisterOffset(reg_offset) => {
+            let reg_offset = &reg_offset.unwrap();
             generate_ld_reg_ireg_offset(modifiers, register, &indirect.span_to(reg_offset))
         }
         _ => Err(Error::new(
@@ -182,24 +190,28 @@ fn generate_ld_indirect(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     match operand.val {
-        ExpressionResult::Number(number) => generate_ld_inum(
-            modifiers,
-            &operand.span_to(**number),
-            operands,
-            symbol_table,
-        ),
-        ExpressionResult::Register(register) => generate_ld_ireg(
-            modifiers,
-            register,
-            operands,
-            symbol_table,
-        ),
-        ExpressionResult::RegisterOffset(reg_offset) => generate_ld_ireg_offset(
-            modifiers,
-            &operand.span_to(reg_offset),
-            operands,
-            symbol_table,
-        ),
+        ExpressionResult::Number(number) => {
+            let number = &number.unwrap();
+            generate_ld_inum(
+                modifiers,
+                &operand.span_to(**number),
+                operands,
+                symbol_table,
+            )
+        }
+        ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
+            generate_ld_ireg(modifiers, register, operands, symbol_table)
+        }
+        ExpressionResult::RegisterOffset(reg_offset) => {
+            let reg_offset = &reg_offset.unwrap();
+            generate_ld_ireg_offset(
+                modifiers,
+                &operand.span_to(reg_offset),
+                operands,
+                symbol_table,
+            )
+        }
         _ => Err(Error::new(
             format!(
                 "Expected a {}, {}, or {}, but found {}",
@@ -222,6 +234,7 @@ fn generate_ld_ireg(
     let operand = operands[1].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register2) => {
+            let register2 = &register2.unwrap();
             generate_ld_ireg_reg(modifiers, register, register2)
         }
         _ => Err(Error::new(
@@ -257,6 +270,7 @@ fn generate_ld_ireg_offset(
     let operand = operands[1].as_ref().eval(symbol_table)?;
     match &operand {
         ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
             generate_ld_ireg_offset_reg(modifiers, reg_offset, register)
         }
         _ => Err(Error::new(
@@ -294,7 +308,10 @@ fn generate_ld_inum(
     let operand = operands[1].as_ref().eval(symbol_table)?;
 
     match &operand {
-        ExpressionResult::Register(register) => generate_ld_inum_reg(modifiers, number, register),
+        ExpressionResult::Register(register) => {
+            let register = &register.unwrap();
+            generate_ld_inum_reg(modifiers, number, register)
+        }
         _ => Err(Error::new(
             format!(
                 "Expected a {}, but found {}",
