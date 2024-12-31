@@ -2,12 +2,18 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Error};
+use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Error, Span};
 
-pub struct SymbolError;
+pub struct SymbolAlreadyDefinedError(pub STEntry);
 
 type Key = Intern<String>;
-type Value = Spanned<ExpressionResult>;
+type Value = STEntry;
+
+#[derive(Debug, Clone)]
+pub struct STEntry {
+    pub result: Spanned<ExpressionResult>,
+    pub key_span: Span,
+}
 
 #[derive(Debug, Clone)]
 pub struct SymbolTable {
@@ -29,8 +35,7 @@ impl SymbolTable {
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
     {
-        let value = self.contains_key(key);
-        if value {
+        if self.contains_key(key) {
             return true;
         };
 
@@ -55,8 +60,7 @@ impl SymbolTable {
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
     {
-        let value = self.get(key);
-        if let Some(value) = value {
+        if let Some(value) = self.get(key) {
             return Some(value.clone());
         }
 
@@ -67,17 +71,27 @@ impl SymbolTable {
         None
     }
 
-    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
-        self.table.insert(key, value)
+    pub fn insert(&mut self, key: Spanned<Key>, value: Spanned<ExpressionResult>) -> Option<Value> {
+        self.table.insert(
+            key.val,
+            STEntry {
+                result: value,
+                key_span: key.span,
+            },
+        )
     }
 
-    pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SymbolError> {
-        // when map_try_insert is released, we can just use that, for it's my own implementaiton
-        if self.table.contains_key(&key) {
-            return Err(SymbolError);
+    pub fn try_insert(
+        &mut self,
+        key: Spanned<Key>,
+        value: Spanned<ExpressionResult>,
+    ) -> Result<(), SymbolAlreadyDefinedError> {
+        // need to call get and not just contains_key because error will contain the entry
+        if let Some(entry) = self.get(&key.val) {
+            return Err(SymbolAlreadyDefinedError(entry.clone()));
         }
 
-        self.table.insert(key, value);
+        self.insert(key, value);
         Ok(())
     }
 }
@@ -90,6 +104,6 @@ pub fn get_identifier(
     if let Some(label_line) = symbol_table.get_recursive(ident.val) {
         Ok(label_line)
     } else {
-        Err(Error::new("Could not find identifier", ident.span))
+        Err(Error::new(ident.span, "Missing identifier").with_label("Could not find identifier"))
     }
 }

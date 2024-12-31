@@ -6,14 +6,11 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
-            _ => Err(Error::new(
-                format!(
-                    "Expected {}, but found {}",
-                    "number".fg(ATTENTION_COLOR),
-                    rhs.fg(ATTENTION_COLOR)
-                ),
-                rhs.span,
-            )),
+            _ => Err(Error::new(rhs.span, "Incorrect type").with_label(format!(
+                "Expected {}, but found {}",
+                "number".fg(ATTENTION_COLOR),
+                rhs.fg(ATTENTION_COLOR)
+            ))),
         }
     }
 }
@@ -42,14 +39,11 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(Error::new(
-                format!(
-                    "Expected {}, but found {}",
-                    "number".fg(ATTENTION_COLOR),
-                    rhs.fg(ATTENTION_COLOR)
-                ),
-                rhs.span,
-            )),
+            _ => Err(Error::new(rhs.span, "Incorrect type").with_label(format!(
+                "Expected {}, but found {}",
+                "number".fg(ATTENTION_COLOR),
+                rhs.fg(ATTENTION_COLOR)
+            ))),
         }
     }
 }

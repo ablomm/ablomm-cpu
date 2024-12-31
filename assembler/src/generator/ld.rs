@@ -15,13 +15,13 @@ pub fn generate_ld(
     ));
 
     if operation.operands.len() != 2 {
-        return Err(Error::new(
-            format!("Expected {} operands", "2".fg(ATTENTION_COLOR)),
-            operation.operands.span,
-        ));
+        return Err(
+            Error::new(operation.operands.span, "Incorrect number of operands")
+                .with_label(format!("Expected {} operands", "2".fg(ATTENTION_COLOR))),
+        );
     }
 
-    let operand = operation.operands[0].as_ref().eval(symbol_table)?;
+    let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
@@ -38,15 +38,14 @@ pub fn generate_ld(
             &operation.operands,
             symbol_table,
         ),
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operation.operands[0].span, "Incorrect type").with_label(format!(
                 "Expected a {} or {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 "indirect".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operation.operands[0].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -56,7 +55,7 @@ fn generate_ld_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
             let number = &number.unwrap();
@@ -69,16 +68,15 @@ fn generate_ld_reg(
         ExpressionResult::Indirect(indirect) => {
             generate_ld_reg_indirect(modifiers, register, &operands[1].span_to(indirect))
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {}, {}, or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 "indirect".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -128,16 +126,15 @@ fn generate_ld_reg_indirect(
             let reg_offset = &reg_offset.unwrap();
             generate_ld_reg_ireg_offset(modifiers, register, &indirect.span_to(reg_offset))
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(indirect.span, "Incorrect type").with_label(format!(
                 "Expected a {}, {}, or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 "register offset".fg(ATTENTION_COLOR),
                 indirect.fg(ATTENTION_COLOR)
-            ),
-            indirect.span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -212,16 +209,15 @@ fn generate_ld_indirect(
                 symbol_table,
             )
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operand.span, "Incorrect type").with_label(format!(
                 "Expected a {}, {}, or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 "register offset".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operand.span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -231,20 +227,19 @@ fn generate_ld_ireg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register2) => {
             let register2 = &register2.unwrap();
             generate_ld_ireg_reg(modifiers, register, register2)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR),
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -267,20 +262,19 @@ fn generate_ld_ireg_offset(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_ld_ireg_offset_reg(modifiers, reg_offset, register)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR),
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -305,21 +299,19 @@ fn generate_ld_inum(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
-
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_ld_inum_reg(modifiers, number, register)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR),
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 

@@ -29,14 +29,15 @@ pub fn generate_alu_op(
             symbol_table,
         )
     } else {
-        Err(Error::new(
-            format!(
-                "Expected {} or {} operands",
-                "2".fg(ATTENTION_COLOR),
-                "3".fg(ATTENTION_COLOR)
+        Err(
+            Error::new(operation.operands.span, "Incorrect number of operands").with_label(
+                format!(
+                    "Expected {} or {} operands",
+                    "2".fg(ATTENTION_COLOR),
+                    "3".fg(ATTENTION_COLOR)
+                ),
             ),
-            operation.operands.span,
-        ))
+        )
     }
 }
 
@@ -46,7 +47,7 @@ fn generate_alu_op_2(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[0].as_ref().eval(symbol_table)?;
+    let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
             let number = &number.unwrap();
@@ -62,15 +63,14 @@ fn generate_alu_op_2(
             let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[0].span, "Incorrect type").with_label(format!(
                 "Expected a {} or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[0].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -81,7 +81,7 @@ fn generate_alu_op_2_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
             let number = &number.unwrap();
@@ -96,15 +96,14 @@ fn generate_alu_op_2_reg(
             let register2 = &register2.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {} or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -133,20 +132,19 @@ fn generate_alu_op_2_num(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -165,20 +163,19 @@ fn generate_alu_op_3(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[0].as_ref().eval(symbol_table)?;
+    let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[0].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[0].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -189,7 +186,7 @@ fn generate_alu_op_3_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[1].as_ref().eval(symbol_table)?;
+    let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
             let number = &number.unwrap();
@@ -213,15 +210,14 @@ fn generate_alu_op_3_reg(
                 symbol_table,
             )
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[1].span, "Incorrect type").with_label(format!(
                 "Expected a {} or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[1].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -233,7 +229,7 @@ fn generate_alu_op_3_reg_reg(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[2].as_ref().eval(symbol_table)?;
+    let operand = operands[2].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
             let number = &number.unwrap();
@@ -249,15 +245,14 @@ fn generate_alu_op_3_reg_reg(
             let register3 = &register3.unwrap();
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[2].span, "Incorrect type").with_label(format!(
                 "Expected a {} or {}, but found {}",
                 "number".fg(ATTENTION_COLOR),
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[2].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -303,20 +298,19 @@ fn generate_alu_op_3_reg_num(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[2].as_ref().eval(symbol_table)?;
+    let operand = operands[2].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register2) => {
             let register2 = &register2.unwrap();
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[2].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[2].span,
-        )),
+            )),
+        ),
     }
 }
 

@@ -28,14 +28,15 @@ pub fn generate_unary_alu_op(
             symbol_table,
         )
     } else {
-        Err(Error::new(
-            format!(
-                "Expected {} or {} operands",
-                "1".fg(ATTENTION_COLOR),
-                "2".fg(ATTENTION_COLOR)
+        Err(
+            Error::new(operation.operands.span, "Incorrect number of operands").with_label(
+                format!(
+                    "Expected {} or {} operands",
+                    "1".fg(ATTENTION_COLOR),
+                    "2".fg(ATTENTION_COLOR)
+                ),
             ),
-            operation.operands.span,
-        ))
+        )
     }
 }
 
@@ -45,20 +46,19 @@ fn generate_unary_alu_op_1(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[0].as_ref().eval(symbol_table)?;
+    let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[0].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[0].span,
-        )),
+            )),
+        ),
     }
 }
 
@@ -68,19 +68,18 @@ fn generate_unary_alu_op_2(
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let operand = operands[0].as_ref().eval(symbol_table)?;
+    let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operands[0].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operands[0].span,
-        )),
+            )),
+        ),
     }
 }

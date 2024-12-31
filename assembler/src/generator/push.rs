@@ -12,26 +12,25 @@ pub fn generate_push(
     ));
 
     if operation.operands.len() != 1 {
-        return Err(Error::new(
-            format!("Expected {} operands", "1".fg(ATTENTION_COLOR)),
-            operation.operands.span,
-        ));
+        return Err(
+            Error::new(operation.operands.span, "Incorrect number of operands")
+                .with_label(format!("Expected {} operands", "1".fg(ATTENTION_COLOR))),
+        );
     }
 
-    let operand = operation.operands[0].as_ref().eval(symbol_table)?;
+    let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
-        _ => Err(Error::new(
-            format!(
+        _ => Err(
+            Error::new(operation.operands[0].span, "Incorrect type").with_label(format!(
                 "Expected a {}, but found {}",
                 "register".fg(ATTENTION_COLOR),
                 operand.fg(ATTENTION_COLOR)
-            ),
-            operation.operands[0].span,
-        )),
+            )),
+        ),
     }
 }
 
