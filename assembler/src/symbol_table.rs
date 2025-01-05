@@ -12,7 +12,15 @@ type Value = STEntry;
 #[derive(Debug, Clone)]
 pub struct STEntry {
     pub result: Spanned<ExpressionResult>,
+
+    // the span of the original definition identifier
     pub key_span: Span,
+
+    // the span of the specifier that imports this symbol
+    pub import_span: Option<Span>,
+
+    // the span of the export statement of the import
+    pub export_span: Option<Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -55,6 +63,8 @@ impl SymbolTable {
     }
 
     // owned value because parent may go out of scope while borrowed
+    // I have attempted to return an enum of either &T or Ref<T>, but I have
+    // gave up because of the borrow checker
     pub fn get_recursive<Q>(&self, key: &Q) -> Option<Value>
     where
         Q: Eq + Hash + ?Sized,
@@ -71,12 +81,20 @@ impl SymbolTable {
         None
     }
 
-    pub fn insert(&mut self, key: Spanned<Key>, value: Spanned<ExpressionResult>) -> Option<Value> {
+    pub fn insert(
+        &mut self,
+        key: Spanned<Key>,
+        value: Spanned<ExpressionResult>,
+        import_span: Option<Span>,
+        export_span: Option<Span>,
+    ) -> Option<Value> {
         self.table.insert(
             key.val,
             STEntry {
                 result: value,
                 key_span: key.span,
+                import_span,
+                export_span,
             },
         )
     }
@@ -85,13 +103,15 @@ impl SymbolTable {
         &mut self,
         key: Spanned<Key>,
         value: Spanned<ExpressionResult>,
+        import_span: Option<Span>,
+        export_span: Option<Span>,
     ) -> Result<(), SymbolAlreadyDefinedError> {
         // need to call get and not just contains_key because error will contain the entry
         if let Some(entry) = self.get(&key.val) {
             return Err(SymbolAlreadyDefinedError(entry.clone()));
         }
 
-        self.insert(key, value);
+        self.insert(key, value, import_span, export_span);
         Ok(())
     }
 }
@@ -101,9 +121,7 @@ pub fn get_identifier(
     ident: &Spanned<&Intern<String>>,
     symbol_table: &SymbolTable,
 ) -> Result<Value, Error> {
-    if let Some(label_line) = symbol_table.get_recursive(ident.val) {
-        Ok(label_line)
-    } else {
-        Err(Error::new(ident.span, "Missing identifier").with_label("Could not find identifier"))
-    }
+    symbol_table
+        .get_recursive(ident.val)
+        .ok_or(Error::new(ident.span, "Missing identifier").with_label("Could not find identifier"))
 }

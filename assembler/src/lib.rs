@@ -114,9 +114,11 @@ fn generate_file_queue(
             for (_back_src, back_span) in import_map.iter().skip(1) {
                 error = error.with_label_span(*back_span, "Imported here");
             }
-            error = error.with_label("This completes the circle, causing a circular dependency");
+            error = error
+                .with_label("This completes the circle, causing a circular dependency")
+                .with_help("Try removing one of these imports");
 
-            return Err(vec![error.with_help("Try removing one of these imports")]);
+            return Err(vec![error]);
         }
 
         if cache.contains_key(&import_src.val) {
@@ -152,14 +154,22 @@ fn parse_path(
     let len = assembly_code.chars().count();
     let eoi = Span::new(src.val, len..len);
 
-    let block = parser().parse(chumsky::Stream::from_iter(
-        eoi,
-        assembly_code
-            .chars()
-            .enumerate()
-            .map(|(i, c)| (c, Span::new(src.val, i..i + 1))),
-    ))?;
-
+    let block = parser()
+        .parse(chumsky::Stream::from_iter(
+            eoi,
+            assembly_code
+                .chars()
+                .enumerate()
+                .map(|(i, c)| (c, Span::new(src.val, i..i + 1))),
+        ))
+        // workaround chumsky not working well with Error: convert to Error after parsing
+        // rather than use Error during parsing
+        .map_err(|errors| {
+            errors
+                .into_iter()
+                .map(|error| error.into())
+                .collect::<Vec<Error>>()
+        })?;
     let file = File {
         src: src.val,
         start_address: None,
@@ -213,12 +223,15 @@ fn fill_symbol_table(
                         label
                             .identifier
                             .span_to(ExpressionResult::Number(address.map(Number))),
+                        None,
+                        None,
                     )
                     .map_err(|error| {
-                        Error::new(label.identifier.span, "Identifier already defined")
-                            .with_label("Defined again here")
-                            .with_label_span(error.0.key_span, "Defined first here")
-                            .with_help("Try using a different name")
+                        Error::identifier_already_defined(
+                            error.0.import_span.unwrap_or(error.0.key_span),
+                            label.identifier.span,
+                        )
+                        .with_help("Try using a different name")
                     })?;
                 if label.export {
                     export(
@@ -243,12 +256,13 @@ fn fill_symbol_table(
                 block
                     .symbol_table
                     .borrow_mut()
-                    .try_insert(assignment.identifier, value)
+                    .try_insert(assignment.identifier, value, None, None)
                     .map_err(|error| {
-                        Error::new(assignment.identifier.span, "Identifier already defined")
-                            .with_label("Defined again here")
-                            .with_label_span(error.0.key_span, "Defined first here")
-                            .with_help("Try using a different name")
+                        Error::identifier_already_defined(
+                            error.0.import_span.unwrap_or(error.0.key_span),
+                            assignment.identifier.span,
+                        )
+                        .with_help("Try using a different name")
                     })?;
 
                 if assignment.export {
@@ -331,6 +345,8 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
                         label
                             .identifier
                             .span_to(ExpressionResult::Number(Some(Number(address)))),
+                        None,
+                        None,
                     );
                 }
 
@@ -347,10 +363,12 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
                             .result,
                     );
 
-                    file.block
-                        .symbol_table
-                        .borrow_mut()
-                        .insert(assignment.identifier, value);
+                    file.block.symbol_table.borrow_mut().insert(
+                        assignment.identifier,
+                        value,
+                        None,
+                        None,
+                    );
                 }
                 _ => (),
             }
@@ -371,12 +389,18 @@ fn export(
 ) -> Result<(), Error> {
     if let Some(entry) = exports.get(&identifier.val) {
         return Err(Error::new(identifier.span, "Identifier already exported")
+            .with_label_span(
+                entry
+                    .export_span
+                    .expect("Exported identifier doesn't have export_span"),
+                "Exported first here",
+            )
             .with_label("Exported again here")
-            .with_label_span(entry.key_span, "Exported first here")
             .with_note("Try removing one of these exports"));
     }
 
-    let export_val = get_identifier(&identifier.as_ref(), symbol_table)?;
+    let mut export_val = get_identifier(&identifier.as_ref(), symbol_table)?;
+    export_val.export_span = Some(identifier.span);
     exports.insert(identifier.val, export_val);
 
     Ok(())
@@ -400,21 +424,34 @@ fn import(
                     ),
                 )?;
 
-                let import_key = named_import
-                    .alias
-                    .as_ref()
-                    .unwrap_or(&named_import.identifier);
+                let original_definition = import_val.key_span.spanned(named_import.identifier.val);
+                let import_key = named_import.alias.as_ref().unwrap_or(&original_definition);
+
+                // if the import is aliased, then treat it as a new definition, since the names
+                // are different (i.e., it is defined at the alias identifier instead of the
+                // definition inside the import)
+                let import_span = if named_import.alias.is_some() {
+                    None
+                } else {
+                    Some(import.specifier.span)
+                };
 
                 symbol_table
-                    .try_insert(*import_key, import_val.result.clone())
+                    .try_insert(
+                        *import_key,
+                        import_val.result.clone(),
+                        import_span,
+                        import_val.export_span,
+                    )
                     .map_err(|error| {
-                        Error::new(import_key.span, "Identifier already defined")
-                            .with_label("Defined again here")
-                            .with_label_span(error.0.key_span, "Defined first here")
-                            .with_help(format!(
-                                "Try aliasing the import by adding {}",
-                                "as <new_name>".fg(ATTENTION_COLOR)
-                            ))
+                        Error::identifier_already_defined(
+                            error.0.key_span,
+                            import_span.unwrap_or(import_key.span),
+                        )
+                        .with_help(format!(
+                            "Try aliasing the import by adding {}",
+                            "as <new_name>".fg(ATTENTION_COLOR)
+                        ))
                     })?;
             }
         }
@@ -426,14 +463,11 @@ fn import(
                     .try_insert(
                         import_val.key_span.spanned(*import_key),
                         import_val.result.clone(),
+                        Some(import.specifier.span),
+                        import_val.export_span,
                     )
                     .map_err(|error| {
-                        Error::new(import.specifier.span, "Identifier already defined")
-                            .with_label(format!(
-                                "Import contains identifier '{}', which already exists in this scope",
-                                import_key.fg(ATTENTION_COLOR)
-                            ))
-                            .with_label_span(error.0.key_span, "Defined first here")
+                        Error::identifier_already_defined(error.0.key_span, import_val.key_span)
                             .with_help(format!(
                                 "Try using named import aliases: {}{}",
                                 import_key.fg(ATTENTION_COLOR),
@@ -481,7 +515,7 @@ impl Block {
 impl Spanned<&Statement> {
     pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         match self.val {
-            Statement::Literal(literal) => self.span_to(literal).num_words(symbol_table),
+            Statement::GenLiteral(literal) => self.span_to(literal).num_words(symbol_table),
             Statement::Block(block) => block.num_words(symbol_table),
             Statement::Operation(operation) => operation.num_words(),
             _ => Ok(0),
@@ -497,28 +531,29 @@ impl Spanned<&Expression> {
         } = self.eval(symbol_table)?;
 
         match result {
+            ExpressionResult::Number(_number) => Ok(1),
             ExpressionResult::String(string) => {
                 let string = string.ok_or_else(|| {
                     let mut error = Error::new(self.span, "Unknown value of expression").with_label(
-                        "Expression's value is required at this point, but it is indetermined",
+                        "Expression needs to be determined, but is not",
                     );
                     for span in waiting_map.values() {
-                        error = error.with_label_span(*span, "This identifier has an unknown value")
+                        error = error.with_label_span(*span, "This value is undetermined")
                     }
 
                     error.with_note(
-                        "This is ultimately caused because it is dependent on a future address (label), but the value of the expression would effect that address (label)",
+                        "This is ultimately caused because the expression is dependent on a future address (label), but the value of the expression would effect that address (label)",
                     )
                 })?;
 
                 Ok(((string.len() as f32) / 4.0).ceil() as u32)
             }
-            ExpressionResult::Number(_number) => Ok(1),
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}",
-                "string".fg(ATTENTION_COLOR),
-                "number".fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number", "string"],
+                Some(result),
+            )),
         }
     }
 }

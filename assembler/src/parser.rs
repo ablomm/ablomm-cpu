@@ -1,6 +1,5 @@
-use crate::ast::*;
 use crate::symbol_table::SymbolTable;
-use crate::Error;
+use crate::{ast::*, Span};
 use chumsky::prelude::*;
 use expression::*;
 use internment::Intern;
@@ -14,7 +13,9 @@ use text::TextParser;
 mod expression;
 mod keywords;
 
-pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
+pub type ParseError = Simple<char, Span>;
+
+pub fn parser() -> impl Parser<char, Spanned<Block>, Error = ParseError> {
     statement_parser()
         .map_with_span(Spanned::new)
         .padded()
@@ -30,7 +31,7 @@ pub fn parser() -> impl Parser<char, Spanned<Block>, Error = Error> {
         .map_with_span(Spanned::new)
 }
 
-fn comment_parser() -> impl Parser<char, String, Error = Error> {
+fn comment_parser() -> impl Parser<char, String, Error = ParseError> {
     let line_comment = just("//").ignore_then(take_until(just("\n")));
     let multiline_comment = just("/*").ignore_then(take_until(just("*/")));
 
@@ -39,7 +40,7 @@ fn comment_parser() -> impl Parser<char, String, Error = Error> {
         .map(|(_, comment)| comment.into())
 }
 
-fn string_parser() -> impl Parser<char, String, Error = Error> {
+fn string_parser() -> impl Parser<char, String, Error = ParseError> {
     let escape_string = just('\\').ignore_then(choice((
         just('\\').to('\\'),
         just('\"').to('"'),
@@ -56,7 +57,7 @@ fn string_parser() -> impl Parser<char, String, Error = Error> {
         .delimited_by(just('"'), just('"'))
 }
 
-fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
+fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
     let modifier = just('.').ignore_then(choice((
         alu_modifier_parser().map(Modifier::AluModifier),
         condition_parser().map(Modifier::Condition),
@@ -91,7 +92,7 @@ fn operation_parser() -> impl Parser<char, Operation, Error = Error> {
         })
 }
 
-fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
+fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
     let label = just("export")
         .padded()
         .or_not()
@@ -148,7 +149,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
             expression_parser()
                 .padded()
                 .then_ignore(just(';'))
-                .map(Statement::Literal),
+                .map(Statement::GenLiteral),
             export
                 .padded()
                 .then_ignore(just(';'))
@@ -162,7 +163,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = Error> {
     })
 }
 
-fn import_parser() -> impl Parser<char, Import, Error = Error> {
+fn import_parser() -> impl Parser<char, Import, Error = ParseError> {
     let named_import = text::ident()
         .map(Intern::new)
         .map_with_span(Spanned::new)

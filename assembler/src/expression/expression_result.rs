@@ -72,6 +72,12 @@ impl Display for ExpressionResult {
     }
 }
 
+impl From<ExpressionResult> for std::string::String {
+    fn from(value: ExpressionResult) -> Self {
+        value.to_string()
+    }
+}
+
 // operations that are not in rust std::op
 
 // asmref to make it clear this is different from rust ref
@@ -100,13 +106,12 @@ impl AsmRef for &Spanned<&ExpressionResult> {
     fn asm_ref(self) -> Self::Output {
         match self.val {
             ExpressionResult::Indirect(indirect) => self.span_to(indirect).asm_ref(),
-            _ => Err(Error::new(self.span, "Incorrect type")
-                .with_label(format!(
-                    "Expected {}, but found {}",
-                    "indirect".fg(ATTENTION_COLOR),
-                    self.fg(ATTENTION_COLOR)
-                ))
-                .with_note("You can only take a reference of a value was previously dereferenced")),
+            _ => Err(
+                Error::incorrect_value(self.span, "type", vec!["indirect"], Some(self.val))
+                    .with_note(
+                        "You can only take a reference of a value was previously dereferenced",
+                    ),
+            ),
         }
     }
 }
@@ -126,11 +131,12 @@ impl Neg for &Spanned<&ExpressionResult> {
     fn neg(self) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => -&self.span_to(number),
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -140,11 +146,12 @@ impl Not for &Spanned<&ExpressionResult> {
     fn not(self) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => !&self.span_to(number),
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -154,11 +161,12 @@ impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn mul(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) * rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -168,11 +176,12 @@ impl Div<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn div(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) / rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -182,11 +191,12 @@ impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn rem(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) % rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -199,14 +209,12 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
             ExpressionResult::String(string) => &self.span_to(string) + rhs,
             ExpressionResult::Register(register) => &self.span_to(register) + rhs,
             ExpressionResult::RegisterOffset(reg_offset) => &self.span_to(reg_offset) + rhs,
-            _ => Err(Error::new(rhs.span, "Incorrect type").with_label(format!(
-                "Expected {}, {}, {}, or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "string".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                "register offset".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number", "string", "register", "register offset"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -218,13 +226,12 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
             ExpressionResult::Number(number) => &self.span_to(number) - rhs,
             ExpressionResult::Register(register) => &self.span_to(register) - rhs,
             ExpressionResult::RegisterOffset(reg_offset) => &self.span_to(reg_offset) - rhs,
-            _ => Err(Error::new(rhs.span, "Incorrect type").with_label(format!(
-                "Expected {}, {}, or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                "register offset".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number", "register", "register offset"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -234,11 +241,12 @@ impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn shl(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) << rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -248,11 +256,12 @@ impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn shr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) >> rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -262,11 +271,12 @@ impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn ashr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => self.span_to(number).ashr(rhs),
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -276,11 +286,12 @@ impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn bitand(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) & rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -290,11 +301,12 @@ impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn bitor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) | rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }
@@ -304,11 +316,12 @@ impl BitXor<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
     fn bitxor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) ^ rhs,
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                self.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number"],
+                Some(self.val),
+            )),
         }
     }
 }

@@ -8,10 +8,12 @@ pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     ));
 
     if operation.operands.len() != 0 {
-        return Err(
-            Error::new(operation.operands.span, "Incorrect number of operands")
-                .with_label(format!("Expected {} operands", "0".fg(ATTENTION_COLOR))),
-        );
+        return Err(Error::incorrect_num(
+            operation.operands.span,
+            "operand",
+            vec![0],
+            operation.operands.len(),
+        ));
     }
 
     let mut opcode = 0;

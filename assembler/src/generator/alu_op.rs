@@ -1,5 +1,3 @@
-use ariadne::Fmt;
-
 use crate::{expression::expression_result::ExpressionResult, generator::*};
 
 pub mod unary_alu_op;
@@ -11,7 +9,7 @@ pub fn generate_alu_op(
     let mnemonic = if let AsmMnemonic::BinaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
         operation.full_mnemonic.mnemonic.span_to(mnemonic)
     } else {
-        panic!("Function must be called with AsmMnemonic::BinaryAlu");
+        panic!("Function was not called with AsmMnemonic::BinaryAlu");
     };
 
     if operation.operands.len() == 2 {
@@ -29,15 +27,12 @@ pub fn generate_alu_op(
             symbol_table,
         )
     } else {
-        Err(
-            Error::new(operation.operands.span, "Incorrect number of operands").with_label(
-                format!(
-                    "Expected {} or {} operands",
-                    "2".fg(ATTENTION_COLOR),
-                    "3".fg(ATTENTION_COLOR)
-                ),
-            ),
-        )
+        Err(Error::incorrect_num(
+            operation.operands.span,
+            "operand",
+            vec![2, 3],
+            operation.operands.len(),
+        ))
     }
 }
 
@@ -63,14 +58,12 @@ fn generate_alu_op_2(
             let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(
-            Error::new(operands[0].span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[0].span,
+            "type",
+            vec!["number", "register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -96,14 +89,12 @@ fn generate_alu_op_2_reg(
             let register2 = &register2.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["number", "register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -138,13 +129,12 @@ fn generate_alu_op_2_num(
             let register = &register.unwrap();
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -169,13 +159,12 @@ fn generate_alu_op_3(
             let register = &register.unwrap();
             generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(
-            Error::new(operands[0].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[0].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -210,14 +199,12 @@ fn generate_alu_op_3_reg(
                 symbol_table,
             )
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["number", "register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -245,14 +232,12 @@ fn generate_alu_op_3_reg_reg(
             let register3 = &register3.unwrap();
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
         }
-        _ => Err(
-            Error::new(operands[2].span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[2].span,
+            "type",
+            vec!["number", "register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -304,13 +289,12 @@ fn generate_alu_op_3_reg_num(
             let register2 = &register2.unwrap();
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
-        _ => Err(
-            Error::new(operands[2].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[2].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 

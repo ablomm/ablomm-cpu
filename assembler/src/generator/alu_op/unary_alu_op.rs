@@ -10,7 +10,7 @@ pub fn generate_unary_alu_op(
     let mnemonic = if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
         operation.full_mnemonic.mnemonic.span_to(mnemonic)
     } else {
-        panic!("Function must be called with AsmMnemonic::UnaryAlu");
+        panic!("Function was not called with AsmMnemonic::UnaryAlu");
     };
 
     if operation.operands.len() == 1 {
@@ -28,15 +28,12 @@ pub fn generate_unary_alu_op(
             symbol_table,
         )
     } else {
-        Err(
-            Error::new(operation.operands.span, "Incorrect number of operands").with_label(
-                format!(
-                    "Expected {} or {} operands",
-                    "1".fg(ATTENTION_COLOR),
-                    "2".fg(ATTENTION_COLOR)
-                ),
-            ),
-        )
+        Err(Error::incorrect_num(
+            operation.operands.span,
+            "operand",
+            vec![1, 2],
+            operation.operands.len(),
+        ))
     }
 }
 
@@ -52,13 +49,12 @@ fn generate_unary_alu_op_1(
             let register = &register.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
-        _ => Err(
-            Error::new(operands[0].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[0].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -74,12 +70,11 @@ fn generate_unary_alu_op_2(
             let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(
-            Error::new(operands[0].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[0].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }

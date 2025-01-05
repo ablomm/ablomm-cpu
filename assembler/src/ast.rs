@@ -57,7 +57,7 @@ pub enum Statement {
     Operation(Operation),
     Label(Label),
     Assignment(Assignment),
-    Literal(Expression),
+    GenLiteral(Expression),
     Export(Vec<Spanned<Intern<String>>>),
     Import(Import),
     #[allow(dead_code)]

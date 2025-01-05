@@ -35,17 +35,11 @@ impl fmt::Display for Src {
     // print the path relative to current directory (if it can, otherwise just print the
     // original canonical path)
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // not sure if there is a better way, but need to have relative_path live long enough, so
-        // creating a variable here
-        let mut relative_path = None;
-        if let Ok(cwd) = current_dir() {
-            relative_path = Some(path_relative_from(self.0.as_path(), cwd.as_path())).flatten();
-        }
+        let relative_path = current_dir()
+            .ok()
+            .and_then(|cwd| path_relative_from(self.0.as_path(), cwd.as_path()));
 
-        let path = match &relative_path {
-            Some(relative_path) => relative_path.as_path(),
-            None => self.0.as_path(),
-        };
+        let path = relative_path.as_deref().unwrap_or(self.0.as_path());
 
         write!(f, "{}", path.display())
     }

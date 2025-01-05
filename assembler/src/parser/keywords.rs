@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = Error> {
+pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = ParseError> {
     return choice((
         text::keyword("nop").to(AsmMnemonic::Nop),
         text::keyword("ld").to(AsmMnemonic::Ld),
@@ -22,7 +22,7 @@ pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = Error> {
     ));
 }
 
-pub fn register_parser() -> impl Parser<char, Register, Error = Error> {
+pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
     return choice((
         text::keyword("r0").to(Register::R0),
         text::keyword("r1").to(Register::R1),
@@ -44,14 +44,14 @@ pub fn register_parser() -> impl Parser<char, Register, Error = Error> {
     ));
 }
 
-pub fn alu_modifier_parser() -> impl Parser<char, AluModifier, Error = Error> {
+pub fn alu_modifier_parser() -> impl Parser<char, AluModifier, Error = ParseError> {
     return choice((
         text::keyword("s").to(AluModifier::S),
         text::keyword("t").to(AluModifier::T),
     ));
 }
 
-pub fn condition_parser() -> impl Parser<char, Condition, Error = Error> {
+pub fn condition_parser() -> impl Parser<char, Condition, Error = ParseError> {
     return choice((
         text::keyword("eq").to(Condition::Eq),
         text::keyword("ne").to(Condition::Ne),

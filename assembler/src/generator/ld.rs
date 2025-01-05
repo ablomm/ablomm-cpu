@@ -1,5 +1,3 @@
-use ariadne::Fmt;
-
 use crate::{
     expression::expression_result::{ExpressionResult, RegisterOffset},
     generator::*,
@@ -15,10 +13,12 @@ pub fn generate_ld(
     ));
 
     if operation.operands.len() != 2 {
-        return Err(
-            Error::new(operation.operands.span, "Incorrect number of operands")
-                .with_label(format!("Expected {} operands", "2".fg(ATTENTION_COLOR))),
-        );
+        return Err(Error::incorrect_num(
+            operation.operands.span,
+            "operand",
+            vec![2],
+            operation.operands.len(),
+        ));
     }
 
     let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
@@ -38,14 +38,12 @@ pub fn generate_ld(
             &operation.operands,
             symbol_table,
         ),
-        _ => Err(
-            Error::new(operation.operands[0].span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                "indirect".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operation.operands[0].span,
+            "type",
+            vec!["register", "indirect"],
+            Some(operand),
+        )),
     }
 }
 
@@ -68,15 +66,12 @@ fn generate_ld_reg(
         ExpressionResult::Indirect(indirect) => {
             generate_ld_reg_indirect(modifiers, register, &operands[1].span_to(indirect))
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {}, {}, or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                "indirect".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["number", "register", "indirect"],
+            Some(operand),
+        )),
     }
 }
 
@@ -126,15 +121,12 @@ fn generate_ld_reg_indirect(
             let reg_offset = &reg_offset.unwrap();
             generate_ld_reg_ireg_offset(modifiers, register, &indirect.span_to(reg_offset))
         }
-        _ => Err(
-            Error::new(indirect.span, "Incorrect type").with_label(format!(
-                "Expected a {}, {}, or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                "register offset".fg(ATTENTION_COLOR),
-                indirect.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            indirect.span,
+            "type",
+            vec!["number", "register", "register offset"],
+            Some(indirect.val),
+        )),
     }
 }
 
@@ -182,16 +174,16 @@ fn generate_ld_reg_inum(
 
 fn generate_ld_indirect(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    operand: &Spanned<&ExpressionResult>,
+    indirect: &Spanned<&ExpressionResult>,
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    match operand.val {
+    match indirect.val {
         ExpressionResult::Number(number) => {
             let number = &number.unwrap();
             generate_ld_inum(
                 modifiers,
-                &operand.span_to(**number),
+                &indirect.span_to(**number),
                 operands,
                 symbol_table,
             )
@@ -204,20 +196,17 @@ fn generate_ld_indirect(
             let reg_offset = &reg_offset.unwrap();
             generate_ld_ireg_offset(
                 modifiers,
-                &operand.span_to(reg_offset),
+                &indirect.span_to(reg_offset),
                 operands,
                 symbol_table,
             )
         }
-        _ => Err(
-            Error::new(operand.span, "Incorrect type").with_label(format!(
-                "Expected a {}, {}, or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "register".fg(ATTENTION_COLOR),
-                "register offset".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            indirect.span,
+            "type",
+            vec!["number", "register", "register offset"],
+            Some(indirect.val),
+        )),
     }
 }
 
@@ -233,13 +222,12 @@ fn generate_ld_ireg(
             let register2 = &register2.unwrap();
             generate_ld_ireg_reg(modifiers, register, register2)
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR),
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -268,13 +256,12 @@ fn generate_ld_ireg_offset(
             let register = &register.unwrap();
             generate_ld_ireg_offset_reg(modifiers, reg_offset, register)
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR),
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 
@@ -305,13 +292,12 @@ fn generate_ld_inum(
             let register = &register.unwrap();
             generate_ld_inum_reg(modifiers, number, register)
         }
-        _ => Err(
-            Error::new(operands[1].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR),
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operands[1].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 

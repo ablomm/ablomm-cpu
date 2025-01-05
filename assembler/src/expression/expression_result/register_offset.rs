@@ -6,11 +6,12 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<RegisterOffset>> {
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
-            _ => Err(Error::new(rhs.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                rhs.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                rhs.span,
+                "type",
+                vec!["number"],
+                Some(rhs.val),
+            )),
         }
     }
 }
@@ -38,11 +39,12 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<RegisterOffset>> {
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(Error::new(rhs.span, "Incorrect type").with_label(format!(
-                "Expected {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                rhs.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                rhs.span,
+                "type",
+                vec!["number"],
+                Some(rhs.val),
+            )),
         }
     }
 }

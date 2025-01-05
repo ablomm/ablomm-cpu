@@ -1,5 +1,3 @@
-use ariadne::Fmt;
-
 use crate::{expression::expression_result::ExpressionResult, generator::*};
 
 pub fn generate_push(
@@ -12,10 +10,12 @@ pub fn generate_push(
     ));
 
     if operation.operands.len() != 1 {
-        return Err(
-            Error::new(operation.operands.span, "Incorrect number of operands")
-                .with_label(format!("Expected {} operands", "1".fg(ATTENTION_COLOR))),
-        );
+        return Err(Error::incorrect_num(
+            operation.operands.span,
+            "operand",
+            vec![1],
+            operation.operands.len(),
+        ));
     }
 
     let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
@@ -24,13 +24,12 @@ pub fn generate_push(
             let register = &register.unwrap();
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
-        _ => Err(
-            Error::new(operation.operands[0].span, "Incorrect type").with_label(format!(
-                "Expected a {}, but found {}",
-                "register".fg(ATTENTION_COLOR),
-                operand.fg(ATTENTION_COLOR)
-            )),
-        ),
+        _ => Err(Error::incorrect_value(
+            operation.operands[0].span,
+            "type",
+            vec!["register"],
+            Some(operand),
+        )),
     }
 }
 

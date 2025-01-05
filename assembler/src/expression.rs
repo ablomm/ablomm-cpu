@@ -48,7 +48,7 @@ impl Spanned<&Expression> {
 
                     _ => (),
                 }
-                get_identifier(&self.span_to(a), symbol_table)?.result.val
+                identifier.result.val
             }
             Expression::Ref(a) => op!(a.asm_ref(), symbol_table, waiting_map, a)?,
             Expression::Deref(a) => op!(a.asm_deref(), symbol_table, waiting_map, a)?,

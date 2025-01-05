@@ -4,8 +4,6 @@ make memory clocked
 
 use verilator
 
-show an error for each statement that has it instead of the first error
-
 -have times 1, and times 0 on register or register offset work and
 -have divide by 1 for register and register offset work
 
@@ -14,35 +12,12 @@ progress bar
 push has 4 bit for number of operands,
 if number is 0, then treat rest as immediate
 
-fix error when there is nothing in found
-
 have operations as an expression, operations are just literals
 
 have multi word instruction, 
 
-fill symbol table with labels but but have value be Number(None)
-	get_symbol would fail if it finds None
-	get_type would succeed if it finds None
-
-maybe just have a pass to get types and have ExpressionResult all have varients that are optional inner values
-fill symbol table with these types (i.e. Number(None), Register(None), etc.)
-(type inference)
-
-
-pass 1: generate file queue
-pass 2: type inference (fill symbol table with just types Number(none), register(None), etc.)
-pass 3: fill symbol table, use types to know num_words
-pass 4: generate operations
-final: put first few addresses to point to root file
-
 have an implicit symbol called pc, which is the current address (this should be knowable at assembly time), then we could do stuff like
 add pc, label - pc; to jump using offsets
-
-maybe implement by passing a enum Value either Lvalue or Rvalue and use the psuedo pc if it is an rvalue
-
-maybe have ld not effect higher addresses, ie. don't tuch the 16 msb, currently it would make it X
-
-
 
 pass 1: generate file queue
 pass 2: type inferance (post order), including inserting types to export_file_map
@@ -51,3 +26,5 @@ pass 3: calculate addresses (files, labels)
 	re-insert all symbols because labels are now included
 pass 4: fill sybol table assignments (labels should already be done in previous pass) (post order)
 pass 5: generate operations
+
+make get_recursive() return ref, maybe use a enum with either Borrow or Ref for & or Ref<T>

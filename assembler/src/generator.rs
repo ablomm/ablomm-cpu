@@ -71,7 +71,7 @@ impl Spanned<&Statement> {
                 .generate(symbol_table)
                 .map_err(|error| vec![error]),
             Statement::Block(block) => self.span_to(block).generate(),
-            Statement::Literal(literal) => self
+            Statement::GenLiteral(literal) => self
                 .span_to(literal)
                 .generate(symbol_table)
                 .map_err(|error| vec![error]),
@@ -122,12 +122,12 @@ impl Spanned<&Expression> {
                 }
                 Ok(opcodes)
             }
-            _ => Err(Error::new(self.span, "Incorrect type").with_label(format!(
-                "Expected a {} or {}, but found {}",
-                "number".fg(ATTENTION_COLOR),
-                "string".fg(ATTENTION_COLOR),
-                result.fg(ATTENTION_COLOR)
-            ))),
+            _ => Err(Error::incorrect_value(
+                self.span,
+                "type",
+                vec!["number", "string"],
+                Some(result),
+            )),
         }
     }
 }

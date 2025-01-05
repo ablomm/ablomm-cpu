@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn expression_parser() -> impl Parser<char, Expression, Error = Error> {
+pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> {
     let bin_num = just("0b")
         .ignore_then(text::digits(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
     let oct_num = just("0o")

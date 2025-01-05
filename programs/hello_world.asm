@@ -1,5 +1,4 @@
-import print from "lib/print.asm";
-
+import * from "lib/print.asm";
 	ld r0, string1;
 	ld pc, print;
 	ld r0, string2;
@@ -7,5 +6,5 @@ import print from "lib/print.asm";
 end:
 	ld pc, end;
 
-string1: "Hello world!\n\0";
-string2: "Hello world, again!\n\0";
+string1: "Hello world!👻\n\0";
+string2: "Hello world, again!😵\n\0";
