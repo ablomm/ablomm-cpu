@@ -1,0 +1,29 @@
+name: CPU Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'cpu/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'cpu/**'
+
+jobs:
+  build:
+  
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cpu/
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install icarus and verilator
+      run: sudo apt-get install -y iverilog verilator
+    - name: Build
+      run: ./scripts/build_all.sh
+    - name: Run tests
+      run: ./build/icarus/Vtest && ./build/verilator/Vtest
