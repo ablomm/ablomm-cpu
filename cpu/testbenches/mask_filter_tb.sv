@@ -6,7 +6,7 @@ module mask_filter_tb;
   mask_filter mask_filter0 (.*);
   initial begin
     #400;
-	$display("\ntesting filter");
+    $display("\ntesting filter");
     test_filter(32'hffffffff, 32'hf0f0f0f0);
     test_filter(32'h12312312, 32'h50f37431);
   end
@@ -17,7 +17,8 @@ module mask_filter_tb;
       mask = mask_in;
       #1;
       $display("out = %d", out);
-      assert (out === (in_in & mask_in));
+      assert (out === (in_in & mask_in))
+      else $fatal;
     end
   endtask
 endmodule

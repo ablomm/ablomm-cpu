@@ -51,11 +51,13 @@ module cpu_reg_tb;
       test_ld_a(data_in);
       test_oe_a;
       $display("a = %d", a);
-      assert (a === data_in);
+      assert (a === data_in)
+      else $fatal;
 
       test_oe_b;
       $display("b_bus = %d", b);
-      assert (b === data_in);
+      assert (b === data_in)
+      else $fatal;
     end
   endtask
 endmodule

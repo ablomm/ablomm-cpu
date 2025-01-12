@@ -36,6 +36,6 @@ module simulator;
       .clk (clk),
       .data(a_bus[7:0]),
       .wr  (mem_wr),
-      .en  (b_bus === 16'h4000)
+      .en  (b_bus[15:0] === 16'h4000)
   );
 endmodule

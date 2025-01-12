@@ -16,7 +16,7 @@ module register_file_tb;
 
   initial begin
     #600;
-	$display("\ntesting register_file");
+    $display("\ntesting register_file");
     test_ld_oe(reg_pkg::R0, 123);
     test_ld_oe(reg_pkg::R1, 321);
     test_ld_oe(reg_pkg::R0, 567);
@@ -56,11 +56,13 @@ module register_file_tb;
       test_ld(sel_reg_in, data_in);
       test_oe_a(sel_reg_in);
       $display("a = %d", a);
-      assert (a === data_in);
+      assert (a === data_in)
+      else $fatal;
 
       test_oe_b(sel_reg_in);
       $display("b = %d", b);
-      assert (b === data_in);
+      assert (b === data_in)
+      else $fatal;
     end
   endtask
 endmodule

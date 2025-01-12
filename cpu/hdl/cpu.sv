@@ -121,11 +121,16 @@ module cpu (
       .ld(sel_in_reg === reg_pkg::STATUS && ld_reg),
       .alu_status_in(alu_status),
       .ld_alu_status(ld_alu_status),
+	  .imask_in(imask_in),
+	  .ld_imask(ld_imask),
+	  .mode_in(mode_in),
+	  .ld_mode(ld_mode),
       .value(status)
   );
 
   sp_reg sp (
       .clk(clk),
+	  .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
@@ -140,6 +145,7 @@ module cpu (
   wire [31:0] pc_val;
   lr_reg lr (
       .clk(clk),
+	  .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
@@ -153,6 +159,7 @@ module cpu (
 
   pc_reg pc (
       .clk(clk),
+	  .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),

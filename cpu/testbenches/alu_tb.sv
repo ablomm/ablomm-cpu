@@ -108,8 +108,10 @@ module alu_tb;
       #1;
 
       $display("a = %d, b = %d, out = %d, op = %h, status = %b", a, b, out, operation, status);
-      assert (out === expected_result_in);
-      assert (status === expected_status_in);
+      assert (out === expected_result_in)
+      else $fatal;
+      assert (status === expected_status_in)
+      else $fatal;
 
       oe = 0;
       #1;

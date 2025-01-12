@@ -9,7 +9,7 @@ module mem_tb;
 
   initial begin
     #500;
-	$display("\ntesting mem");
+    $display("\ntesting mem");
     en = 1;
     test_rd_wr(15, 123);
     test_rd_wr(16, 223);
@@ -42,7 +42,8 @@ module mem_tb;
       test_write(addr_in, data_in);
       test_read(addr_in);
       $display("data = %d", out);
-      assert (out === data_in);
+      assert (out === data_in)
+      else $fatal;
     end
   endtask
 endmodule

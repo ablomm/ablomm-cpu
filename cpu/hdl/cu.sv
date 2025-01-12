@@ -67,6 +67,7 @@ module cu (
     EXCEPT3,
 
     FETCH,
+	NOP,
     NOT,
     LD,
     LDR,

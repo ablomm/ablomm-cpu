@@ -87,7 +87,8 @@ module cu_tb;
       $display("sel_b_reg: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, post_inc_pc: %d",
                sel_b_reg, oe_b_reg, mem_rd, ld_ir, post_inc_pc);
 
-      assert (sel_b_reg === reg_pkg::PC && oe_b_reg === 1 && mem_rd === 1 && post_inc_pc === 1);
+      assert (sel_b_reg === reg_pkg::PC && oe_b_reg === 1 && mem_rd === 1 && post_inc_pc === 1)
+      else $fatal;
     end
   endtask
 
@@ -96,7 +97,7 @@ module cu_tb;
                        input reg_e reg_b_in = reg_pkg::R1, input reg_e reg_c_in = reg_pkg::R2);
     begin
       ir.condition = NONE;
-      ir.instruction = op_in | 8'hf0;  // alu ops start with 0xf*
+      ir.instruction = instruction_e'(op_in | 8'hf0);  // alu ops start with 0xf*
       ir.operands.alu_op.flags.immediate = 0;
       ir.operands.alu_op.flags.reverse = reverse_in;
       ir.operands.alu_op.flags.loadn = loadn_in;
@@ -116,7 +117,8 @@ module cu_tb;
           "sel_a_reg: %d, oe_a_reg_file: %d, sel_b_reg: %d, oe_b_reg_file: %d, alu_op: %d, sel_in_reg: %d, ld_reg_file: %d",
           sel_a_reg, oe_a_reg, sel_b_reg, oe_b_reg, alu_op, sel_in_reg, ld_reg);
 
-      assert (sel_a_reg === reg_b_in && oe_a_reg === 1 && sel_b_reg === reg_c_in && oe_b_reg === 1 && alu_op === op_in && sel_in_reg === reg_a_in && ld_reg === 1);
+      assert (sel_a_reg === reg_b_in && oe_a_reg === 1 && sel_b_reg === reg_c_in && oe_b_reg === 1 && alu_op === op_in && sel_in_reg === reg_a_in && ld_reg === 1)
+      else $fatal;
 
       clk = 1;
       #1;
