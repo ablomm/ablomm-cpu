@@ -17,7 +17,6 @@ hdl/sp_reg.sv
 hdl/status_reg.sv
 
 simulation/mem.sv
-simulation/rom.sv
 simulation/tty.sv
 
 testbenches/alu_tb.sv
