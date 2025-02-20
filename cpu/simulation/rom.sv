@@ -13,5 +13,10 @@ module rom #(
   logic [WORD_SIZE-1:0] mem[DEPTH];
 
   assign out = (en && rd) ? mem[addr] : 'hz;
-  initial $readmemh("simulation/programs/program.txt", mem);
+
+  initial begin
+    string src;
+    $value$plusargs("src=%s", src);
+    $readmemh(src, mem);
+  end
 endmodule
