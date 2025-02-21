@@ -1,15 +1,8 @@
 use crate::ast::*;
 use crate::error::*;
 use crate::expression::expression_result::ExpressionResult;
-use crate::generator::alu_op::unary_alu_op::*;
-use crate::generator::alu_op::*;
-use crate::generator::int::*;
-use crate::generator::ld::*;
-use crate::generator::pop::*;
-use crate::generator::push::*;
 use crate::symbol_table::SymbolTable;
 use ariadne::Fmt;
-use nop::*;
 use std::fmt::Display;
 use std::ops::Range;
 
@@ -83,13 +76,13 @@ impl Spanned<&Statement> {
 impl Spanned<&Operation> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
-            AsmMnemonic::Nop => generate_nop(self),
-            AsmMnemonic::Ld => generate_ld(self, symbol_table),
-            AsmMnemonic::Push => generate_push(self, symbol_table),
-            AsmMnemonic::Pop => generate_pop(self, symbol_table),
-            AsmMnemonic::Int => generate_int(self),
-            AsmMnemonic::UnaryAlu(_) => generate_unary_alu_op(self, symbol_table),
-            AsmMnemonic::BinaryAlu(_) => generate_alu_op(self, symbol_table),
+            AsmMnemonic::Nop => nop::generate_nop(self),
+            AsmMnemonic::Ld => ld::generate_ld(self, symbol_table),
+            AsmMnemonic::Push => push::generate_push(self, symbol_table),
+            AsmMnemonic::Pop => pop::generate_pop(self, symbol_table),
+            AsmMnemonic::Int => int::generate_int(self),
+            AsmMnemonic::UnaryAlu(_) => alu_op::generate_unary_alu_op(self, symbol_table),
+            AsmMnemonic::BinaryAlu(_) => alu_op::generate_alu_op(self, symbol_table),
         }
         .map(|opcode| vec![opcode])
     }

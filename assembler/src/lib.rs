@@ -9,13 +9,11 @@ use expression::{
     expression_result::{ExpressionResult, Number},
     EvalReturn,
 };
-use generator::*;
 use indexmap::IndexMap;
 use internment::Intern;
-use parser::*;
 use span::*;
 use src::Src;
-use symbol_table::{get_identifier, STEntry, SymbolTable};
+use symbol_table::{STEntry, SymbolTable};
 
 mod ast;
 pub mod error;
@@ -78,7 +76,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
         files: file_queue.into_iter().rev().collect(),
     };
 
-    compile_ast(&ast).map_err(|error| (error, sources(cache)))
+    generator::compile_ast(&ast).map_err(|error| (error, sources(cache)))
 }
 
 // takes in a canonanical file path, address, and cache and returns a queue of the order in which to
@@ -154,7 +152,7 @@ fn parse_path(
     let len = assembly_code.chars().count();
     let eoi = Span::new(src.val, len..len);
 
-    let block = parser()
+    let block = parser::block_parser()
         .parse(chumsky::Stream::from_iter(
             eoi,
             assembly_code
@@ -215,24 +213,14 @@ fn fill_symbol_table(
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
-                block
-                    .symbol_table
-                    .borrow_mut()
-                    .try_insert(
-                        label.identifier,
-                        label
-                            .identifier
-                            .span_to(ExpressionResult::Number(address.map(Number))),
-                        None,
-                        None,
-                    )
-                    .map_err(|error| {
-                        Error::identifier_already_defined(
-                            error.0.import_span.unwrap_or(error.0.key_span),
-                            label.identifier.span,
-                        )
-                        .with_help("Try using a different name")
-                    })?;
+                block.symbol_table.borrow_mut().try_insert(
+                    label.identifier,
+                    label
+                        .identifier
+                        .span_to(ExpressionResult::Number(address.map(Number))),
+                    None,
+                    None,
+                )?;
                 if label.export {
                     export(
                         &label.identifier,
@@ -253,17 +241,12 @@ fn fill_symbol_table(
                         .result,
                 );
 
-                block
-                    .symbol_table
-                    .borrow_mut()
-                    .try_insert(assignment.identifier, value, None, None)
-                    .map_err(|error| {
-                        Error::identifier_already_defined(
-                            error.0.import_span.unwrap_or(error.0.key_span),
-                            assignment.identifier.span,
-                        )
-                        .with_help("Try using a different name")
-                    })?;
+                block.symbol_table.borrow_mut().try_insert(
+                    assignment.identifier,
+                    value,
+                    None,
+                    None,
+                )?;
 
                 if assignment.export {
                     export(
@@ -399,7 +382,7 @@ fn export(
             .with_note("Try removing one of these exports"));
     }
 
-    let mut export_val = get_identifier(&identifier.as_ref(), symbol_table)?;
+    let mut export_val = symbol_table.try_get(&identifier.as_ref())?;
     export_val.export_span = Some(identifier.span);
     exports.insert(identifier.val, export_val);
 
@@ -444,11 +427,7 @@ fn import(
                         import_val.export_span,
                     )
                     .map_err(|error| {
-                        Error::identifier_already_defined(
-                            error.0.key_span,
-                            import_span.unwrap_or(import_key.span),
-                        )
-                        .with_help(format!(
+                        error.with_help(format!(
                             "Try aliasing the import by adding {}",
                             "as <new_name>".fg(ATTENTION_COLOR)
                         ))
@@ -467,12 +446,11 @@ fn import(
                         import_val.export_span,
                     )
                     .map_err(|error| {
-                        Error::identifier_already_defined(error.0.key_span, import_val.key_span)
-                            .with_help(format!(
-                                "Try using named import aliases: {}{}",
-                                import_key.fg(ATTENTION_COLOR),
-                                " as <new_name> ... <other imports>".fg(ATTENTION_COLOR)
-                            ))
+                        error.with_help(format!(
+                            "Try using named import aliases: {}{}",
+                            import_key.fg(ATTENTION_COLOR),
+                            " as <new_name> ... <other imports>".fg(ATTENTION_COLOR)
+                        ))
                     })?;
             }
         }

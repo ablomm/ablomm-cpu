@@ -1,4 +1,3 @@
-use ablomm_asm::*;
 use clap::Parser;
 use std::{fs, process::ExitCode};
 
@@ -16,7 +15,7 @@ struct Args {
 fn main() -> ExitCode {
     let args = Args::parse();
 
-    match assemble(&args.input) {
+    match ablomm_asm::assemble(&args.input) {
         Ok(machine_code) => {
             match args.output {
                 Some(output_file) => {

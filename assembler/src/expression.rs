@@ -6,7 +6,7 @@ use internment::Intern;
 
 use crate::{
     ast::{Expression, Register, Spanned},
-    symbol_table::{get_identifier, SymbolTable},
+    symbol_table::SymbolTable,
     Error, Span, ATTENTION_COLOR,
 };
 
@@ -37,7 +37,7 @@ impl Spanned<&Expression> {
             Expression::String(string) => ExpressionResult::String(Some(String(string.clone()))),
             Expression::Number(a) => ExpressionResult::Number(Some(Number(*a))),
             Expression::Ident(a) => {
-                let identifier = get_identifier(&self.span_to(a), symbol_table)?;
+                let identifier = symbol_table.try_get(&self.span_to(a))?;
                 match identifier.result.val {
                     ExpressionResult::Number(None)
                     | ExpressionResult::String(None)

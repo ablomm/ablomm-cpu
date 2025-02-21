@@ -4,8 +4,6 @@ use internment::Intern;
 
 use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Error, Span};
 
-pub struct SymbolAlreadyDefinedError(pub STEntry);
-
 type Key = Intern<String>;
 type Value = STEntry;
 
@@ -81,6 +79,13 @@ impl SymbolTable {
         None
     }
 
+    // just returns a nice error instead of Option
+    pub fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, Error> {
+        self.get_recursive(ident.val).ok_or(
+            Error::new(ident.span, "Missing identifier").with_label("Could not find identifier"),
+        )
+    }
+
     pub fn insert(
         &mut self,
         key: Spanned<Key>,
@@ -105,23 +110,16 @@ impl SymbolTable {
         value: Spanned<ExpressionResult>,
         import_span: Option<Span>,
         export_span: Option<Span>,
-    ) -> Result<(), SymbolAlreadyDefinedError> {
+    ) -> Result<(), Error> {
         // need to call get and not just contains_key because error will contain the entry
         if let Some(entry) = self.get(&key.val) {
-            return Err(SymbolAlreadyDefinedError(entry.clone()));
+            return Err(Error::identifier_already_defined(
+                entry.import_span.unwrap_or(entry.key_span),
+                key.span,
+            ));
         }
 
         self.insert(key, value, import_span, export_span);
         Ok(())
     }
-}
-
-// some helper functions
-pub fn get_identifier(
-    ident: &Spanned<&Intern<String>>,
-    symbol_table: &SymbolTable,
-) -> Result<Value, Error> {
-    symbol_table
-        .get_recursive(ident.val)
-        .ok_or(Error::new(ident.span, "Missing identifier").with_label("Could not find identifier"))
 }

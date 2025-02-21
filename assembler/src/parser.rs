@@ -1,9 +1,7 @@
 use crate::symbol_table::SymbolTable;
 use crate::{ast::*, Span};
 use chumsky::prelude::*;
-use expression::*;
 use internment::Intern;
-use keywords::*;
 use std::cell::RefCell;
 use std::char;
 use std::collections::HashMap;
@@ -15,7 +13,7 @@ mod keywords;
 
 pub type ParseError = Simple<char, Span>;
 
-pub fn parser() -> impl Parser<char, Spanned<Block>, Error = ParseError> {
+pub fn block_parser() -> impl Parser<char, Spanned<Block>, Error = ParseError> {
     statement_parser()
         .map_with_span(Spanned::new)
         .padded()
@@ -59,11 +57,11 @@ fn string_parser() -> impl Parser<char, String, Error = ParseError> {
 
 fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
     let modifier = just('.').ignore_then(choice((
-        alu_modifier_parser().map(Modifier::AluModifier),
-        condition_parser().map(Modifier::Condition),
+        keywords::alu_modifier_parser().map(Modifier::AluModifier),
+        keywords::condition_parser().map(Modifier::Condition),
     )));
 
-    let full_mnemonic = mnemonic_parser()
+    let full_mnemonic = keywords::mnemonic_parser()
         .map_with_span(Spanned::new)
         .then(
             modifier
@@ -80,7 +78,7 @@ fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
         .map_with_span(Spanned::new)
         .padded()
         .then(
-            expression_parser()
+            expression::expression_parser()
                 .map_with_span(Spanned::new)
                 .padded()
                 .separated_by(just(','))
@@ -107,7 +105,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
         .or_not()
         .then(text::ident().map(Intern::new).map_with_span(Spanned::new))
         .then_ignore(just('=').padded())
-        .then(expression_parser().map_with_span(Spanned::new))
+        .then(expression::expression_parser().map_with_span(Spanned::new))
         .map(|((export, identifier), expression)| Assignment {
             export: export.is_some(),
             identifier,
@@ -146,7 +144,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Assignment),
-            expression_parser()
+            expression::expression_parser()
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::GenLiteral),

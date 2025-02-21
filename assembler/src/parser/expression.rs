@@ -28,7 +28,7 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
 
     let expr = recursive(|expression| {
         let atom = choice((
-            register_parser().map(Expression::Register),
+            keywords::register_parser().map(Expression::Register),
             string_parser().map(Expression::String),
             number.map(Expression::Number),
             text::ident().map(Intern::new).map(Expression::Ident),

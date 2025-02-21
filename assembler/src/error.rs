@@ -141,6 +141,7 @@ impl Error {
         Error::new(second_define, "Identifier already defined")
             .with_label_span(first_define, "Defined first here")
             .with_label("Defined again here")
+            .with_help("Try using a different name")
     }
 }
 
