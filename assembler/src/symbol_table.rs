@@ -114,8 +114,10 @@ impl SymbolTable {
         // need to call get and not just contains_key because error will contain the entry
         if let Some(entry) = self.get(&key.val) {
             return Err(Error::identifier_already_defined(
-                entry.import_span.unwrap_or(entry.key_span),
+                entry.key_span,
+                entry.import_span,
                 key.span,
+                import_span,
             ));
         }
 

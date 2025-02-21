@@ -137,11 +137,32 @@ impl Error {
             .with_label(format!("Expected {}, but found {}", expected, found,))
     }
 
-    pub fn identifier_already_defined(first_define: Span, second_define: Span) -> Self {
-        Error::new(second_define, "Identifier already defined")
+    pub fn identifier_already_defined(
+        first_define: Span,
+        first_define_import: Option<Span>,
+        second_define: Span,
+        second_define_import: Option<Span>,
+    ) -> Self {
+        let mut error = Error::new(second_define, "Identifier already defined")
             .with_label_span(first_define, "Defined first here")
             .with_label("Defined again here")
-            .with_help("Try using a different name")
+            .with_help("Try using a different name");
+
+        if let Some(import) = first_define_import {
+            error = error.with_label_span(import, "Imported here")
+        }
+
+        if let Some(import) = second_define_import {
+            let message = if first_define_import.is_some() {
+                "Imported again here"
+            } else {
+                "Imported here"
+            };
+
+            error = error.with_label_span(import, message)
+        }
+
+        error
     }
 }
 
