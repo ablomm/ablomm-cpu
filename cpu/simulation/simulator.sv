@@ -1,6 +1,6 @@
 module simulator;
   logic clk = 0;
-  logic start = 1, rst = 0;
+  logic start = 1;
   logic hwint = 0;
   tri [31:0] a_bus, b_bus, result_bus;
   wire mem_rd, mem_wr;
@@ -37,5 +37,14 @@ module simulator;
       .data(a_bus[7:0]),
       .wr  (mem_wr),
       .en  (b_bus[15:0] === 16'h4000)
+  );
+
+  // memory mapped power controller for simulation
+  power power0 (
+      .clk (clk),
+      .data(a_bus[7:0]),
+      .wr  (mem_wr),
+      .en  (b_bus[15:0] === 16'h4001),
+      .rst (rst)
   );
 endmodule

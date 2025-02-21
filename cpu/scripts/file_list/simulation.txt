@@ -17,6 +17,7 @@ hdl/sp_reg.sv
 hdl/status_reg.sv
 
 simulation/mem.sv
+simulation/power.sv
 simulation/rom.sv
 simulation/simulator.sv
 simulation/tty.sv
