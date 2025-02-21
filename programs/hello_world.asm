@@ -1,5 +1,6 @@
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
+import * from "lib/test.asm";
 
 	ld r0, string1;
 	ld pc, print;

@@ -144,13 +144,13 @@ impl Error {
         second_define_import: Option<Span>,
     ) -> Self {
         let mut error = Error::new(second_define, "Identifier already defined")
-            .with_label_span(first_define, "Defined first here")
-            .with_label("Defined again here")
-            .with_help("Try using a different name");
+            .with_label_span(first_define, "Defined first here");
 
         if let Some(import) = first_define_import {
             error = error.with_label_span(import, "Imported here")
         }
+
+        error = error.with_label("Defined again here");
 
         if let Some(import) = second_define_import {
             let message = if first_define_import.is_some() {
@@ -162,7 +162,7 @@ impl Error {
             error = error.with_label_span(import, message)
         }
 
-        error
+        error.with_help("Try using a different name")
     }
 }
 
