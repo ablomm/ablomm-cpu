@@ -181,51 +181,55 @@ fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), Error> {
     let mut file_exports_map = HashMap::new();
     for file in file_queue {
         // can't do map_err because of borrow checker
-        fill_symbol_table(
+        let exports = fill_symbol_table(
             &file.src,
             &file.span_to(&file.block),
             file.start_address,
-            &mut file_exports_map,
-        )?
+            &file_exports_map,
+        )?;
+
+        file_exports_map.insert(file.src, exports);
     }
     Ok(())
 }
 
-// generates symbol table for block and sub_block
+// generates symbol table for block and sub_block, returns exported symbols
 fn fill_symbol_table(
     src: &Intern<Src>,
     block: &Spanned<&Block>,
     // if start_address is None, it will simply fill the symbol_table to the best of it's ability
     // without any addresses
     start_address: Option<u32>,
-    file_exports_map: &mut HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
-) -> Result<(), Error> {
-    // start from scratch to prevent duplicate errors (yes technically not as fast as it could be,
+    file_exports_map: &HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
+) -> Result<HashMap<Intern<String>, STEntry>, Error> {
+    // start from scratch to prevent `symbol already defined` errors (yes technically not as fast as it could be,
     // but much easier to reason about)
     block.symbol_table.borrow_mut().table.clear();
     let mut address = start_address;
 
-    // this if statement makes the file_export_map.get_mut(src).unwrap() safe to unwrap
-    if !file_exports_map.contains_key(src) {
-        file_exports_map.insert(*src, HashMap::new());
-    }
+    let mut exports = HashMap::new();
 
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
+                let result = label
+                    .identifier
+                    .span_to(ExpressionResult::Number(address.map(Number)));
+
                 block.symbol_table.borrow_mut().try_insert(
-                    label.identifier,
-                    label
-                        .identifier
-                        .span_to(ExpressionResult::Number(address.map(Number))),
-                    None,
-                    None,
+                    label.identifier.val,
+                    STEntry {
+                        result,
+                        key_span: label.identifier.span,
+                        import_span: None,
+                        export_span: None,
+                    },
                 )?;
                 if label.export {
                     export(
                         &label.identifier,
                         &block.symbol_table.borrow(),
-                        file_exports_map.get_mut(src).unwrap(),
+                        &mut exports,
                     )?;
                 }
             }
@@ -233,7 +237,7 @@ fn fill_symbol_table(
             Statement::Assignment(assignment) => {
                 // need to move the expression evaluation out of the symbol_table.insert() call
                 // to satisfy the borrow checker
-                let value = assignment.expression.span_to(
+                let result = assignment.expression.span_to(
                     assignment
                         .expression
                         .as_ref()
@@ -242,28 +246,27 @@ fn fill_symbol_table(
                 );
 
                 block.symbol_table.borrow_mut().try_insert(
-                    assignment.identifier,
-                    value,
-                    None,
-                    None,
+                    assignment.identifier.val,
+                    STEntry {
+                        result,
+                        key_span: assignment.identifier.span,
+                        import_span: None,
+                        export_span: None,
+                    },
                 )?;
 
                 if assignment.export {
                     export(
                         &assignment.identifier,
                         &block.symbol_table.borrow(),
-                        file_exports_map.get_mut(src).unwrap(),
+                        &mut exports,
                     )?;
                 }
             }
 
             Statement::Export(identifiers) => {
                 for identifier in identifiers {
-                    export(
-                        identifier,
-                        &block.symbol_table.borrow(),
-                        file_exports_map.get_mut(src).unwrap(),
-                    )?;
+                    export(identifier, &block.symbol_table.borrow(), &mut exports)?;
                 }
             }
 
@@ -290,12 +293,16 @@ fn fill_symbol_table(
 
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-                fill_symbol_table(
+                let sub_exports = fill_symbol_table(
                     src,
                     &statement.span_to(sub_block),
                     address,
                     file_exports_map,
                 )?;
+
+                for (key, val) in sub_exports {
+                    block.symbol_table.borrow_mut().try_insert(key, val)?;
+                }
             }
             _ => (),
         }
@@ -308,7 +315,7 @@ fn fill_symbol_table(
         }
     }
 
-    Ok(())
+    Ok(exports)
 }
 
 // needed because some future imports symbols depend on the size of the importer's length (yeah, I
@@ -323,13 +330,18 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
                 // we now are able to calculate labels, which gives more values that can be used in
                 // num_words()
                 Statement::Label(label) => {
+                    let result = label
+                        .identifier
+                        .span_to(ExpressionResult::Number(Some(Number(address))));
+
                     file.block.symbol_table.borrow_mut().insert(
-                        label.identifier,
-                        label
-                            .identifier
-                            .span_to(ExpressionResult::Number(Some(Number(address)))),
-                        None,
-                        None,
+                        label.identifier.val,
+                        STEntry {
+                            result,
+                            key_span: label.identifier.span,
+                            import_span: None,
+                            export_span: None,
+                        },
                     );
                 }
 
@@ -338,7 +350,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
                 // don't worry about exports, as the file_queue is in post_order which guarntees
                 // all importers have already been parsed, so no one will use the new exports
                 Statement::Assignment(assignment) => {
-                    let value = assignment.expression.span_to(
+                    let result = assignment.expression.span_to(
                         assignment
                             .expression
                             .as_ref()
@@ -347,10 +359,13 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
                     );
 
                     file.block.symbol_table.borrow_mut().insert(
-                        assignment.identifier,
-                        value,
-                        None,
-                        None,
+                        assignment.identifier.val,
+                        STEntry {
+                            result,
+                            key_span: assignment.identifier.span,
+                            import_span: None,
+                            export_span: None,
+                        },
                     );
                 }
                 _ => (),
@@ -419,13 +434,14 @@ fn import(
                     Some(import.specifier.span)
                 };
 
+                let st_entry = STEntry {
+                    key_span: import_key.span,
+                    import_span,
+                    ..import_val.clone()
+                };
+
                 symbol_table
-                    .try_insert(
-                        *import_key,
-                        import_val.result.clone(),
-                        import_span,
-                        import_val.export_span,
-                    )
+                    .try_insert(import_key.val, st_entry)
                     .map_err(|error| {
                         error.with_help(format!(
                             "Try aliasing the import by adding {}",
@@ -438,13 +454,13 @@ fn import(
         // unselective import (i.e. import * from <file>
         ImportSpecifier::Blob => {
             for (import_key, import_val) in exports {
+                let st_entry = STEntry {
+                    import_span: Some(import.specifier.span),
+                    ..import_val.clone()
+                };
+
                 symbol_table
-                    .try_insert(
-                        import_val.key_span.spanned(*import_key),
-                        import_val.result.clone(),
-                        Some(import.specifier.span),
-                        import_val.export_span,
-                    )
+                    .try_insert(*import_key, st_entry)
                     .map_err(|error| {
                         error.with_help(format!(
                             "Try using named import aliases: {}{}",

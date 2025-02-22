@@ -86,42 +86,22 @@ impl SymbolTable {
         )
     }
 
-    pub fn insert(
-        &mut self,
-        key: Spanned<Key>,
-        value: Spanned<ExpressionResult>,
-        import_span: Option<Span>,
-        export_span: Option<Span>,
-    ) -> Option<Value> {
-        self.table.insert(
-            key.val,
-            STEntry {
-                result: value,
-                key_span: key.span,
-                import_span,
-                export_span,
-            },
-        )
+    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+        self.table.insert(key, value)
     }
 
-    pub fn try_insert(
-        &mut self,
-        key: Spanned<Key>,
-        value: Spanned<ExpressionResult>,
-        import_span: Option<Span>,
-        export_span: Option<Span>,
-    ) -> Result<(), Error> {
+    pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), Error> {
         // need to call get and not just contains_key because error will contain the entry
-        if let Some(entry) = self.get(&key.val) {
+        if let Some(entry) = self.get(&key) {
             return Err(Error::identifier_already_defined(
                 entry.key_span,
                 entry.import_span,
-                key.span,
-                import_span,
+                value.key_span,
+                value.import_span,
             ));
         }
 
-        self.insert(key, value, import_span, export_span);
+        self.insert(key, value);
         Ok(())
     }
 }
