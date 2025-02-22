@@ -1,0 +1,49 @@
+# Building
+To build the appliaction, you must have installed the following:
+- [Rust](https://www.rust-lang.org/)
+- Either [Verilator](https://www.veripool.org/verilator/) and/or [Icarus Verilog](https://steveicarus.github.io/iverilog/) (recommended Verilator)
+- Bash (to use the scripts, otherwise you will need to run the commands / write scripts manually for your shell)
+  - For Windows, you can get Bash through [Mingw](https://www.mingw-w64.org/)
+    
+> [!NOTE]
+> Verilator is used for the utility scripts described below, and therefore is the recommended one to install if you must choose only one.
+ 
+Included in the repo is a [script to build everything](../scripts/build_all.sh).
+
+To build simply run from the project directory:
+``` bash
+$ ./scripts/build_all.sh
+```
+
+# Running
+Included in the repo is a [script to assemble and run a program](../scripts/run.sh).
+
+To run the included hello_world program, simply run from the project directory:
+``` bash
+$ ./scripts/run.sh programs/hello_world.asm
+```
+
+## Assemble
+Usually it's fine to just use the `run.sh` script, which will assemble and run the appliaction all in one, but you may want to only assemble a program.
+
+Included in the repo is a [script to assemble a program](../scripts/assemble.sh).
+
+To assemble the included hello_world program, simply run from the project directory:
+``` bash
+$ ./scripts/assmeble.sh programs/hello_world.asm
+```
+> [!NOTE]  
+> By defaullt, the assembler will print the machine code to stdout. You can optionally write the output to a file using redirection or using the `-o <OUTPUT>` option. For a full list of options the assembler supports use the `-h` option.
+
+## Simulate
+The simulator allows you to run a program by passing in the machine code for that program.
+
+Included in the repo is a [script to simulate a program](../scripts/simulate.sh).
+
+To simulate a program `hello_world` (which contains the machine code), simply run from the project directory:
+``` bash
+$ ./scripts/simulate.sh +src=hello_world
+```
+
+> [!NOTE]  
+> The scripts will simply delegate all inputs to the verilated model of the simulator. Therefore, all Verilator options can also be passed through this script.
