@@ -1,28 +1,28 @@
 # Public Registers
-There are 12, 32-bit, general purpose register (r0 to r11)
+There are 11, 32-bit, general purpose register (R0 to R10)
 > [!NOTE]
-> r11 has no special meaning to the CPU, although, the assembler will use "fp" (frame pointer) as an alias to r11.
+> R10 has no special meaning to the CPU, although, the assembler will use "fp" (frame pointer) as an alias to R10.
 
 There are 4 special purpose registers with varying widths. The table below enumerates all registers and their purpose.
 
 | Register | Code | Description | Width |
 |----------|------|-------------|-------|
-| r0 | 0 | General purpose | 32 |
-| r1 | 1 | General purpose | 32 |
-| r2 | 2 | General purpose | 32 |
-| r3 | 3 | General purpose | 32 |
-| r4 | 4 | General purpose | 32 |
-| r5 | 5 | General purpose | 32 |
-| r6 | 6 | General purpose | 32 |
-| r7 | 7 | General purpose | 32 |
-| r8 | 8 | General purpose | 32 |
-| r9 | 9 | General purpose | 32 |
-| r10 | 10 | General purpose | 32 |
-| r11 | 11 | General purpose | 32 |
-| status | 12 | state of the CPU; conditions, interupt mask, and mode | 6 |
-| sp | 13 | stack pointer; points to last item in stack, and grows down | 32 |
-| lr | 14 | link register; is set to previous pc value if pc is explicitly written to | 32 |
-| pc | 15 | program counter; points to next instruction to run | 32 |
+| R0 | 0 | General purpose | 32 |
+| R1 | 1 | General purpose | 32 |
+| R2 | 2 | General purpose | 32 |
+| R3 | 3 | General purpose | 32 |
+| R4 | 4 | General purpose | 32 |
+| R5 | 5 | General purpose | 32 |
+| R6 | 6 | General purpose | 32 |
+| R7 | 7 | General purpose | 32 |
+| R8 | 8 | General purpose | 32 |
+| R9 | 9 | General purpose | 32 |
+| R10 | 10 | General purpose | 32 |
+| STATUS | 11 | state of the CPU; conditions, interupt mask, and mode | 6 |
+| SP | 12 | stack pointer; points to last item in stack, and grows down | 32 |
+| LR | 13 | link register; is set to previous PC value if PCL is written to | 32 |
+| PCL | 14 | program counter; A pseudo register used to load PC and load LR with the previous PC value (much like some ISA's jump with link) | 32 |
+| PC | 15 | program counter; points to next instruction to run | 32 |
 
 ## Status Register
 Among all the special purpose registers, the status register is the only register with a different width.
@@ -49,16 +49,16 @@ The first four of these flags are used for conditional execution. The following 
 | Condition | Code | Description | NZCV Expression |
 |-----------|------|-------------|-----------------|
 | none | 0 | always executes | true |
-| eq | 1 | `sub.t x, y` where x == y | Z |
-| ne | 2 | `sub.t x, y` where x != y | !Z |
-| ult | 3 | `sub.t x, y` where x and y are unsigned, and x < y  | !C |
-| ugt | 4 | `sub.t x, y` where x and y are unsigned, and x > y  | C && !Z |
-| ule | 5 | `sub.t x, y` where x and y are unsigned, and x <= y  | !C || Z |
-| uge | 6 | `sub.t x, y` where x and y are unsigned, and x >= y  | C |
-| slt | 7 | `sub.t x, y` where x and y are signed, and x < y  | N !== V |
-| sgt | 8 | `sub.t x, y` where x and y are signed, and x > y  | !Z && (N == V) |
-| sle | 9 | `sub.t x, y` where x and y are signed, and x <= y  | Z || (N != V) |
-| sge | 10 | `sub.t x, y` where x and y are signed, and x >= y  | N == V |
+| EQ | 1 | `sub.t x, y` where x == y | Z |
+| NE | 2 | `sub.t x, y` where x != y | !Z |
+| ULT | 3 | `sub.t x, y` where x and y are unsigned, and x < y  | !C |
+| UGT | 4 | `sub.t x, y` where x and y are unsigned, and x > y  | C && !Z |
+| ULE | 5 | `sub.t x, y` where x and y are unsigned, and x <= y  | !C || Z |
+| UGE | 6 | `sub.t x, y` where x and y are unsigned, and x >= y  | C |
+| SLT | 7 | `sub.t x, y` where x and y are signed, and x < y  | N !== V |
+| SGT | 8 | `sub.t x, y` where x and y are signed, and x > y  | !Z && (N == V) |
+| SLE | 9 | `sub.t x, y` where x and y are signed, and x <= y  | Z || (N != V) |
+| SGE | 10 | `sub.t x, y` where x and y are signed, and x >= y  | N == V |
 
 # Instruction
 There is only 10 instruction from the CPU's perspective. The ALU instruction is generic and works with all supported ALU operations. The instructions are enumerated in the following table:
@@ -238,7 +238,7 @@ The addresses of various locations in memory the CPU may jump to in each case ar
 
 When a hardware interupt is triggered, the interupt mask is set to 0, meaning no more hardware inerrupts will occur until it is unmasked.
 
-Hardware and software interrupts, as well as exceptions, will push pc and lr before jumping.
+Hardware and software interrupts, as well as exceptions, will push pc.
 
 Start will reset all registers to 0.
 
