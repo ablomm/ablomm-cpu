@@ -38,7 +38,7 @@ export print: {
 import print from "lib/print.asm";
 
 ld r0, string;
-ld pc.l, print;
+ld pc.link, print;
 
 string: "hello world!\n\0";
 ```
@@ -197,9 +197,9 @@ import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
 	ld r0, string1;
-	ld pc.l, print;
+	ld pc.link, print;
 	ld r0, string2;
-	ld pc.l, print;
+	ld pc.link, print;
 
 	ld r0, SHUTDOWN;
 	ld power, r0;

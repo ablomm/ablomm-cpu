@@ -20,8 +20,8 @@ There are 4 special purpose registers with varying widths. The table below enume
 | R10 | 10 | General purpose | 32 |
 | STATUS | 11 | state of the CPU; conditions, interupt mask, and mode | 6 |
 | SP | 12 | stack pointer; points to last item in stack, and grows down | 32 |
-| LR | 13 | link register; is set to previous PC value if PCL is written to | 32 |
-| PCL | 14 | program counter; A pseudo register used to load PC and load LR with the previous PC value (much like some ISA's jump with link) | 32 |
+| LR | 13 | link register; is set to previous PC value if PCLINK is written to | 32 |
+| PCLINK | 14 | program counter; A pseudo register used to load PC and load LR with the previous PC value (much like some ISA's jump with link) | 32 |
 | PC | 15 | program counter; points to next instruction to run | 32 |
 
 ## Status Register
