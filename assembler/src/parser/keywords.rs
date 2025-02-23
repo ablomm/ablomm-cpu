@@ -2,66 +2,66 @@ use super::*;
 
 pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = ParseError> {
     return choice((
-        text::keyword("nop").to(AsmMnemonic::Nop),
-        text::keyword("ld").to(AsmMnemonic::Ld),
-        text::keyword("push").to(AsmMnemonic::Push),
-        text::keyword("pop").to(AsmMnemonic::Pop),
-        text::keyword("int").to(AsmMnemonic::Int),
-        text::keyword("and").to(AsmMnemonic::BinaryAlu(CpuMnemonic::And)),
-        text::keyword("or").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Or)),
-        text::keyword("xor").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Xor)),
-        text::keyword("not").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Not)),
-        text::keyword("add").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Add)),
-        text::keyword("addc").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Addc)),
-        text::keyword("sub").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Sub)),
-        text::keyword("subb").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Subb)),
-        text::keyword("neg").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Neg)),
-        text::keyword("shl").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shl)),
-        text::keyword("shr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shr)),
-        text::keyword("ashr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ashr)),
+        just("nop").to(AsmMnemonic::Nop),
+        just("ld").to(AsmMnemonic::Ld),
+        just("push").to(AsmMnemonic::Push),
+        just("pop").to(AsmMnemonic::Pop),
+        just("int").to(AsmMnemonic::Int),
+        just("and").to(AsmMnemonic::BinaryAlu(CpuMnemonic::And)),
+        just("or").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Or)),
+        just("xor").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Xor)),
+        just("not").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Not)),
+        just("add").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Add)),
+        just("addc").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Addc)),
+        just("sub").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Sub)),
+        just("subb").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Subb)),
+        just("neg").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Neg)),
+        just("shl").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shl)),
+        just("shr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shr)),
+        just("ashr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ashr)),
     ));
 }
 
 pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
     return choice((
-        text::keyword("r0").to(Register::R0),
-        text::keyword("r1").to(Register::R1),
-        text::keyword("r2").to(Register::R2),
-        text::keyword("r3").to(Register::R3),
-        text::keyword("r4").to(Register::R4),
-        text::keyword("r5").to(Register::R5),
-        text::keyword("r6").to(Register::R6),
-        text::keyword("r7").to(Register::R7),
-        text::keyword("r8").to(Register::R8),
-        text::keyword("r9").to(Register::R9),
-        text::keyword("r10").to(Register::R10),
-        text::keyword("r11").to(Register::R11),
-        text::keyword("fp").to(Register::R11), // just an alias
-        text::keyword("status").to(Register::Status),
-        text::keyword("sp").to(Register::Sp),
-        text::keyword("lr").to(Register::Lr),
-        text::keyword("pc").to(Register::Pc),
+        just("r0").to(Register::R0),
+        just("r1").to(Register::R1),
+        just("r2").to(Register::R2),
+        just("r3").to(Register::R3),
+        just("r4").to(Register::R4),
+        just("r5").to(Register::R5),
+        just("r6").to(Register::R6),
+        just("r7").to(Register::R7),
+        just("r8").to(Register::R8),
+        just("r9").to(Register::R9),
+        just("r10").to(Register::R10),
+        just("fp").to(Register::R10), // just an alias
+        just("status").to(Register::Status),
+        just("sp").to(Register::Sp),
+        just("lr").to(Register::Lr),
+        just("pc.l").to(Register::Pcl), // psuedo register, used to jump with link
+        just("pc").to(Register::Pc),
     ));
 }
 
 pub fn alu_modifier_parser() -> impl Parser<char, AluModifier, Error = ParseError> {
     return choice((
-        text::keyword("s").to(AluModifier::S),
-        text::keyword("t").to(AluModifier::T),
+        just("s").to(AluModifier::S),
+        just("t").to(AluModifier::T),
     ));
 }
 
 pub fn condition_parser() -> impl Parser<char, Condition, Error = ParseError> {
     return choice((
-        text::keyword("eq").to(Condition::Eq),
-        text::keyword("ne").to(Condition::Ne),
-        text::keyword("ult").to(Condition::Ult),
-        text::keyword("ugt").to(Condition::Ugt),
-        text::keyword("ule").to(Condition::Ule),
-        text::keyword("uge").to(Condition::Uge),
-        text::keyword("slt").to(Condition::Slt),
-        text::keyword("sgt").to(Condition::Sgt),
-        text::keyword("sle").to(Condition::Sle),
-        text::keyword("sge").to(Condition::Sge),
+        just("eq").to(Condition::Eq),
+        just("ne").to(Condition::Ne),
+        just("ult").to(Condition::Ult),
+        just("ugt").to(Condition::Ugt),
+        just("ule").to(Condition::Ule),
+        just("uge").to(Condition::Uge),
+        just("slt").to(Condition::Slt),
+        just("sgt").to(Condition::Sgt),
+        just("sle").to(Condition::Sle),
+        just("sge").to(Condition::Sge),
     ));
 }

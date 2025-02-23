@@ -217,9 +217,9 @@ pub enum Register {
     R8,
     R9,
     R10,
-    R11,
     Status,
     Sp,
     Lr,
+    Pcl,
     Pc,
 }

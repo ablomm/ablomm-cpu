@@ -24,10 +24,10 @@ package reg_pkg;
     R8,
     R9,
     R10,
-    R11,
     STATUS,
     SP,
     LR,
+	PCL, // pseudo register: PC, loading link to previous pc state if it's a write
     PC
   } reg_e;
 endpackage

@@ -92,9 +92,9 @@ module cpu (
   );
 
   // public registers
-  // 0-11 => general registers (including fp)
+  // 0-10 => general registers (including fp)
   register_file #(
-      .DEPTH(12)
+      .DEPTH(11)
   ) reg_file (
       .clk(clk),
       .rst(rst),
@@ -163,9 +163,9 @@ module cpu (
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
-      .oe_a(sel_a_reg === reg_pkg::PC && oe_a_reg),
-      .oe_b(sel_b_reg === reg_pkg::PC && oe_b_reg),
-      .ld(sel_in_reg === reg_pkg::PC && ld_reg),
+      .oe_a((sel_a_reg === reg_pkg::PC || sel_a_reg === reg_pkg::PCL) && oe_a_reg),
+      .oe_b((sel_b_reg === reg_pkg::PC || sel_b_reg === reg_pkg::PCL) && oe_b_reg),
+      .ld((sel_in_reg === reg_pkg::PC || sel_in_reg === reg_pkg::PCL) && ld_reg),
       .post_inc(post_inc_pc),
       .value(pc_val)
   );
