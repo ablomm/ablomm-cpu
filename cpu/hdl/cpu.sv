@@ -34,8 +34,6 @@ module cpu (
   wire oe_b_reg;
   wire ld_reg;
 
-  wire ld_pc_lr;
-
   wire post_inc_sp;
   wire pre_dec_sp;
   wire post_inc_pc;
@@ -153,7 +151,7 @@ module cpu (
       .oe_b(sel_b_reg === reg_pkg::LR && oe_b_reg),
       .ld(sel_in_reg === reg_pkg::LR && ld_reg),
       .pc(pc_val),
-      .ld_pc(ld_pc_lr),
+      .ld_pc(sel_in_reg === reg_pkg::PCLINK && ld_reg),
       .value()
   );
 
@@ -163,9 +161,9 @@ module cpu (
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result_bus),
-      .oe_a((sel_a_reg === reg_pkg::PC || sel_a_reg === reg_pkg::PCL) && oe_a_reg),
-      .oe_b((sel_b_reg === reg_pkg::PC || sel_b_reg === reg_pkg::PCL) && oe_b_reg),
-      .ld((sel_in_reg === reg_pkg::PC || sel_in_reg === reg_pkg::PCL) && ld_reg),
+      .oe_a((sel_a_reg === reg_pkg::PC || sel_a_reg === reg_pkg::PCLINK) && oe_a_reg),
+      .oe_b((sel_b_reg === reg_pkg::PC || sel_b_reg === reg_pkg::PCLINK) && oe_b_reg),
+      .ld((sel_in_reg === reg_pkg::PC || sel_in_reg === reg_pkg::PCLINK) && ld_reg),
       .post_inc(post_inc_pc),
       .value(pc_val)
   );

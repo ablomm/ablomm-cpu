@@ -220,6 +220,6 @@ pub enum Register {
     Status,
     Sp,
     Lr,
-    Pcl,
+    Pclink,
     Pc,
 }

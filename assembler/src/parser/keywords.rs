@@ -39,16 +39,13 @@ pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
         just("status").to(Register::Status),
         just("sp").to(Register::Sp),
         just("lr").to(Register::Lr),
-        just("pc.l").to(Register::Pcl), // psuedo register, used to jump with link
+        just("pc.link").to(Register::Pclink), // psuedo register, used to jump with link
         just("pc").to(Register::Pc),
     ));
 }
 
 pub fn alu_modifier_parser() -> impl Parser<char, AluModifier, Error = ParseError> {
-    return choice((
-        just("s").to(AluModifier::S),
-        just("t").to(AluModifier::T),
-    ));
+    return choice((just("s").to(AluModifier::S), just("t").to(AluModifier::T)));
 }
 
 pub fn condition_parser() -> impl Parser<char, Condition, Error = ParseError> {
