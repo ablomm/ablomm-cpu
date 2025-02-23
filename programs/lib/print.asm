@@ -2,7 +2,6 @@ import * from "defines.asm";
 
 // params: r0 = string to be printed
 export print: {
-		push lr;
 		push r1;
 		push r2;
 
@@ -33,5 +32,5 @@ export print: {
 	return:
 		pop r2;
 		pop r1;
-		pop pc;
+		ld pc, lr;
 }
