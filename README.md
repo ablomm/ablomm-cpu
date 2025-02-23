@@ -1,4 +1,5 @@
 # Ablomm CPU and Assembler
+
 This project contains a fully functioning 32 bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
 
 The CPU can be simulated with Verilator or Icarus Verilog.
@@ -6,6 +7,7 @@ The CPU can be simulated with Verilator or Icarus Verilog.
 I have not synthesized it or ran it on an FPGA (because I don't have one right now), but it should all be synthesizable.
 
 ## Contents
+
 - [Building and Running](#building-and-running)
 - [Documentation](#documentation)
 - [Assembler](#assembler)
@@ -13,13 +15,17 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
  	- [Examples](#examples)
  
 ## Building and Running
+
 To build and run this project see the [setup](docs/setup.md) document.
 
 ## Documentation
+
 Please refer to the [docs directory](docs/) for the documentation on the assembly syntax and the CPU's ISA.
 
 # Assembler
+
 The assembler has quite a bit of featues inspired from high level languages such as C. By far the most advanced part of this project is the assembler, as I am a software guy more than a hardware one.
+
 ## Key Features
 
 ### File imports:
@@ -27,14 +33,16 @@ The assembler has quite a bit of featues inspired from high level languages such
 The assembler contains a fully fledged import and export system quite similar to JavaScript. Import aliasing, blob imports, and block scoped imports are all supported.
 
 `lib/print.asm`:
-``` asm
+
+```asm
 export print: {
   ...
 }
 ```
 
 `hello_world.asm`:
-``` asm
+
+```asm
 import print from "lib/print.asm";
 
 ld r0, string;
@@ -48,7 +56,8 @@ string: "hello world!\n\0";
 ### Blocks and lexical scopes
 
 The assembler contains support for blocks and lexical scopes to avoid namespace collisions and logically group blocks of code.
-``` asm
+
+```asm
 label: {
   identifier = 123;
 
@@ -65,10 +74,12 @@ ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
 
 ```
+
 ---
 
 ### Beautiful error messages
-``` asm
+
+```asm
 label: {
   identifier = 123;
 
@@ -85,20 +96,23 @@ ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
 
 ```
+
 ![image](https://github.com/user-attachments/assets/bed91bf9-f8e8-414b-8f7d-6e7e06c0c66c)
 
-``` asm
+```asm
 import * from "lib/print.asm";
 print = 123;
 ```
+
 ![image](https://github.com/user-attachments/assets/7b8ce2c5-7be1-403a-9f54-5c1601878204)
 
 ---
 
 ### Compile time expressions
 
-The assembler has support for compile time variables and expressions similar to c++ constexpr
-``` asm
+The assembler has support for compile time variables and expressions similar to c++ constexpr:
+
+```asm
 tty = *0x4000; // the tty device
 char_to_print = r0;
   ld char_to_print, 'H';
@@ -119,8 +133,10 @@ local_variable = *(fp + 3);
 ```
 
 ## Examples:
-### Define a few variables
-``` asm
+
+### Define a few variables:
+
+```asm
 export tty = *0x4000;
 export power = *0x4001;
 export SHUTDOWN = 0;
@@ -128,7 +144,8 @@ export RESTART = 1;
 ```
 
 ### Count from 0 to 9 and print it to the terminal:
-``` asm
+
+```asm
 import * from "lib/defines.asm";
 
 num = r0;
@@ -147,16 +164,17 @@ loop:
 	ld r0, SHUTDOWN;
 	ld power, r0;
 ```
+
 ![image](https://github.com/user-attachments/assets/a562133a-cbc3-48e3-945d-33867e017e60)
 
 
 ### Print a null terminated string to the terminal:
-``` asm
+
+```asm
 import * from "defines.asm";
 
 // params: r0 = string to be printed
 export print: {
-		push lr;
 		push r1;
 		push r2;
 
@@ -187,12 +205,13 @@ export print: {
 	return:
 		pop r2;
 		pop r1;
-		pop pc;
-}
+		ld pc, lr;
+  }
 ```
 
 ### Print hello world using the print function defined above:
-``` asm
+
+```asm
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
@@ -207,4 +226,5 @@ import print from "lib/print.asm";
 string1: "Hello world!👻\n\0";
 string2: "Hello world, again!😵\n\0";
 ```
+
 ![image](https://github.com/user-attachments/assets/d3693ec4-e594-45c5-b75d-19c36e0dd057)

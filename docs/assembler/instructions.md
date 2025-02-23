@@ -1,0 +1,479 @@
+# Assembly Instructions
+
+The assembly contains a small number of instructions. The assembler has a different (but similar) set of instructions than the CPU instructions listed in the [ISA document](../cpu/isa.md#instruction). 
+
+Each assembly instruction maps 1:1 to a CPU instruction, and the different set is merely a convinence as you shall see.
+
+Each assembly instruction is enumerated in the following table:
+
+<table>
+<tr>
+<th>Instruction</th>
+<th>Description</th>
+<th>CPU Instruction</th>
+<th>Example</th>
+<th>Pseudo Code</th>
+</tr>
+
+<tr>
+<td>nop</td>
+<td>No operation</td>
+<td>NOP</td>
+<td> 
+      
+`nop;` 
+      
+</td>
+<td>
+
+`;`
+    
+</td>
+</tr>
+
+<tr>
+<!-- LD -->
+<td rowspan="6">ld</td>
+<td rowspan="6">Load</td>
+<td>LD</td>
+<td>
+      
+`ld r1, *123;`
+      
+</td>
+<td>
+
+`r1 = *123`
+      
+</td>
+</tr>
+
+<tr>
+<td>LDR</td>
+<td>
+
+`ld r1, *(r2 + 3);`
+      
+</td>
+<td>
+
+`r1 = *(r2 + 3)`
+    
+</td>
+</tr>
+  
+<tr>
+<td>LDI</td>
+<td>
+
+`ld r1, 123;`
+      
+</td>
+<td>
+
+`r1 = 123`
+      
+</td>
+</tr>
+  
+<tr>
+<td>ST</td>
+<td>
+
+`ld *123, r1;`
+      
+</td>
+<td>
+
+`*123 = r1`
+      
+</td>
+</tr>
+  
+<tr>
+<td>STR</td>
+<td>
+
+`ld *(r1 + 3), r2;`
+      
+</td>
+<td>
+
+`*(r1 + 3) = r2`
+      
+</td>
+</tr>
+  
+<tr>
+<td>ALU.PASSA</td>
+<td>
+
+`ld r1, r2;`
+      
+</td>
+<td>
+
+`r1 = r2`
+      
+</td>
+</tr>
+<tr>
+<td>push</td>
+<td>Push to stack</td>
+<td>PUSH</td>
+<td>
+
+`push r1;`
+      
+</td>
+<td>
+
+`*(--sp) = r1`
+      
+</td>
+</tr>
+<tr>
+<td>pop</td>
+<td>Pop from stack</td>
+<td>POP</td>
+<td>
+
+`pop r1;`
+      
+</td>
+<td>
+
+`r1 = *(sp++)`
+      
+</td>
+</tr>
+
+<tr>
+<td>int</td>
+<td>Software interrupt</td>
+<td>INT</td>
+<td>
+
+`int;`
+      
+</td>
+<td>
+
+`*(--sp) = pc` <br>
+`status &= 0b111110` <br>
+`pc = 2`
+      
+</td>
+</tr>
+  
+<tr>
+<td>and</td>
+<td>Bitwise AND</td>
+<td>ALU.AND</td>
+<td>
+      
+`and r1, r2, r3;` <br>
+`and r1, r2, 123;` <br>
+`and r1, r2;` <br>
+`and r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 & r3` <br>
+`r1 = r2 & 123` <br>
+`r1 = r1 & r2` <br>
+`r1 = r1 & 123`
+      
+</td>
+</tr>
+    
+<tr>
+<td>or</td>
+<td>Bitwise OR</td>
+<td>ALU.OR</td>
+<td>
+      
+`or r1, r2, r3;` <br>
+`or r1, r2, 123;` <br>
+`or r1, r2;` <br>
+`or r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 | r3` <br>
+`r1 = r2 | 123` <br>
+`r1 = r1 | r2` <br>
+`r1 = r1 | 123`
+      
+</td>
+</tr>
+  
+<tr>
+<td>xor</td>
+<td>Bitwise exclusive OR</td>
+<td>ALU.XOR</td>
+<td>
+      
+`xor r1, r2, r3;` <br>
+`xor r1, r2, 123;` <br>
+`xor r1, r2;` <br>
+`xor r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 ^ r3` <br>
+`r1 = r2 ^ 123` <br>
+`r1 = r1 ^ r2` <br>
+`r1 = r1 ^ 123`
+      
+</td>
+</tr>
+  
+<tr>
+<td>not</td>
+<td>Bitwise NOT</td>
+<td>ALU.NOT</td>
+<td>
+      
+`not r1, r2;` <br>
+`not r1, 123;` <br>
+`not r1;` <br>
+      
+</td>
+<td>
+
+`r1 = ~r2` <br>
+`r1 = ~123` <br>
+`r1 = ~r1`
+      
+</td>
+</tr>
+
+<tr>
+<td>add</td>
+<td>Addition</td>
+<td>ALU.ADD</td>
+<td>
+      
+`add r1, r2, r3;` <br>
+`add r1, r2, 123;` <br>
+`add r1, r2;` <br>
+`add r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 + r3` <br>
+`r1 = r2 + 123` <br>
+`r1 = r1 + r2` <br>
+`r1 = r1 + 123`
+      
+</td>
+</tr>
+
+<tr>
+<td>addc</td>
+<td>Addition with carry</td>
+<td>ALU.ADDC</td>
+<td>
+      
+`addc r1, r2, r3;` <br>
+`addc r1, r2, 123;` <br>
+`addc r1, r2;` <br>
+`addc r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 + r3 + carry` <br>
+`r1 = r2 + 123 + carry` <br>
+`r1 = r1 + r2 + carry` <br>
+`r1 = r1 + 123 + carry`
+      
+</td>
+</tr>
+  
+<tr>
+<td>sub</td>
+<td>Subtraction</td>
+<td>ALU.SUB</td>
+<td>
+      
+`sub r1, r2, r3;` <br>
+`sub r1, r2, 123;` <br>
+`sub r1, 123, r2;` <br>
+`sub r1, r2;` <br>
+`sub r1, 123;` <br>
+`sub 123, r1;`
+      
+</td>
+<td>
+
+`r1 = r2 - r3` <br>
+`r1 = r2 - 123` <br>
+`r1 = 123 - r2` <br>
+`r1 = r1 - r2` <br>
+`r1 = r1 - 123` <br>
+`r1 = 123 - r1`
+
+</td>
+</tr>
+
+<tr>
+<td>subb</td>
+<td>Subtraction with borrow</td>
+<td>ALU.SUBB</td>
+<td>
+      
+`subb r1, r2, r3;` <br>
+`subb r1, r2, 123;` <br>
+`subb r1, 123, r2;` <br>
+`subb r1, r2;` <br>
+`subb r1, 123;` <br>
+`subb 123, r1;`
+      
+</td>
+<td>
+
+`r1 = r2 - r3 - borrow` <br>
+`r1 = r2 - 123 - borrow` <br>
+`r1 = 123 - r2 - borrow` <br>
+`r1 = r1 - r2 - borrow` <br>
+`r1 = r1 - 123 - borrow` <br>
+`r1 = 123 - r1 - borrow`
+
+</td>
+</tr>
+
+<tr>
+<td>neg</td>
+<td>Binary negation</td>
+<td>ALU.NEG</td>
+<td>
+      
+`neg r1, r2;` <br>
+`neg r1, 123;` <br>
+`neg r1;` <br>
+      
+</td>
+<td>
+
+`r1 = -r2` <br>
+`r1 = -123` <br>
+`r1 = -r1`
+      
+</td>
+</tr>
+
+<tr>
+<td>shl</td>
+<td>Shift left</td>
+<td>ALU.SHL</td>
+<td>
+      
+`shl r1, r2, r3;` <br>
+`shl r1, r2, 123;` <br>
+`shl r1, r2;` <br>
+`shl r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 << r3` <br>
+`r1 = r2 << 123` <br>
+`r1 = r1 << r2` <br>
+`r1 = r1 << 123`
+      
+</td>
+</tr>
+<tr>
+<td>shr</td>
+<td>Logical shift right</td>
+<td>ALU.SHR</td>
+<td>
+      
+`shr r1, r2, r3;` <br>
+`shr r1, r2, 123;` <br>
+`shr r1, r2;` <br>
+`shr r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 >> r3` <br>
+`r1 = r2 >> 123` <br>
+`r1 = r1 >> r2` <br>
+`r1 = r1 >> 123`
+      
+</td>
+</tr>
+  
+<tr>
+<td>ashr</td>
+<td>Arithmetic shift right</td>
+<td>ALU.ASHR</td>
+<td>
+      
+`ashr r1, r2, r3;` <br>
+`ashr r1, r2, 123;` <br>
+`ahsr r1, r2;` <br>
+`ashr r1, 123;`
+      
+</td>
+<td>
+
+`r1 = r2 >>> r3` <br>
+`r1 = r2 >>> 123` <br>
+`r1 = r1 >>> r2` <br>
+`r1 = r1 >>> 123`
+      
+</td>
+</tr>
+</table>
+
+# Instruction Modifiers
+
+The assembler allows adding modifiers to the instruciton mnemonics. These modifiy the functionality of an instruction. Some modifiers work on all instructions, while others work on only a subset of the instructions.
+
+## ALU Modifiers
+
+These modifiers only work on ALU instructions (those listed ALU.* in the [Instructions section](#assembly-instructions).
+
+The ALU modifiers allow for conditionally updating the status register with the NZCV flags, as described in the [ISA document](../cpu/isa.md#status-register)
+
+The below table enumerates each modifier:
+
+| ALU Modifier | Description | Example | Pseudo Code |
+|---|---|---|---|
+| s | Sets the NZCV from the result of the ALU operation | `sub.s r1, r2;` | `r1 = r1 - r2` <br> `status.NZCV = <new flags>` |
+| t | Sets the NZCV from the result of the ALU operation, but ignores the result | `and.t r1, r2;` | `r1 & r2` <br> `status.NZCV = <new flags>` |
+
+## Condition Modifiers
+
+These modifiers work on all instructions.
+
+The condition modifiers allow for conditional operation, and make the instruction only execute if the conditions are met.
+
+These conditions are the same conditions as seen in the [ISA document](../cpu/isa.md#conditions)
+
+The below table enumerates each condition:
+
+| Condition | Description | Example | Pseudo Code |
+|---|---|---|---|
+| none | always executes | `ld pc, 123;` | `pc = 123` |
+| eq | `sub.t x, y` where `x == y` | `ld.eq pc, 123;` | `if (Z) { pc = 123 }` |
+| ne | `sub.t x, y` where `x != y` | `ld.ne r1, r2;` | `if (!Z) { r1 = r2 }` |
+| ult | `sub.t x, y` where x and y are unsigned, and `x < y` | `sub.ult fp, 123;` | `if (!C) { fp = fp - 123 }` |
+| ugt | `sub.t x, y` where x and y are unsigned, and `x > y`  | `add.ugt r1, r3, r5;` | `if (C && !Z) { r1 = r3 + r5 }` |
+| ule | `sub.t x, y` where x and y are unsigned, and `x <= y` | `sub.ule pc, r5;` | `if (!C \|\| Z) { pc = pc - r5 }` |
+| uge | `sub.t x, y` where x and y are unsigned, and `x >= y`  | `int.uge;` | `if (C) { ... }` |
+| slt | `sub.t x, y` where x and y are signed, and `x < y`  | `push.slt lr;` | `if (N !== V) { ... }` |
+| sgt | `sub.t x, y` where x and y are signed, and `x > y`  | `pop.sgt r0;` | `if (!Z && (N == V)) { ... }`
+| sle | `sub.t x, y` where x and y are signed, and `x <= y`  | `shl.sle r1, r2, r3;` | `if (Z \|\| (N != V)) { r1 = r2 << r3 }` |
+| sge | `sub.t x, y` where x and y are signed, and `x >= y`  | `ashr.sge r1, 123;` | `if (N == V) { r1 = r1 >>> 123 }` |
+
+> [!NOTE]
+> Although the condition mnemonics are for subtraction, it works for any ALU operation. for example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`.

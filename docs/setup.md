@@ -1,4 +1,5 @@
 # Building
+
 To build the appliaction, you must have installed the following:
 - [Rust](https://www.rust-lang.org/)
 - Either [Verilator](https://www.veripool.org/verilator/) and/or [Icarus Verilog](https://steveicarus.github.io/iverilog/) (recommended Verilator)
@@ -11,37 +12,44 @@ To build the appliaction, you must have installed the following:
 Included in the repo is a [script to build everything](../scripts/build_all.sh).
 
 To build simply run from the project directory:
-``` bash
+
+```bash
 $ ./scripts/build_all.sh
 ```
 
 # Running
+
 Included in the repo is a [script to assemble and run a program](../scripts/run.sh).
 
 To run the included hello_world program, simply run from the project directory:
-``` bash
+
+```bash
 $ ./scripts/run.sh programs/hello_world.asm
 ```
 
 ## Assemble
+
 Usually it's fine to just use the `run.sh` script, which will assemble and run the appliaction all in one, but you may want to only assemble a program.
 
 Included in the repo is a [script to assemble a program](../scripts/assemble.sh).
 
 To assemble the included hello_world program, simply run from the project directory:
-``` bash
+
+```bash
 $ ./scripts/assmeble.sh programs/hello_world.asm
 ```
 > [!NOTE]  
 > By defaullt, the assembler will print the machine code to stdout. You can optionally write the output to a file using redirection or using the `-o <OUTPUT>` option. For a full list of options the assembler supports use the `-h` option.
 
 ## Simulate
+
 The simulator allows you to run a program by passing in the machine code for that program.
 
 Included in the repo is a [script to simulate a program](../scripts/simulate.sh).
 
 To simulate a program `hello_world` (which contains the machine code), simply run from the project directory:
-``` bash
+
+```bash
 $ ./scripts/simulate.sh +src=hello_world
 ```
 
