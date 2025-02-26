@@ -1,3 +1,8 @@
+/* test
+	/* asdf */
+asdf
+	*/
+
 tty = *0x4000; // the tty device
 char_to_print = r0;
   ld char_to_print, 'H';

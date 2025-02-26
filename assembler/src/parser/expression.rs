@@ -13,10 +13,10 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
     // we're able to do that because empty chars ('') are not supported
     let escape_char = just('\\').ignore_then(choice((
+        just('0').to('\0'),
+        just('t').to('\t'),
         just('n').to('\n'),
         just('r').to('\r'),
-        just('t').to('\t'),
-        just('0').to('\0'),
     )));
 
     let char_num = escape_char

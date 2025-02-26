@@ -42,10 +42,10 @@ fn string_parser() -> impl Parser<char, String, Error = ParseError> {
     let escape_string = just('\\').ignore_then(choice((
         just('\\').to('\\'),
         just('\"').to('"'),
+        just('0').to('\0'),
+        just('t').to('\t'),
         just('n').to('\n'),
         just('r').to('\r'),
-        just('t').to('\t'),
-        just('0').to('\0'),
     )));
 
     filter(|c| *c != '\\' && *c != '"')
