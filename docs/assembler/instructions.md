@@ -455,25 +455,350 @@ The below table enumerates each modifier:
 
 These modifiers work on all instructions.
 
-The condition modifiers allow for conditional operation, and make the instruction only execute if the conditions are met.
+The condition modifiers allow for conditional operation, which makes the instruction only execute if the condition is met.
 
-These conditions are the same conditions as seen in the [ISA document](../cpu/isa.md#conditions)
+These conditions are mapped to CPU conditions as seen in the [ISA document](../cpu/isa.md#conditions)
 
 The below table enumerates each condition:
 
-| Condition | Description | Example | Pseudo Code |
-|---|---|---|---|
-| none | always executes | `ld pc, 123;` | `pc = 123` |
-| eq | `sub.t x, y` where `x == y` | `ld.eq pc, 123;` | `if (Z) { pc = 123 }` |
-| ne | `sub.t x, y` where `x != y` | `ld.ne r1, r2;` | `if (!Z) { r1 = r2 }` |
-| ult | `sub.t x, y` where x and y are unsigned, and `x < y` | `sub.ult fp, 123;` | `if (!C) { fp = fp - 123 }` |
-| ugt | `sub.t x, y` where x and y are unsigned, and `x > y`  | `add.ugt r1, r3, r5;` | `if (C && !Z) { r1 = r3 + r5 }` |
-| ule | `sub.t x, y` where x and y are unsigned, and `x <= y` | `sub.ule pc, r5;` | `if (!C \|\| Z) { pc = pc - r5 }` |
-| uge | `sub.t x, y` where x and y are unsigned, and `x >= y`  | `int.uge;` | `if (C) { ... }` |
-| slt | `sub.t x, y` where x and y are signed, and `x < y`  | `push.slt lr;` | `if (N !== V) { ... }` |
-| sgt | `sub.t x, y` where x and y are signed, and `x > y`  | `pop.sgt r0;` | `if (!Z && (N == V)) { ... }`
-| sle | `sub.t x, y` where x and y are signed, and `x <= y`  | `shl.sle r1, r2, r3;` | `if (Z \|\| (N != V)) { r1 = r2 << r3 }` |
-| sge | `sub.t x, y` where x and y are signed, and `x >= y`  | `ashr.sge r1, 123;` | `if (N == V) { r1 = r1 >>> 123 }` |
+<table>
+<tr>
+<th>Condition</th>
+<th>Description</th>
+<th>Example</th>
+<th>CPU Condition</th>
+<th>Pseudo Code</th>
+</tr>
+
+<tr>
+<td></td>
+<td>Always executes</td>
+<td>
+
+`ld pc, 123;`
+      
+</td>
+<td>NONE</td>
+<td>
+
+`pc = 123`
+
+</td>
+</tr>
+
+<tr>
+<td>eq</td>
+<td>
+      
+`sub.t x, y` where `x == y`
+
+<td>
+
+`ld.eq pc, 123;`
+      
+</td>
+<td rowspan="2">EQ</td>
+<td rowspan="2">
+
+`if (Z) { pc = 123 }`
+
+</td>
+</tr>
+
+<tr>
+<td>zs</td>
+<td>
+      
+Zero flag is set; alias for `eq`
+
+</td>
+<td>
+
+`ld.zs pc, 123;`
+      
+</td>
+</tr>
+
+<tr>
+<td>ne</td>
+<td>
+      
+`sub.t x, y` where `x != y`
+
+<td>
+
+`ld.ne r1, r2;`
+      
+</td>
+<td rowspan="2">NE</td>
+<td rowspan="2">
+
+`if (!Z) { r1 = r2 }`
+
+</td>
+</tr>
+
+<tr>
+<td>zc</td>
+<td>
+      
+Zero flag is clear; alias for `ne`
+
+</td>
+<td>
+
+`ld.zc r1, r2;`
+      
+</td>
+</tr>
+
+<tr>
+<td>neg</td>
+<td>
+      
+Last ALU operation resulted in negative number if interpreted as a signed value
+
+<td>
+
+`ld.neg *r1, r2;`
+      
+</td>
+<td rowspan="2">NEG</td>
+<td rowspan="2">
+
+`if (N) { *r1 = r2 }`
+
+</td>
+</tr>
+
+<tr>
+<td>ns</td>
+<td>
+      
+Negative flag is set; alias for `neg`
+
+</td>
+<td>
+
+`ld.ns *r1, r2;`
+      
+</td>
+</tr>
+
+<tr>
+<td>pos</td>
+<td>
+      
+Last ALU operation resulted in positive number if interpreted as a signed value
+
+<td>
+
+`ld.pos *(fp + 3), r0;`
+      
+</td>
+<td rowspan="2">POS</td>
+<td rowspan="2">
+
+`if (!N) { *(fp + 3) = r9 }`
+
+</td>
+</tr>
+
+<tr>
+<td>nc</td>
+<td>
+      
+Negative flag is clear; alias for `pos`
+
+</td>
+<td>
+
+`ld.nc *(fp + 3), r0;`
+      
+</td>
+</tr>
+
+<tr>
+<td>ult</td>
+<td>
+      
+`sub.t x, y` where x and y are unsigned, and `x < y`
+
+<td>
+
+`sub.ult fp, 123;`
+      
+</td>
+<td rowspan="2">ULT</td>
+<td rowspan="2">
+
+`if (!C) { fp = fp - 123 }`
+
+</td>
+</tr>
+
+<tr>
+<td>cc</td>
+<td>
+      
+Carry flag is clear; alias for `ult`
+
+</td>
+<td>
+
+`sub.cc fp, 123;`
+      
+</td>
+</tr>
+
+<tr>
+<td>ugt</td>
+<td>
+      
+`sub.t x, y` where x and y are unsigned, and `x > y`
+
+<td>
+
+`add.ugt r1, r3, r5;`
+      
+</td>
+<td>UGT</td>
+<td>
+
+`if (C && !Z) { r1 = r3 + r5 }`
+
+</td>
+</tr>
+
+<tr>
+<td>ule</td>
+<td>
+      
+`sub.t x, y` where x and y are unsigned, and `x <= y`
+
+<td>
+
+`sub.ule pc, r5;`
+      
+</td>
+<td>ULE</td>
+<td>
+
+`if (!C || Z) { pc = pc - r5 }`
+
+</td>
+</tr>
+
+<tr>
+<td>uge</td>
+<td>
+      
+`sub.t x, y` where x and y are unsigned, and `x >= y`
+
+<td>
+
+`int.uge;`
+      
+</td>
+<td rowspan="2">UGE</td>
+<td rowspan="2">
+
+`if (C) { ... }`
+
+</td>
+</tr>
+
+<tr>
+<td>cs</td>
+<td>
+      
+Carry flag is set; alias for `uge`
+
+</td>
+<td>
+
+`int.cs;`
+      
+</td>
+</tr>
+
+<tr>
+<td>slt</td>
+<td>
+      
+`sub.t x, y` where x and y are signed, and `x < y`
+
+<td>
+
+`push.slt lr;`
+      
+</td>
+<td>SLT</td>
+<td>
+
+`if (N !== V) { ... }`
+
+</td>
+</tr>
+
+<tr>
+<td>sgt</td>
+<td>
+      
+`sub.t x, y` where x and y are signed, and `x > y`
+
+<td>
+
+`pop.sgt r0;`
+      
+</td>
+<td>SGT</td>
+<td>
+
+`if (!Z && (N == V)) { ... }`
+
+</td>
+</tr>
+
+<tr>
+<td>sle</td>
+<td>
+
+`sub.t x, y` where x and y are signed, and `x <= y`
+
+<td>
+
+`shl.sle r1, r2, r3;`
+      
+</td>
+<td>SLE</td>
+<td>
+
+`if (Z || (N != V)) { r1 = r2 << r3 }`
+
+</td>
+</tr>
+
+<tr>
+<td>sge</td>
+<td>
+
+`sub.t x, y` where x and y are signed, and `x >= y`
+
+<td>
+
+`ashr.sge r1, 123;`
+      
+</td>
+<td>SGE</td>
+<td>
+
+`if (N == V) { r1 = r1 >>> 123 }`
+
+</td>
+</tr>
+
+</table>
 
 > [!NOTE]
-> Although the condition mnemonics are for subtraction, it works for any ALU operation. for example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`.
+> Although some condition mnemonics are for subtraction, it works for any ALU operation. for example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`. To make your code clearer, you may use the aliases if the subtraction mnemonics can cause confusion, for example, `ld.zc pc, 123;`.

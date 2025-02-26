@@ -10,7 +10,7 @@ package alu_pkg;
     ADDC,
     SUB,
     SUBB,
-	NEG,
+    NEG,
     SHL,
     SHR,
     ASHR

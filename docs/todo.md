@@ -14,8 +14,6 @@ Currently PUSH and POP only works on one register at a time.
 
 E.g.: `push r1, r2, r3;`
 
-### More conditions for if each condition bit is set (nor not set?)
-
 ### Create timer and interupt controller in simulator
 
 ## Assembler
@@ -56,4 +54,9 @@ There is no test currently for the assembler.
 
 ### Document simulator
 
-### Document something with the interupt vecotor table in assembly
+### Document something with the interupt vecotor table in assembly (an example maybe?)
+
+### document fp
+
+## Misc
+### Rename "programs" dir to "examples"

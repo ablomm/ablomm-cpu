@@ -62,7 +62,7 @@ module cu (
     EXCEPT2,
 
     FETCH,
-	NOP,
+    NOP,
     NOT,
     LD,
     LDR,
@@ -124,8 +124,8 @@ module cu (
         end
       end
 
-      SWINT1: state <= SWINT2;
-      HWINT1: state <= HWINT2;
+      SWINT1:  state <= SWINT2;
+      HWINT1:  state <= HWINT2;
       EXCEPT1: state <= EXCEPT2;
 
       STOP: if (start) state <= FETCH;
@@ -137,17 +137,20 @@ module cu (
     begin
       unique case (condition)
         cu_pkg::NONE: satisfies_condition = 1;
-        cu_pkg::EQ: satisfies_condition = status.zero;
-        cu_pkg::NE: satisfies_condition = !status.zero;
-        cu_pkg::ULT: satisfies_condition = !status.carry;
-        cu_pkg::UGT: satisfies_condition = status.carry && !status.zero;
-        cu_pkg::ULE: satisfies_condition = !status.carry || status.zero;
-        cu_pkg::UGE: satisfies_condition = status.carry;
-        cu_pkg::SLT: satisfies_condition = status.negative !== status.overflow;
-        cu_pkg::SGT: satisfies_condition = !status.zero && (status.negative === status.overflow);
-        cu_pkg::SLE: satisfies_condition = status.zero || (status.negative !== status.overflow);
-        cu_pkg::SGE: satisfies_condition = status.negative === status.overflow;
-        default: satisfies_condition = 1;
+        cu_pkg::EQ:   satisfies_condition = status.zero;
+        cu_pkg::NE:   satisfies_condition = !status.zero;
+        cu_pkg::NEG:  satisfies_condition = status.negative;
+        cu_pkg::POS:  satisfies_condition = !status.negative;
+        cu_pkg::VS:   satisfies_condition = status.overflow;
+        cu_pkg::VC:   satisfies_condition = !status.overflow;
+        cu_pkg::ULT:  satisfies_condition = !status.carry;
+        cu_pkg::UGT:  satisfies_condition = status.carry && !status.zero;
+        cu_pkg::ULE:  satisfies_condition = !status.carry || status.zero;
+        cu_pkg::UGE:  satisfies_condition = status.carry;
+        cu_pkg::SLT:  satisfies_condition = status.negative !== status.overflow;
+        cu_pkg::SGT:  satisfies_condition = !status.zero && (status.negative === status.overflow);
+        cu_pkg::SLE:  satisfies_condition = status.zero || (status.negative !== status.overflow);
+        cu_pkg::SGE:  satisfies_condition = status.negative === status.overflow;
       endcase
     end
 

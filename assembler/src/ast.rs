@@ -180,6 +180,10 @@ pub enum Condition {
     None = 0, // not used, but for completeness
     Eq,
     Ne,
+    Neg,
+    Pos,
+    Vs,
+    Vc,
     Ult,
     Ugt,
     Ule,

@@ -52,6 +52,10 @@ pub fn condition_parser() -> impl Parser<char, Condition, Error = ParseError> {
     return choice((
         just("eq").to(Condition::Eq),
         just("ne").to(Condition::Ne),
+        just("neg").to(Condition::Neg),
+        just("pos").to(Condition::Pos),
+        just("vs").to(Condition::Vs),
+        just("vc").to(Condition::Vc),
         just("ult").to(Condition::Ult),
         just("ugt").to(Condition::Ugt),
         just("ule").to(Condition::Ule),
@@ -60,5 +64,12 @@ pub fn condition_parser() -> impl Parser<char, Condition, Error = ParseError> {
         just("sgt").to(Condition::Sgt),
         just("sle").to(Condition::Sle),
         just("sge").to(Condition::Sge),
+        // condition aliases
+        just("ns").to(Condition::Neg),
+        just("nc").to(Condition::Pos),
+        just("zs").to(Condition::Eq),
+        just("zc").to(Condition::Ne),
+        just("cs").to(Condition::Uge),
+        just("cc").to(Condition::Ult),
     ));
 }

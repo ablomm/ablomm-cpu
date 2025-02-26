@@ -1,6 +1,6 @@
 # Public Registers
 
-There are 11, 32-bit, general purpose register (r0 to r10)
+There are 11, 32-bit, general purpose register (`r0` to `r10`)
 
 > [!NOTE]
 > `r10` has no special meaning to the CPU, although, the assembler will use "`fp`" (frame pointer) as an alias to `r10`.
@@ -53,17 +53,24 @@ The first four of these flags are used for conditional execution. The following 
 
 | Condition | Code | Description | NZCV Expression |
 |---|---|---|---|
-| none | 0x0 | always executes | `true` |
-| eq | 0x1 | `sub.t x, y` where `x == y` | `Z` |
-| ne | 0x2 | `sub.t x, y` where `x != y` | `!Z` |
-| ult | 0x3 | `sub.t x, y` where x and y are unsigned, and `x < y` | `!C` |
-| ugt | 0x4 | `sub.t x, y` where x and y are unsigned, and `x > y`  | `C && !Z` |
-| ule | 0x5 | `sub.t x, y` where x and y are unsigned, and `x <= y` | `!C \|\| Z` |
-| uge | 0x6 | `sub.t x, y` where x and y are unsigned, and `x >= y`  | `C` |
-| slt | 0x7 | `sub.t x, y` where x and y are signed, and `x < y`  | `N !== V` |
-| sgt | 0x8 | `sub.t x, y` where x and y are signed, and `x > y`  | `!Z && (N == V)` |
-| sle | 0x9 | `sub.t x, y` where x and y are signed, and `x <= y`  | `Z \|\| (N != V)` |
-| sge | 0xa | `sub.t x, y` where x and y are signed, and `x >= y`  | `N == V` |
+| NONE | 0x0 | always executes | `true` |
+| EQ | 0x1 | `sub.t x, y` where `x == y` | `Z` |
+| NE | 0x2 | `sub.t x, y` where `x != y` | `!Z` |
+| NEG | 0x3 | Last ALU operation resulted in negative number if interpreted as a signed value | `N` |
+| POS | 0x4 | Last ALU operation resulted in positive number if interpreted as a signed value | `!N` |
+| Vs | 0x5 | Last ALU operation resulted in a signed overflow | `V` |
+| Vc | 0x6 | Last ALU operation did not result in a signed overflow | `!V` |
+| ULT | 0x7 | `sub.t x, y` where x and y are unsigned, and `x < y` | `!C` |
+| UGT | 0x8 | `sub.t x, y` where x and y are unsigned, and `x > y`  | `C && !Z` |
+| ULE | 0x9 | `sub.t x, y` where x and y are unsigned, and `x <= y` | `!C \|\| Z` |
+| UGE | 0xa | `sub.t x, y` where x and y are unsigned, and `x >= y`  | `C` |
+| SLT | 0xb | `sub.t x, y` where x and y are signed, and `x < y`  | `N !== V` |
+| SGT | 0xc | `sub.t x, y` where x and y are signed, and `x > y`  | `!Z && (N == V)` |
+| SLE | 0xd | `sub.t x, y` where x and y are signed, and `x <= y`  | `Z \|\| (N != V)` |
+| SGE | 0xe | `sub.t x, y` where x and y are signed, and `x >= y`  | `N == V` |
+
+> [!NOTE]
+> The assembler has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Upercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
 
 # Instruction
 
@@ -251,7 +258,7 @@ You may have noticed the ALU CPU instruction contains four bits named "I", "R", 
 | Ln | Loadn flag; if set to 1, then do not load the result of the operation into Register A | So we can do stuff like `sub.t, r1, r2`; not really useful for if S=0, but note the .t is like `TST` is other ISAs |
 | S | Set status flag; if set to 1, then sets the status register with it's various flags | So we can do stuff like `sub.s, r1, r2` |
 
-## Interrupt Vector Table
+# Interrupt Vector Table
 
 The addresses of various locations in memory the CPU may jump to in each case are as follows:
 
@@ -269,3 +276,39 @@ Hardware and software interrupts, as well as exceptions, will push pc before jum
 Start will reset all registers to 0.
 
 All of these jumps will result in entering supervisor mode.
+
+# Addresses
+
+Although technically the CPU is 32-bit, it is most practical to keep code in the first 2<sup>16</sup> addresses. 
+
+This is because the instructions are fixed-width, and there is only space for 16 bits for an address or immediate, and so jumps to far away addresses would be a bit combersome, although still possible. You could still do jumps to addresses within 2<sup>8</sup> addresses by adding or subtracting to `pc`.
+
+It is in theory possible to make it work with 32-bit addresses, but it would cause so much trouble to be not worth it. For example, you would have to do something similar to:
+
+```asm
+// some code ...
+  sub pc, 1; // need to jump over the gen literal
+far_away_label_address: far_away_label;
+// some more code ...
+// address 2^16
+  ld r0, far_away_label_address;
+  ld pc, r0;
+// even more code ...
+far_away_label:
+// I want to jump here
+```
+
+> [!NOTE]
+> A normal `ld pc, far_away_label;` would not work because the `ld` instruction only supports 16-bit addresses. Trying to do so would result in an assembler error notifying you that the address does not fit.
+
+To load a piece of data from above address 2<sup>16</sup>, you would need to get the address in a register by whatever means. The easiest would be to just simply keep a global variable for the address in the code segement, such as:
+
+```asm
+ld r0, far_away_variable_address;
+ld r0, *r0;
+
+far_away_variable_address: 0x12345678;
+```
+
+> [!NOTE]
+> A normal `ld r0, *0x12345678;` would not work because the `ld` instruction only supports 16-bit addresses. Trying to do so would result in an assembler error notifying you that the address does not fit. 
