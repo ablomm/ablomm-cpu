@@ -14,6 +14,10 @@ Currently PUSH and POP only works on one register at a time.
 
 E.g.: `push r1, r2, r3;`
 
+### More conditions for if each condition bit is set (nor not set?)
+
+### Create timer and interupt controller in simulator
+
 ## Assembler
 
 ### Progress bar
@@ -36,12 +40,20 @@ It is possible to determine the value of pc statically at compile time. Perhaps 
 
 This would allow things like `add pc, label - $pc;` which is a jump using offsets instead of absolute addresses.
 
-### Symbol table returns ref for get_recursive()
+### Symbol table `get_recursive()` returns borrowed value instead of a cloned one
 
-Currently get_recursive returns a cloned value, but it might be possible to return some ref object.
+Currently `get_recursive()` returns a cloned value, but it might be possible to return some ref object.
 
 I tried this for a while, but couldn't figure out how to make it work with the borrow checker, but I think it might be possible.
+
+### Have some conditions aliased to others, e.g. zs (zero set) alias to eq
 
 ### Tests
 
 There is no test currently for the assembler.
+
+## Docs
+
+### Document simulator
+
+### Document something with the interupt vecotor table in assembly
