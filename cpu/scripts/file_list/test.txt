@@ -17,7 +17,9 @@ hdl/sp_reg.sv
 hdl/status_reg.sv
 
 simulation/mem.sv
+simulation/pic.sv
 simulation/tty.sv
+simulation/timer.sv
 
 testbenches/alu_tb.sv
 testbenches/cpu_reg_tb.sv
@@ -25,3 +27,4 @@ testbenches/cu_tb.sv
 testbenches/mask_filter_tb.sv
 testbenches/mem_tb.sv
 testbenches/register_file_tb.sv
+testbenches/timer_tb.sv

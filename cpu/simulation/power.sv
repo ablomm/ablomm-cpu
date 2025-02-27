@@ -1,6 +1,6 @@
 module power (
     input clk,
-    input [7:0] data,
+    input [1:0] data,
     input wr,
     input en,
     output logic rst

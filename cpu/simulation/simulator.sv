@@ -1,7 +1,8 @@
 module simulator;
   logic clk = 0;
+  wire  hwint;  // set by pic
+  wire  rst;  // set by power controller
   logic start = 1;
-  logic hwint = 0;
   tri [31:0] a_bus, b_bus, result_bus;
   wire mem_rd, mem_wr;
 
@@ -31,20 +32,41 @@ module simulator;
       .en  (b_bus[15:14] === 2'b00)
   );
 
-  // memory mapped terminal for simulation
-  tty tty0 (
+  wire timer_int;
+  timer timer0 (
+      .clk(clk),
+      .data(a_bus),
+      .reg_sel(b_bus[1:0]),
+      .rd(mem_rd && b_bus[15:2] === 14'h1000),
+      .wr(mem_wr && b_bus[15:2] === 14'h1000),
+      .timeout(timer_int)
+  );
+
+  wire [15:0] irq_sources = {{15{1'b0}}, timer_int};
+
+  // super basic pic
+  pic pic0 (
       .clk (clk),
-      .data(a_bus[7:0]),
-      .wr  (mem_wr),
-      .en  (b_bus[15:0] === 16'h4000)
+      .irq (irq_sources),
+      .out (result_bus),
+      .rd  (mem_rd && b_bus[15:0] === 16'h4004),
+      .intr(hwint)
   );
 
   // memory mapped power controller for simulation
   power power0 (
       .clk (clk),
+      .data(a_bus[1:0]),
+      .wr  (mem_wr),
+      .en  (b_bus[15:0] === 16'h4005),
+      .rst (rst)
+  );
+
+  // memory mapped terminal for simulation
+  tty tty0 (
+      .clk (clk),
       .data(a_bus[7:0]),
       .wr  (mem_wr),
-      .en  (b_bus[15:0] === 16'h4001),
-      .rst (rst)
+      .en  (b_bus[15:0] === 16'h4006)
   );
 endmodule

@@ -83,8 +83,7 @@ module cu (
   always_ff @(negedge clk) begin
     unique case (state)
       FETCH: begin
-        if (hwint & status.imask) state <= HWINT1;
-        else if (satisfies_condition(ir.condition, status.alu_status)) begin
+        if (satisfies_condition(ir.condition, status.alu_status)) begin
           unique casez (ir.instruction)
             cu_pkg::NOP: state <= NOP;
             cu_pkg::LD: begin
@@ -129,7 +128,10 @@ module cu (
       EXCEPT1: state <= EXCEPT2;
 
       STOP: if (start) state <= FETCH;
-      default: state <= FETCH;
+      default: begin
+        if (hwint & status.imask) state <= HWINT1;
+        else state <= FETCH;
+      end
     endcase
   end
 
