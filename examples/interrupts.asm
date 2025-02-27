@@ -45,7 +45,7 @@ isr:
 	// enable interupts again (the cpu disabled interupts for us)
 	or status, interupt_enable_bit;
 
-	// the cpu will push pc for us, we just need to pop it
+	// the cpu pushed pc for us, we just need to pop it
 	pop pc;
 
 sw_isr:
