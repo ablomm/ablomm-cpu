@@ -5,7 +5,7 @@ These expressions do not have any cost in the runtime of the program.
 
 For example:
 
-``` asm
+```asm
 1 * 2 * (3 / 4 >>> 2) << 1;
 ```
 
@@ -13,12 +13,29 @@ This example will compile to a machine code which contains the literal value of 
 
 You may also include expression in constant identifier assignments and instruction operands:
 
-``` asm
+```asm
 value = 4 * 2;
   ld r1, value >> (2 * 3);
 ```
 
 As shown in the previous example, expressions can contain identifiers.
+
+Identifiers are explained in the [Constants document](constants.md) and [Label document](label.md).
+
+Expresions can also contain registers:
+
+```asm
+  ld r1, *(r2 + 3 * 2);
+value = r4 - 3;
+  ld r2, *value;
+```
+
+> [!NOTE]
+> If a register is in an expression, it is only valid if the expression evaluates to a register +- some number. This is called a register offset, as outlined in the [Result Types section](#register-offset).
+
+ 
+> [!NOTE]
+> A register in an expression does to evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are compile-time and so cannot evaluate any run-time values such as registers. This is explained more in the [Constants document](constants.md).
 
 A list of all the possible operators in an expression are detailed in the table below in the order of precedence:
 
@@ -301,7 +318,235 @@ The following table enumerates the possible escape characters:
 
 ### Register
 
-Registers are simply the registers as described in the [ISA document](../cpu/isa.md#public-registers).
+Registers hold data in the CPU to use for instructions.
+
+These registers are mapped to CPU registers as seen in the [ISA document](../cpu/isa.md#public-registers).
+
+All registers are 32-bits, except the status register, which is 6-bits. Refer to the [ISA document](../cpu/isa.md#status-register) for the layout of the status register.
+
+The list of registers allowed in the assembly is as follows:
+
+<table>
+  
+<tr>
+<th>Register</th>    
+<th>Description</th>
+<th>Example</th>
+<th>CPU register</th>
+</tr>
+
+<tr>
+<td>r0</td>
+<td>General purpose</td>
+<td>
+
+`ld r0, 123;`
+
+</td>
+<td>R0</td>
+</tr>
+
+<tr>
+<td>r1</td>
+<td>General purpose</td>
+<td>
+
+`ld r1, r0;`
+
+</td>
+<td>R1</td>
+</tr>
+
+<tr>
+<td>r2</td>
+<td>General purpose</td>
+<td>
+
+`add r2, 123;`
+
+</td>
+<td>R2</td>
+</tr>
+
+<tr>
+<td>r3</td>
+<td>General purpose</td>
+<td>
+
+`sub r2, 123;`
+
+</td>
+<td>R3</td>
+</tr>
+
+<tr>
+<td>r4</td>
+<td>General purpose</td>
+<td>
+
+`sub.t 123, r4;`
+
+</td>
+<td>R4</td>
+</tr>
+
+<tr>
+<td>r5</td>
+<td>General purpose</td>
+<td>
+
+`push r5;`
+
+</td>
+<td>R5</td>
+</tr>
+
+<tr>
+<td>r6</td>
+<td>General purpose</td>
+<td>
+
+`shr r6, 2;`
+
+</td>
+<td>R6</td>
+</tr>
+
+<tr>
+<td>r7</td>
+<td>General purpose</td>
+<td>
+
+`shr.s r7, r2;`
+
+</td>
+<td>R7</td>
+</tr>
+
+<tr>
+<td>r8</td>
+<td>General purpose</td>
+<td>
+
+`ld r8, *123;`
+
+</td>
+<td>R8</td>
+</tr>
+
+<tr>
+<td>r9</td>
+<td>General purpose</td>
+<td>
+
+`ld *123, r9;`
+
+</td>
+<td>R9</td>
+</tr>
+
+<tr>
+<td>r10</td>
+<td>
+  
+General purpose (if not using as `fp`)
+
+</td>
+<td>
+
+`ld r10, r5;`
+
+</td>
+<td rowspan="2">R10</td>
+</tr>
+
+<tr>
+<td>fp</td>
+<td>
+  
+Frame pointer; aliases to `r10`
+
+</td>
+<td>
+
+`ld r0, *(fp + 3);`
+
+</td>
+</tr>
+
+<tr>
+<td>status</td>
+<td>
+  
+State of the CPU; conditions, interupt mask, and mode. Refer to the [ISA document](../cpu/isa.md#status-register) for more information
+
+</td>
+<td>
+
+`or status, 0b10;`
+
+</td>
+<td>STATUS</td>
+</tr>
+
+<tr>
+<td>sp</td>
+<td>Stack pointer; points to last item in stack, and grows down</td>
+<td>
+
+`sub sp, 10;`
+
+</td>
+<td>SP</td>
+</tr>
+
+<tr>
+<td>lr</td>
+<td>
+  
+Link register; is set to previous `pc` value if `pc.link` is written to
+
+</td>
+<td>
+
+`ld pc, lr;`
+
+</td>
+<td>LR</td>
+
+<tr>
+<td>pc.link</td>
+<td>
+  
+Program counter with link; A pseudo register used to load `pc` and load `lr` with the previous `pc` value (much like some ISA's jump with link). Use this register to jump and set `lr`
+
+</td>
+<td>
+
+`ld pc.link, print;`
+
+</td>
+<td>PCLINK</td>
+</tr>
+
+<tr>
+<td>pc</td>
+<td>
+  
+Program counter; points to next instruction to run. Use this register to jump without setting `lr`
+
+</td>
+<td>
+
+`ld pc, end;`
+
+</td>
+<td>PC</td>
+</tr>
+
+</tr>
+
+</table>
 
 Example: `r1`, `pc`, and `lr`
 

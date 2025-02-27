@@ -1,30 +1,30 @@
 # Public Registers
 
-There are 11, 32-bit, general purpose register (`r0` to `r10`)
-
-> [!NOTE]
-> `r10` has no special meaning to the CPU, although, the assembler will use "`fp`" (frame pointer) as an alias to `r10`.
+There are 11, 32-bit, general purpose register (`R0` to `R10`)
 
 There are 4 special purpose registers with varying widths. The table below enumerates all registers and their purpose.
 
 | Register | Code | Description | Width |
 |---|---|---|---|
-| r0 | 0x0 | General purpose | 32 |
-| r1 | 0x1 | General purpose | 32 |
-| r2 | 0x2 | General purpose | 32 |
-| r3 | 0x3 | General purpose | 32 |
-| r4 | 0x4 | General purpose | 32 |
-| r5 | 0x5 | General purpose | 32 |
-| r6 | 0x6 | General purpose | 32 |
-| r7 | 0x7 | General purpose | 32 |
-| r8 | 0x8 | General purpose | 32 |
-| r9 | 0x9 | General purpose | 32 |
-| r10 | 0xa | General purpose | 32 |
-| status | 0xb | state of the CPU; conditions, interupt mask, and mode | 6 |
-| sp | 0xc | stack pointer; points to last item in stack, and grows down | 32 |
-| lr | 0xd | link register; is set to previous pc value if pc.link is written to | 32 |
-| pc.link | 0xe | program counter; A pseudo register used to load pc and load lr with the previous pc value (much like some ISA's jump with link) | 32 |
-| pc | 0xf | program counter; points to next instruction to run | 32 |
+| R0 | 0x0 | General purpose | 32 |
+| R1 | 0x1 | General purpose | 32 |
+| R2 | 0x2 | General purpose | 32 |
+| R3 | 0x3 | General purpose | 32 |
+| R4 | 0x4 | General purpose | 32 |
+| R5 | 0x5 | General purpose | 32 |
+| R6 | 0x6 | General purpose | 32 |
+| R7 | 0x7 | General purpose | 32 |
+| R8 | 0x8 | General purpose | 32 |
+| R9 | 0x9 | General purpose | 32 |
+| R10 | 0xa | General purpose | 32 |
+| STATUS | 0xb | State of the CPU; conditions, interupt mask, and mode | 6 |
+| SP | 0xc | Stack pointer; points to last item in stack, and grows down | 32 |
+| LR | 0xd | Link register; is set to previous `PC` value if `PCLINK` is written to | 32 |
+| PCLINK | 0xe | Program counter; A pseudo register used to load `PC` and load `LR` with the previous `PC` value (much like some ISA's jump with link) | 32 |
+| PC | 0xf | Program counter; points to next instruction to run | 32 |
+
+> [!NOTE]
+> The assembler has more registers that will alias to this set, notably `fp` which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Upercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
 
 ## Status Register
 
@@ -276,6 +276,8 @@ Hardware and software interrupts, as well as exceptions, will push pc before jum
 Start will reset all registers to 0.
 
 All of these jumps will result in entering supervisor mode.
+
+Check out the [Interrupt example](../../examples/interrupts.asm) for how to set up the interupt vector table.
 
 # Addresses
 
