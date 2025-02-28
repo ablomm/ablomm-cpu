@@ -27,6 +27,7 @@ module timer #(
         timer_pkg::CTRL: control_reg <= timer_ctrl_t'(data[1:0]);
         timer_pkg::INTERVAL: interval_reg <= data;
         timer_pkg::TIMER: timer_reg <= data;
+        default: ;
       endcase
     end
   end
@@ -58,6 +59,7 @@ module timer #(
       timer_pkg::CTRL: sel_reg_val = control_reg;
       timer_pkg::INTERVAL: sel_reg_val = interval_reg;
       timer_pkg::TIMER: sel_reg_val = timer_reg;
+      default: ;
     endcase
   endfunction
 endmodule
