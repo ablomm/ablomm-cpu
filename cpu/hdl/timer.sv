@@ -17,7 +17,6 @@ module timer #(
   logic [WORD_SIZE-1:0] timer_reg;
 
   // reads
-  //always_comb out = out_val(rd, reg_sel, control_reg, interval_reg, timer_reg);
   assign out = rd ? sel_reg_val(reg_sel, control_reg, interval_reg, timer_reg) : 'hz;
 
   // writes
