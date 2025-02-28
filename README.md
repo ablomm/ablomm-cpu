@@ -1,6 +1,8 @@
 # Ablomm CPU and Assembler
+![ablomm_ghost](https://github.com/user-attachments/assets/1b8abaa7-37c0-4045-9683-3ea57e72a7a0)
 
-This project contains a fully functioning 32 bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
+
+This project contains a fully functioning 32-bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
 
 The CPU can be simulated with Verilator or Icarus Verilog.
 
@@ -8,11 +10,110 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
 
 ## Contents
 
+- [Examples](#examples)
 - [Building and Running](#building-and-running)
 - [Documentation](#documentation)
 - [Assembler](#assembler)
 	- [Key Features](#key-features)
- 	- [Examples](#examples)
+
+## Examples:
+
+### Define a few variables:
+
+```asm
+export tty = *0x4006;
+export power = *0x4005;
+export power_shutdown_code = 0;
+export power_restart_code = 1;
+```
+
+### Count from 0 to 9 and print it to the terminal:
+
+```asm
+import * from "lib/defines.asm";
+
+num = r0;
+new_line = r1;
+
+	ld r0, '0';
+loop:
+	ld tty, num;
+	add num, 1;
+	sub.t num, '9';
+	ld.ule pc, loop;
+
+	ld new_line, '\n';
+	ld tty, new_line;
+
+	ld r0, power_shutdown_code;
+	ld power, r0;
+```
+
+![image](https://github.com/user-attachments/assets/a562133a-cbc3-48e3-945d-33867e017e60)
+
+
+### Print a null terminated string to the terminal:
+
+```asm
+import * from "defines.asm";
+
+// params: r0 = string to be printed
+export print: {
+		push r1;
+		push r2;
+
+	string_ptr = r0;
+	string_word = r1;
+	bytes_left = r2;
+
+	print_word:
+		ld string_word, *string_ptr;
+		ld bytes_left, 4; // 4 bytes in a word
+
+	/* 
+		since memory is only word addressible
+		we need to do some shifts to get each byte
+		individually
+	*/
+
+	print_byte:
+		and.t string_word, 0xff;
+		ld.eq pc, return; // i.e. lsb is null '\0'
+		ld tty, string_word;
+		shr string_word, 8;
+		sub.s bytes_left, 1;
+		ld.ne pc, print_byte;
+		// we have printed all the bytes in the word
+		add string_ptr, 1;
+		ld pc, print_word;
+	return:
+		pop r2;
+		pop r1;
+		ld pc, lr;
+  }
+```
+
+### Print hello world using the print function defined above:
+
+```asm
+import * from "lib/defines.asm";
+import print from "lib/print.asm";
+
+	ld r0, string1;
+	ld pc.link, print;
+	ld r0, string2;
+	ld pc.link, print;
+
+	ld r0, power_shutdown_code;
+	ld power, r0;
+
+string1: "Hello world!👻\n\0";
+string2: "Hello world, again!😵\n\0";
+```
+
+![image](https://github.com/user-attachments/assets/d3693ec4-e594-45c5-b75d-19c36e0dd057)
+
+For more examples, check out the [Examples directory](examples)!
  
 ## Building and Running
 
@@ -131,100 +232,3 @@ local_variable = *(fp + 3);
   ld r0, 5 << 2 + tty_address * 4;
   ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
 ```
-
-## Examples:
-
-### Define a few variables:
-
-```asm
-export tty = *0x4000;
-export power = *0x4001;
-export SHUTDOWN = 0;
-export RESTART = 1;
-```
-
-### Count from 0 to 9 and print it to the terminal:
-
-```asm
-import * from "lib/defines.asm";
-
-num = r0;
-new_line = r1;
-
-	ld r0, '0';
-loop:
-	ld tty, num;
-	add num, 1;
-	sub.t num, '9';
-	ld.ule pc, loop;
-
-	ld new_line, '\n';
-	ld tty, new_line;
-
-	ld r0, SHUTDOWN;
-	ld power, r0;
-```
-
-![image](https://github.com/user-attachments/assets/a562133a-cbc3-48e3-945d-33867e017e60)
-
-
-### Print a null terminated string to the terminal:
-
-```asm
-import * from "defines.asm";
-
-// params: r0 = string to be printed
-export print: {
-		push r1;
-		push r2;
-
-	string_ptr = r0;
-	string_word = r1;
-	bytes_left = r2;
-
-	print_word:
-		ld string_word, *string_ptr;
-		ld bytes_left, 4; // 4 bytes in a word
-
-	/* 
-		since memory is only word addressible
-		we need to do some shifts to get each byte
-		individually
-	*/
-
-	print_byte:
-		and.t string_word, 0xff;
-		ld.eq pc, return; // i.e. lsb is null '\0'
-		ld tty, string_word;
-		shr string_word, 8;
-		sub.s bytes_left, 1;
-		ld.ne pc, print_byte;
-		// we have printed all the bytes in the word
-		add string_ptr, 1;
-		ld pc, print_word;
-	return:
-		pop r2;
-		pop r1;
-		ld pc, lr;
-  }
-```
-
-### Print hello world using the print function defined above:
-
-```asm
-import * from "lib/defines.asm";
-import print from "lib/print.asm";
-
-	ld r0, string1;
-	ld pc.link, print;
-	ld r0, string2;
-	ld pc.link, print;
-
-	ld r0, SHUTDOWN;
-	ld power, r0;
-
-string1: "Hello world!👻\n\0";
-string2: "Hello world, again!😵\n\0";
-```
-
-![image](https://github.com/user-attachments/assets/d3693ec4-e594-45c5-b75d-19c36e0dd057)
