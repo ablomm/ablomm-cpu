@@ -1,5 +1,5 @@
 # Ablomm CPU and Assembler
-![ablomm_ghost](https://github.com/user-attachments/assets/1b8abaa7-37c0-4045-9683-3ea57e72a7a0)
+![ablomm_ghost](https://github.com/user-attachments/assets/490bea8d-e06b-4051-b459-b5ccc5217a4f)
 
 
 This project contains a fully functioning 32-bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
