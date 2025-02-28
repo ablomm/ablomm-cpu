@@ -6,7 +6,7 @@ module cpu (
     input clk,
     input start,
     input rst,
-    input hwint,
+    input irq,
     output [31:0] a_bus,  // not tri, as it is driven by the filters (the reg bus is a tri)
     output [31:0] b_bus,  // not tri, as it is driven by the filters (the reg bus is a tri)
     output tri [31:0] result_bus,

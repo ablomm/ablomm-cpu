@@ -4,7 +4,7 @@ module cu_tb;
 
   logic clk;
   logic start;
-  logic hwint;
+  logic irq;
   logic rst = 0;
   ir_t ir;
   status_t status;

@@ -1,3 +1,4 @@
+// power controller
 module power (
     input clk,
     input [1:0] data,

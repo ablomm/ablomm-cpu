@@ -2,11 +2,12 @@ import cu_pkg::*;
 import alu_pkg::*;
 import reg_pkg::*;
 
+// control unit
 module cu (
     input clk,
     input wire start,
     input wire rst,
-    input wire hwint,
+    input wire irq,
 
     input wire ir_t ir,
     input wire status_t status,
@@ -129,7 +130,7 @@ module cu (
 
       STOP: if (start) state <= FETCH;
       default: begin
-        if (hwint & status.imask) state <= HWINT1;
+        if (irq & status.imask) state <= HWINT1;
         else state <= FETCH;
       end
     endcase

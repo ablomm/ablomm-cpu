@@ -1,3 +1,4 @@
+// stack pointer
 module sp_reg #(
     parameter integer SIZE = 32,
     parameter logic [SIZE-1:0] INITIAL_VAL = 0

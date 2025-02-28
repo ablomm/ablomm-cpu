@@ -4,11 +4,11 @@ module ic #(
     parameter integer IRQ_LENGTH = 16
 ) (
     input clk,
-    input [IRQ_LENGTH-1:0] irq,
+    input [IRQ_LENGTH-1:0] irq_in,
     output tri [WORD_SIZE-1:0] out,
     input rd,
-    output intr
+    output irq_out
 );
-  assign out  = rd ? irq : 'hz;
-  assign intr = irq !== 'b0;
+  assign out = rd ? irq_in : 'hz;
+  assign irq_out = irq_in !== 'b0;
 endmodule
