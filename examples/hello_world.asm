@@ -6,7 +6,7 @@ import print from "lib/print.asm";
 	ld r0, string2;
 	ld pc.link, print;
 
-	ld r0, SHUTDOWN;
+	ld r0, power_shutdown_code;
 	ld power, r0;
 
 string1: "Hello world!👻\n\0";

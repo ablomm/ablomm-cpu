@@ -37,6 +37,7 @@ module simulator;
       .clk(clk),
       .data(a_bus),
       .reg_sel(b_bus[1:0]),
+      .out(result_bus),
       .rd(mem_rd && b_bus[15:2] === 14'h1000),
       .wr(mem_wr && b_bus[15:2] === 14'h1000),
       .timeout(timer_int)
@@ -44,8 +45,7 @@ module simulator;
 
   wire [15:0] irq_sources = {{15{1'b0}}, timer_int};
 
-  // super basic pic
-  pic pic0 (
+  ic ic0 (
       .clk (clk),
       .irq (irq_sources),
       .out (result_bus),

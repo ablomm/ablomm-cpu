@@ -1,4 +1,5 @@
-module pic #(
+// super basic interupt conroller; basically just an AND gate
+module ic #(
     parameter integer WORD_SIZE  = 32,
     parameter integer IRQ_LENGTH = 16
 ) (

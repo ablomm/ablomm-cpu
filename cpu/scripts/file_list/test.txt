@@ -1,25 +1,24 @@
 hdl/packages/alu_pkg.sv
 hdl/packages/reg_pkg.sv
 hdl/packages/cu_pkg.sv
+hdl/packages/timer_pkg.sv
 
 hdl/alu.sv
 hdl/cpu.sv
 hdl/cpu_reg.sv
 hdl/cu.sv
 hdl/full_adder.sv
+hdl/ic.sv
 hdl/lr_reg.sv
 hdl/mask_filter.sv
+hdl/mem.sv
 hdl/offset_filter.sv
 hdl/pc_reg.sv
 hdl/reg_constants.sv
 hdl/register_file.sv
 hdl/sp_reg.sv
 hdl/status_reg.sv
-
-simulation/mem.sv
-simulation/pic.sv
-simulation/tty.sv
-simulation/timer.sv
+hdl/timer.sv
 
 testbenches/alu_tb.sv
 testbenches/cpu_reg_tb.sv

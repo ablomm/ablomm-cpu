@@ -13,5 +13,5 @@ loop:
 	ld new_line, '\n';
 	ld tty, new_line;
 
-	ld r0, SHUTDOWN;
+	ld r0, power_shutdown_code;
 	ld power, r0;
