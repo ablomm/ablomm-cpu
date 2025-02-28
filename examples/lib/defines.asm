@@ -10,7 +10,7 @@ export timer_timer = *0x4003;
 export timer_ctrl_start = 0b01;
 export timer_ctrl_continue = 0b10;
 
-export pic = *0x4004;
+export ic = *0x4004;
 
 export power = *0x4005;
 export power_shutdown_code = 0;

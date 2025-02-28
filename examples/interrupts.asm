@@ -34,7 +34,7 @@ isr:
 	ld pc.link, print;
 
 	// check the interupt and acknowledge it
-	ld r0, pic;
+	ld r0, ic;
 	and.t r0, timer_interupt_mask;
 	ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
 
