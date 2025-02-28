@@ -1,6 +1,6 @@
 # Timer
 
-Included in the project is a timer device, which is used to create interrupts at a set interval. The timer implementation can be found in the [`timer.sv` file](../cpu/hdl/timer.sv).
+Included in the project is a timer device, which is used to create interrupts at a set interval.
 
 The timer is a countdown timer.
 
@@ -55,7 +55,7 @@ The `TIMER` register contains the current value of the timer. The timer raises a
 
 ## Memory Map
 
-The simulator will map the timer to addresses `0x4000` to `0x4003`.
+The simulator will map the timer to addresses `0x4000` to `0x4003`, as documented in the [Simulator document](simulator.md#memory-map).
 
 Therefore, the registers are memory mapped as follows:
 
@@ -68,7 +68,7 @@ Therefore, the registers are memory mapped as follows:
 
 ## Interupt Map
 
-The simulator will set the timer as the 0th interrupt in the interrupt controller. The interrupt controller is documented in the [Interrupt Controller document](interrupt_controller),
+The simulator will set the timer as the 0th interrupt in the interrupt controller. The interrupt controller is documented in the [Interrupt Controller document](interrupt_controller.md).
 
 ## Examples
 

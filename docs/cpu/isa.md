@@ -265,7 +265,7 @@ The addresses of various locations in memory the CPU may jump to in each case ar
 | Purpose | Address | When |
 |---|---|---|
 | Start | 0 | When CPU turns on or resets |
-| Hardware interrupt | 1 | When interupt mask is set and the hwint line is high |
+| Hardware interrupt | 1 | When interupt mask is set and the IRQ line is high |
 | Software interrupt | 2 | When the instruction `int` is ran |
 | Exception | 3 | When a privledged operation is ran in user mode |
 

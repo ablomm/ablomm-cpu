@@ -44,19 +44,6 @@ Currently `get_recursive()` returns a cloned value, but it might be possible to 
 
 I tried this for a while, but couldn't figure out how to make it work with the borrow checker, but I think it might be possible.
 
-### Have some conditions aliased to others, e.g. zs (zero set) alias to eq
-
 ### Tests
 
 There is no test currently for the assembler.
-
-## Docs
-
-### Document simulator
-
-### Document something with the interupt vecotor table in assembly (an example maybe?)
-
-### document fp
-
-## Misc
-### Rename "programs" dir to "examples"

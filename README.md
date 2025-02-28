@@ -121,7 +121,7 @@ To build and run this project see the [setup](docs/setup.md) document.
 
 ## Documentation
 
-Please refer to the [docs directory](docs/) for the documentation on the assembly syntax and the CPU's ISA.
+Please refer to the [docs directory](docs/) for the documentation.
 
 # Assembler
 

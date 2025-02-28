@@ -8,7 +8,7 @@ Reading is not supported, and may cause any random value to be read.
 
 ## Memory Map
 
-The simulator will map the TTY to address `0x4006`.
+The simulator will map the TTY to address `0x4006`, as documented in the [Simulator document](simulator.md#memory-map).
 
 ## Examples
 
