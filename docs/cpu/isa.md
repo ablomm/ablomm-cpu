@@ -277,7 +277,7 @@ Start will reset all registers to 0.
 
 All of these jumps will result in entering supervisor mode.
 
-Check out the [Interrupt example](../../examples/interrupts.asm) for how to set up the interupt vector table.
+Check out the [Interrupts example](../../examples/interrupts.asm) for how to set up the interupt vector table.
 
 # Addresses
 
