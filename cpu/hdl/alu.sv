@@ -1,19 +1,21 @@
 import alu_pkg::*;
 
-module alu (
+module alu #(
+    parameter integer WIDTH = 32
+) (
     input oe,
     input alu_op_e operation,
     input carry_in,
-    input [31:0] a,
-    input [31:0] b,
-    output tri [31:0] out,
+    input [WIDTH-1:0] a,
+    input [WIDTH-1:0] b,
+    output tri [WIDTH-1:0] out,
     output alu_status_t status
 );
-  logic [31:0] out_var;
+  logic [WIDTH-1:0] out_var;
 
   assign out = oe ? out_var : 'hz;
 
-  logic [31:0] adder_a, adder_b, adder_out;
+  logic [WIDTH-1:0] adder_a, adder_b, adder_out;
   logic adder_carry_in, adder_borrow_in;
   wire adder_carry_out, adder_overflow;
   full_adder adder (
@@ -78,7 +80,7 @@ module alu (
       end
 
       alu_pkg::NEG:  out_var = -b;
-      alu_pkg::SHL:  {status.carry, out_var} = a << b;
+      alu_pkg::SHL:  {status.carry, out_var} = (WIDTH + 1)'(a) << (WIDTH + 1)'(b);
       alu_pkg::SHR:  out_var = a >> b;
       alu_pkg::ASHR: out_var = $signed(a) >>> b;
 

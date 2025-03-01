@@ -25,5 +25,6 @@ testbenches/cpu_reg_tb.sv
 testbenches/cu_tb.sv
 testbenches/mask_filter_tb.sv
 testbenches/mem_tb.sv
+testbenches/offset_filter_tb.sv
 testbenches/register_file_tb.sv
 testbenches/timer_tb.sv

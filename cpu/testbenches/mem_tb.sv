@@ -15,7 +15,7 @@ module mem_tb;
     test_rd_wr(16, 223);
   end
 
-  task static test_write(input logic [15:0] addr_in, input logic [32:0] data_in);
+  task static test_write(input logic [15:0] addr_in, input logic [31:0] data_in);
     begin
       clk = 0;
       #1;
@@ -37,7 +37,7 @@ module mem_tb;
     end
   endtask
 
-  task static test_rd_wr(input logic [15:0] addr_in, input logic [32:0] data_in);
+  task static test_rd_wr(input logic [15:0] addr_in, input logic [31:0] data_in);
     begin
       test_write(addr_in, data_in);
       test_read(addr_in);

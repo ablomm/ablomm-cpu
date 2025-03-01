@@ -77,64 +77,64 @@ module cu (
 
   states_e state = STOP;
 
-  always @(posedge rst) state <= STOP;
-
   // state changes
   // negative edge to fix race conditions
-  always_ff @(negedge clk) begin
-    unique case (state)
-      FETCH: begin
-        if (satisfies_condition(ir.condition, status.alu_status)) begin
-          unique casez (ir.instruction)
-            cu_pkg::NOP: state <= NOP;
-            cu_pkg::LD: begin
-              if (ir.operands.ld.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
-                state <= EXCEPT1;
-              else state <= LD;
-            end
-            cu_pkg::LDR: begin
-              if (ir.operands.ldr.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
-                state <= EXCEPT1;
-              else state <= LDR;
-            end
-            cu_pkg::LDI: begin
-              if (ir.operands.ldi.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
-                state <= EXCEPT1;
-              else state <= LDI;
-            end
-            cu_pkg::ST: state <= ST;
-            cu_pkg::STR: state <= STR;
-            cu_pkg::PUSH: state <= PUSH;
-            cu_pkg::POP: begin
-              if (ir.operands.pop.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
-                state <= EXCEPT1;
-              else state <= POP;
-            end
-            cu_pkg::INT: state <= SWINT1;
-            // all alu ops will have a f in first instruction nibble
-            // the second nibble will be the alu_op
-            'hf?: begin
-              // exception if try to load status when not in supervisor mode
-              if (ir.operands.unknown_alu_op.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
-                state <= EXCEPT1;
-              else state <= ALU;
-            end
-            default: state <= EXCEPT1;
-          endcase
+  always_ff @(negedge clk or posedge rst)
+    if (rst) state <= STOP;
+    else begin
+      unique case (state)
+        FETCH: begin
+          if (satisfies_condition(ir.condition, status.alu_status)) begin
+            unique casez (ir.instruction)
+              cu_pkg::NOP: state <= NOP;
+              cu_pkg::LD: begin
+                if (ir.operands.ld.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                  state <= EXCEPT1;
+                else state <= LD;
+              end
+              cu_pkg::LDR: begin
+                if (ir.operands.ldr.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                  state <= EXCEPT1;
+                else state <= LDR;
+              end
+              cu_pkg::LDI: begin
+                if (ir.operands.ldi.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                  state <= EXCEPT1;
+                else state <= LDI;
+              end
+              cu_pkg::ST: state <= ST;
+              cu_pkg::STR: state <= STR;
+              cu_pkg::PUSH: state <= PUSH;
+              cu_pkg::POP: begin
+                if (ir.operands.pop.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                  state <= EXCEPT1;
+                else state <= POP;
+              end
+              cu_pkg::INT: state <= SWINT1;
+              // all alu ops will have a f in first instruction nibble
+              // the second nibble will be the alu_op
+              'hf?: begin
+                // exception if try to load status when not in supervisor mode
+                if (ir.operands.unknown_alu_op.reg_a === reg_pkg::STATUS && status.mode !== reg_pkg::SUPERVISOR)
+                  state <= EXCEPT1;
+                else state <= ALU;
+              end
+              default: state <= EXCEPT1;
+            endcase
+          end
         end
-      end
 
-      SWINT1:  state <= SWINT2;
-      HWINT1:  state <= HWINT2;
-      EXCEPT1: state <= EXCEPT2;
+        SWINT1:  state <= SWINT2;
+        HWINT1:  state <= HWINT2;
+        EXCEPT1: state <= EXCEPT2;
 
-      STOP: if (start) state <= FETCH;
-      default: begin
-        if (irq & status.imask) state <= HWINT1;
-        else state <= FETCH;
-      end
-    endcase
-  end
+        STOP: if (start) state <= FETCH;
+        default: begin
+          if (irq & status.imask) state <= HWINT1;
+          else state <= FETCH;
+        end
+      endcase
+    end
 
   function static logic satisfies_condition(input cond_e condition, input alu_status_t status);
     begin

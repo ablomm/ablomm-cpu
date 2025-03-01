@@ -95,7 +95,7 @@ module cu_tb;
                        input reg_e reg_b_in = reg_pkg::R1, input reg_e reg_c_in = reg_pkg::R2);
     begin
       ir.condition = NONE;
-      ir.instruction = instruction_e'(op_in | 8'hf0);  // alu ops start with 0xf*
+      ir.instruction = instruction_e'(8'(op_in) | 8'hf0);  // alu ops start with 0xf*
       ir.operands.alu_op.flags.immediate = 0;
       ir.operands.alu_op.flags.reverse = reverse_in;
       ir.operands.alu_op.flags.loadn = loadn_in;

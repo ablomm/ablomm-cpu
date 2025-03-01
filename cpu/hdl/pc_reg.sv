@@ -18,9 +18,7 @@ module pc_reg #(
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
 
-  always @(posedge rst) value <= INITIAL_VAL;
-
-  always @(posedge clk) begin
-    value <= (ld ? in : value) + post_inc;
-  end
+  always @(posedge clk or posedge rst)
+    if (rst) value <= INITIAL_VAL;
+    else value <= (ld ? in : value) + SIZE'(post_inc);
 endmodule

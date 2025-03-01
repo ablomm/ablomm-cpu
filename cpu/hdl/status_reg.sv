@@ -20,15 +20,16 @@ module status_reg #(
     output status_t value = INITIAL_VAL
 );
 
-  assign a = oe_a ? value : 'hz;
-  assign b = oe_b ? value : 'hz;
+  // for some reason verilator complains when it's 'hz
+  assign a = oe_a ? value : 6'hz;
+  assign b = oe_b ? value : 6'hz;
 
-  always @(posedge rst) value <= INITIAL_VAL;
-
-  always_ff @(posedge clk) begin
-    if (ld) value <= in;
-    if (ld_alu_status) value.alu_status <= alu_status_in;
-    if (ld_imask) value.imask <= imask_in;
-    if (ld_mode) value.mode <= mode_in;
-  end
+  always_ff @(posedge clk or posedge rst)
+    if (rst) value <= INITIAL_VAL;
+    else begin
+      if (ld) value <= in;
+      if (ld_alu_status) value.alu_status <= alu_status_in;
+      if (ld_imask) value.imask <= imask_in;
+      if (ld_mode) value.mode <= mode_in;
+    end
 endmodule

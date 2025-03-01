@@ -6,8 +6,5 @@ module offset_filter #(
     input [WIDTH-1:0] in,
     input signed [OFFSET_WIDTH-1:0] offset
 );
-  // for whatever reason, an explicit wire is required
-  // (it wont sign extend if you just put in offset directly)
-  wire [WIDTH-1:0] extended_offset = offset;
-  assign out = in + extended_offset;
+  assign out = in + WIDTH'(offset);
 endmodule

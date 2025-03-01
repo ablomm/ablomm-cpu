@@ -1,5 +1,3 @@
--Wno-BLKANDNBLK
--Wno-MULTITOP
 -Wno-fatal
 -j 0
 --binary

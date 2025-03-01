@@ -12,7 +12,7 @@ module timer_tb;
   timer timer (.*);
 
   initial begin
-    #700;
+    #800;
     $display("\ntesting timer");
     test_interval(4);
     test_interval(8);
@@ -44,7 +44,7 @@ module timer_tb;
 
       clk = 0;
       reg_sel = timer_pkg::CTRL;
-      data = timer_ctrl;
+      data = 32'(timer_ctrl);
       wr = 1;
       #1;
       clk = 1;
@@ -52,7 +52,7 @@ module timer_tb;
       wr  = 0;
       clk = 0;
       #1;
-      test_read(timer_pkg::CTRL, timer_ctrl);
+      test_read(timer_pkg::CTRL, 32'(timer_ctrl));
     end
   endtask
 

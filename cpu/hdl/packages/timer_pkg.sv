@@ -9,7 +9,7 @@ package timer_pkg;
     ACK = 2'h0,
     CTRL,
     INTERVAL,
-	TIMER
+    TIMER
   } timer_reg_e;
 
 endpackage

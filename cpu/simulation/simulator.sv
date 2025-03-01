@@ -39,7 +39,7 @@ module simulator;
   ic ic0 (
       .clk(clk),
       .irq_in(irq_sources),
-      .out(result_bus),
+      .out(result_bus[15:0]),
       .rd(mem_rd && b_bus[15:0] === 16'h4004),
       .irq_out(irq)
   );

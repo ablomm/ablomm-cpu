@@ -7,17 +7,18 @@ module mask_filter_tb;
   initial begin
     #400;
     $display("\ntesting filter");
-    test_filter(32'hffffffff, 32'hf0f0f0f0);
-    test_filter(32'h12312312, 32'h50f37431);
+    test_filter('hffffffff, 'hf0f0f0f0, 'hf0f0f0f0);
+    test_filter('h12312312, 'h50f37431, 'h10312010);
   end
 
-  task static test_filter(input logic [31:0] in_in, input logic [31:0] mask_in);
+  task static test_filter(input logic [31:0] in_in, input logic [31:0] mask_in,
+                          input logic [31:0] expected);
     begin
       in   = in_in;
       mask = mask_in;
       #1;
-      $display("out = %d", out);
-      assert (out === (in_in & mask_in))
+      $display("in = %h, mask = %h, out = %h, expected = %h", in_in, mask_in, out, expected);
+      assert (out === expected)
       else $fatal;
     end
   endtask

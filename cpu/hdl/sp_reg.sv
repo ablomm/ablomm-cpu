@@ -13,17 +13,18 @@ module sp_reg #(
     input ld,
     input post_inc,
     input pre_dec,
-    output logic [SIZE-1:0] value = INITIAL_VAL // only if you need to direclty access (not on the data/addr bus)
+    output [SIZE-1:0] value  // only if you need to direclty access (not on the data/addr bus)
 );
 
+  logic [SIZE-1:0] value_reg = INITIAL_VAL;
+
+  // I have to do this instead of just having an `always @(pre_dec) value_reg -= 1;
+  // because apparently it's not good to have both blocking and nonblock assignments
+  assign value = value_reg - SIZE'(pre_dec);
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
 
-  always @(posedge rst) value <= INITIAL_VAL;
-
-  always @(posedge pre_dec) value -= 1;
-
-  always @(posedge clk) begin
-    value <= (ld ? in : value) + post_inc;
-  end
+  always_ff @(posedge clk or posedge rst)
+    if (rst) value_reg <= INITIAL_VAL;
+    else value_reg <= (ld ? in : value_reg) + SIZE'(post_inc) - SIZE'(pre_dec);
 endmodule

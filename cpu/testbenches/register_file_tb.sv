@@ -15,7 +15,7 @@ module register_file_tb;
   register_file reg_file0 (.*);
 
   initial begin
-    #600;
+    #700;
     $display("\ntesting register_file");
     test_ld_oe(reg_pkg::R0, 123);
     test_ld_oe(reg_pkg::R1, 321);
@@ -51,7 +51,7 @@ module register_file_tb;
     end
   endtask
 
-  task static test_ld_oe(input reg_e sel_reg_in, input logic [32:0] data_in);
+  task static test_ld_oe(input reg_e sel_reg_in, input logic [31:0] data_in);
     begin
       test_ld(sel_reg_in, data_in);
       test_oe_a(sel_reg_in);
