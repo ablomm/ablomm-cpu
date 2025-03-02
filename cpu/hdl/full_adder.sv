@@ -11,7 +11,7 @@ module full_adder #(
 );
   always_comb begin
     // I think we actually want the borrow to be sign extended here (up to WIDTH bits)
-    {carry_out, out} = WIDTH'(a) + WIDTH'(b) + WIDTH'(carry_in) - WIDTH'(borrow_in);
+    {carry_out, out} = (WIDTH+1)'(a) + (WIDTH+1)'(b) + (WIDTH+1)'(carry_in) - (WIDTH+1)'(borrow_in);
     overflow = out[WIDTH-1] ^ a[WIDTH-1] ^ b[WIDTH-1] ^ carry_out;
   end
 endmodule

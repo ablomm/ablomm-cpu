@@ -8,15 +8,14 @@ module timer_tb;
   logic rd, wr;
   wire timeout;
 
-  integer i;
   timer timer (.*);
 
   initial begin
-    #800;
+    #1300;
     $display("\ntesting timer");
-    test_interval(4);
-    test_interval(8);
-    test_interval(10);
+    test_timer(4);
+    test_timer(8);
+    test_timer(10);
   end
 
   task static load_interval(input logic [31:0] interval);
@@ -26,12 +25,13 @@ module timer_tb;
       reg_sel = timer_pkg::INTERVAL;
       wr = 1;
       #1;
+
       clk = 1;
       #1;
+
       wr  = 0;
       clk = 0;
       #1;
-      test_read(timer_pkg::INTERVAL, interval);
     end
   endtask
 
@@ -47,12 +47,13 @@ module timer_tb;
       data = 32'(timer_ctrl);
       wr = 1;
       #1;
+
       clk = 1;
       #1;
+
       wr  = 0;
       clk = 0;
       #1;
-      test_read(timer_pkg::CTRL, 32'(timer_ctrl));
     end
   endtask
 
@@ -62,8 +63,10 @@ module timer_tb;
       reg_sel = timer_pkg::ACK;
       wr = 1;
       #1;
+
       clk = 1;
       #1;
+
       wr  = 0;
       clk = 0;
       #1;
@@ -74,42 +77,56 @@ module timer_tb;
     begin
       clk = 0;
       #1;
+
       clk = 1;
       #1;
+
       clk = 0;
       #1;
     end
   endtask
 
-  task static test_read(timer_reg_e in_reg, logic [31:0] expected);
+  task static read_register(input timer_reg_e reg_in, output logic [31:0] value_out);
     begin
-      reg_sel = in_reg;
+      reg_sel = reg_in;
       rd = 1;
       wr = 0;
       #1;
 
-      $display("reading register 0b%b = %d; expected = %d", in_reg, out, expected);
-      assert (out === expected)
-      else $fatal;
-
-      #1;
+      value_out = out;
       rd = 0;
+      #1;
     end
   endtask
 
-  task static test_interval(input logic [31:0] interval);
-    $display("interval = %d", interval);
+  task static test_read_expected(input timer_reg_e reg_in, input logic [31:0] expected);
     begin
-      clk = 0;
+      logic [31:0] read_value;
+
+      read_register(reg_in, read_value);
+
+      $display("reading register 0b%b = %d; expected = %d", reg_in, read_value, expected);
+      assert (read_value === expected)
+      else $fatal;
+    end
+  endtask
+
+  task static test_timer(input logic [31:0] interval);
+    begin
+      integer i;
+
+      $display("interval = %d", interval);
       load_interval(interval);
+      test_read_expected(timer_pkg::INTERVAL, interval);
 
       start_timer();
+      test_read_expected(timer_pkg::CTRL, 'b01);
 
       for (i = 1; i <= interval; i++) begin
         assert (timeout === 'b0)
         else $fatal;
         clock_timer();
-        test_read(timer_pkg::TIMER, interval - i);
+        test_read_expected(timer_pkg::TIMER, interval - i);
       end
 
       assert (timeout === 'b1)

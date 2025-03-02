@@ -5,7 +5,7 @@ module offset_filter_tb;
 
   offset_filter #(.OFFSET_WIDTH(12)) offset_filter (.*);
   initial begin
-    #600;
+    #800;
     $display("\ntesting offset filter");
     test_filter('h0, 'h123, 'h123);
     test_filter('hffffffff, 'h1, 'h0);
@@ -19,6 +19,7 @@ module offset_filter_tb;
       in = in_in;
       offset = offset_in;
       #1;
+
       $display("in = %h, offset = %h, out = %h, expected = %h", in_in, offset_in, out, expected);
       assert (out === expected)
       else $fatal;

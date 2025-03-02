@@ -45,14 +45,11 @@ module cu_tb;
   cpu_mode_e mode_in;
   logic ld_mode;
 
-  cu cu0 (
-      .*,
-      .clk(~clk)
-  );
+  cu cu0 (.*);
 
 
   initial begin
-    #200;
+    #300;
     $display("\ntesting cu");
     test_start;
     test_alu(alu_pkg::AND);
@@ -73,6 +70,7 @@ module cu_tb;
 
       test_fetch;
       start = 0;
+      #1;
     end
   endtask
 

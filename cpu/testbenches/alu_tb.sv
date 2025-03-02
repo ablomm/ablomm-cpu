@@ -43,11 +43,14 @@ module alu_tb;
 
     $display("\nADDC:");
     carry_in = 1;
+    #1;
     test_alu(alu_pkg::ADDC, 1, 1, 3, 4'b0000);  // 1 + 1 + 1
     test_alu(alu_pkg::ADDC, 2, 1, 4, 4'b0000);  // 2 + 1 + 1
     test_alu(alu_pkg::ADDC, 32'hffffffff, 2, 2, 4'b0010);  // -1 + 2 + 1
     test_alu(alu_pkg::ADDC, 32'h7fffffff, 1, 32'h80000001, 4'b1001);  // 2^31-1 + 1 + 1
+
     carry_in = 0;
+    #1;
     test_alu(alu_pkg::ADDC, 1, 1, 2, 4'b0000);  // 1 + 1 + 0
     test_alu(alu_pkg::ADDC, 2, 1, 3, 4'b0000);  // 2 + 1 + 0
     test_alu(alu_pkg::ADDC, 32'hffffffff, 2, 1, 4'b0010);  // -1 + 2 + 0
@@ -61,12 +64,15 @@ module alu_tb;
 
     $display("\nSUBB:");
     carry_in = 0;
+    #1;
     test_alu(alu_pkg::SUBB, 5, 1, 3, 4'b0010);  // 5 - 1 - 1
     test_alu(alu_pkg::SUBB, 1, 1, -1, 4'b1000);  // 1 - 1 - 1
     test_alu(alu_pkg::SUBB, 2, 1, 0, 4'b0110);  // 2 - 1 - 1
     test_alu(alu_pkg::SUBB, 2, 3, -2, 4'b1000);  // 2 - 3 - 1
     test_alu(alu_pkg::SUBB, 32'h80000000, 1, 32'h7ffffffe, 4'b0011);  // 2^32 - 1 - 1
+
     carry_in = 1;
+    #1;
     test_alu(alu_pkg::SUBB, 5, 1, 4, 4'b0010);  // 5 - 1
     test_alu(alu_pkg::SUBB, 1, 1, 0, 4'b0110);  // 1 - 1
     test_alu(alu_pkg::SUBB, 2, 1, 1, 4'b0010);  // 2 - 1
@@ -107,7 +113,9 @@ module alu_tb;
       oe = 1;
       #1;
 
-      $display("a = %d, b = %d, out = %d, op = %h, status = %b", a, b, out, operation, status);
+      $display(
+          "a = %d, b = %d, out = %d, op = %h, status = %b; expected result = %d, expected status = %b",
+          a, b, out, operation, status, expected_result_in, expected_status_in);
       assert (out === expected_result_in)
       else $fatal;
       assert (status === expected_status_in)

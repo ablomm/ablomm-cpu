@@ -1,18 +1,21 @@
-module cpu_reg_tb;
+module sp_reg_tb;
   logic clk;
   logic rst = 0;
   tri [31:0] a, b;
   logic [31:0] in;
   logic oe_a, oe_b, ld;
+  logic post_inc = 0, pre_dec = 0;
   logic [31:0] value;
 
-  cpu_reg reg0 (.*);
+  sp_reg sp (.*);
 
   initial begin
-    #200;
-    $display("\ntesting cpu_reg");
+    #1100;
+    $display("\ntesting sp_reg");
     test_ld_oe(123);
+    test_pre_dec();
     test_ld_oe(321);
+    test_post_inc();
   end
 
   task static load(input logic [31:0] data_in);
@@ -68,6 +71,56 @@ module cpu_reg_tb;
       get_from_b(read_value);
       $display("ld oe b: b = %d, expected = %d", read_value, data_in);
       assert (read_value === data_in)
+      else $fatal;
+    end
+  endtask
+
+  task static test_pre_dec();
+    begin
+      logic [31:0] pre_value;
+      pre_value = value;
+
+      clk = 0;
+      pre_dec = 1;
+      #1;
+
+      $display("pre_dec before clk: value = %d, expected = %d", value, pre_value - 1);
+      assert (pre_value - 1 === value)
+      else $fatal;
+
+      clk = 1;
+      #1;
+
+      pre_dec = 0;
+      #1;
+
+      $display("pre_dec after clk: value = %d, expected = %d", value, pre_value - 1);
+      assert (pre_value - 1 === value)
+      else $fatal;
+    end
+  endtask
+
+  task static test_post_inc();
+    begin
+      logic [31:0] pre_value;
+      pre_value = value;
+
+      clk = 0;
+      post_inc = 1;
+      #1;
+
+      $display("post_inc before clk: value = %d, expected = %d", value, pre_value);
+      assert (pre_value === value)
+      else $fatal;
+
+      clk = 1;
+      #1;
+
+      post_inc = 0;
+      #1;
+
+      $display("post_inc after clk: value = %d, expected = %d", value, pre_value + 1);
+      assert (pre_value + 1 === value)
       else $fatal;
     end
   endtask

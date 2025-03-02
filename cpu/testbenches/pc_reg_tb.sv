@@ -1,17 +1,19 @@
-module cpu_reg_tb;
+module pc_reg_tb;
   logic clk;
   logic rst = 0;
   tri [31:0] a, b;
   logic [31:0] in;
   logic oe_a, oe_b, ld;
+  logic post_inc = 0;
   logic [31:0] value;
 
-  cpu_reg reg0 (.*);
+  pc_reg pc (.*);
 
   initial begin
-    #200;
-    $display("\ntesting cpu_reg");
+    #900;
+    $display("\ntesting pc_reg");
     test_ld_oe(123);
+    test_post_inc();
     test_ld_oe(321);
   end
 
@@ -68,6 +70,31 @@ module cpu_reg_tb;
       get_from_b(read_value);
       $display("ld oe b: b = %d, expected = %d", read_value, data_in);
       assert (read_value === data_in)
+      else $fatal;
+    end
+  endtask
+
+  task static test_post_inc();
+    begin
+      logic [31:0] pre_value;
+      pre_value = value;
+
+      clk = 0;
+      post_inc = 1;
+      #1;
+
+      $display("post_inc before clk: value = %d, expected = %d", value, pre_value);
+      assert (pre_value === value)
+      else $fatal;
+
+      clk = 1;
+      #1;
+
+      post_inc = 0;
+      #1;
+
+      $display("post_inc after clk: value = %d, expected = %d", value, pre_value + 1);
+      assert (pre_value + 1 === value)
       else $fatal;
     end
   endtask
