@@ -1,3 +1,7 @@
+# Starting
+
+The CPU powers on in the `STOP` state. To start the CPU you must assert the `start` line. On the next falling edge of the clock, if the `start` line is high, then the CPU will begin fetching instructions starting at address 0, as outlined in the [Interrupt Vector Table section](#interrupt-vector-table).  
+
 # Public Registers
 
 There are 11, 32-bit, general purpose register (`R0` to `R10`)
