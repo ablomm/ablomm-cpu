@@ -1,10 +1,11 @@
 module simulator;
   logic clk = 0;
-  wire  irq;  // set by ic
-  wire  rst;  // set by power controller
+  wire irq;  // set by ic
+  wire rst;  // set by power controller
   logic start = 1;
-  tri [31:0] a_bus, b_bus, result_bus;
-  wire mem_rd, mem_wr;
+  wire [31:0] addr;
+  tri [31:0] data;
+  wire rd, wr;
 
   initial forever #10 clk = ~clk;
 
@@ -15,10 +16,10 @@ module simulator;
       .ADDR_WIDTH(14)
   ) rom0 (
       .clk (clk),
-      .addr(b_bus[13:0]),
-      .out (result_bus),
-      .rd  (mem_rd),
-      .en  (b_bus[15:14] === 2'b00)
+      .addr(addr[13:0]),
+      .out (data),
+      .rd  (rd),
+      .en  (addr[15:14] === 2'b00)
   );
 
   wire timer_int;
@@ -26,11 +27,11 @@ module simulator;
   // 0x4000 to 0x4003 (4 addresses)
   timer timer0 (
       .clk(clk),
-      .data(a_bus),
-      .reg_sel(b_bus[1:0]),
-      .out(result_bus),
-      .rd(mem_rd && b_bus[15:2] === 14'h1000),
-      .wr(mem_wr && b_bus[15:2] === 14'h1000),
+      .data(data),
+      .reg_sel(addr[1:0]),
+      .out(data),
+      .rd(rd && addr[15:2] === 14'h1000),
+      .wr(wr && addr[15:2] === 14'h1000),
       .timeout(timer_int)
   );
 
@@ -39,8 +40,8 @@ module simulator;
   ic ic0 (
       .clk(clk),
       .irq_in(irq_sources),
-      .out(result_bus[15:0]),
-      .rd(mem_rd && b_bus[15:0] === 16'h4004),
+      .out(data[15:0]),
+      .rd(rd && addr[15:0] === 16'h4004),
       .irq_out(irq)
   );
 
@@ -48,9 +49,9 @@ module simulator;
   // 0x4005
   power power0 (
       .clk (clk),
-      .data(a_bus[1:0]),
-      .wr  (mem_wr),
-      .en  (b_bus[15:0] === 16'h4005),
+      .data(data[1:0]),
+      .wr  (wr),
+      .en  (addr[15:0] === 16'h4005),
       .rst (rst)
   );
 
@@ -58,9 +59,9 @@ module simulator;
   // 0x4006
   tty tty0 (
       .clk (clk),
-      .data(a_bus[7:0]),
-      .wr  (mem_wr),
-      .en  (b_bus[15:0] === 16'h4006)
+      .data(data[7:0]),
+      .wr  (wr),
+      .en  (addr[15:0] === 16'h4006)
   );
 
   // 0x8000 to 0xffff (2^15 addresses)
@@ -68,12 +69,12 @@ module simulator;
       .ADDR_WIDTH(15)
   ) mem0 (
       .clk (clk),
-      .addr(b_bus[14:0]),
-      .data(a_bus),
-      .out (result_bus),
-      .rd  (mem_rd),
-      .wr  (mem_wr),
-      .en  (b_bus[15] === 1'b1)
+      .addr(addr[14:0]),
+      .data(data),
+      .out (data),
+      .rd  (rd),
+      .wr  (wr),
+      .en  (addr[15] === 1'b1)
   );
 
 endmodule

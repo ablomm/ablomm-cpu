@@ -7,16 +7,25 @@ module cpu (
     input start,
     input rst,
     input irq,
-    output [31:0] a_bus,  // not tri, as it is driven by the filters (the reg bus is a tri)
-    output [31:0] b_bus,  // not tri, as it is driven by the filters (the reg bus is a tri)
-    output tri [31:0] result_bus,
-    output mem_rd,
-    output mem_wr
+    inout tri [31:0] data,
+    output [31:0] addr,
+    output rd,
+    output wr
 );
 
   // reg buses get filtered and eventually go on the a or b buses
-  tri [31:0] a_reg_bus;
-  tri [31:0] b_reg_bus;
+  // driven by multiple things
+  tri  [31:0] a_reg_bus;
+  tri  [31:0] b_reg_bus;
+
+  // only driven by the filters
+  wire [31:0] a_bus;
+  wire [31:0] b_bus;
+  wire [31:0] result;
+
+  assign data   = wr ? a_bus : 'hz;
+  assign addr   = rd || wr ? b_bus : 'hz;
+  assign result = rd ? data : 'hz;
 
   // control signals
   wire oe_alu;
@@ -63,7 +72,7 @@ module cpu (
       .carry_in(1'(status.alu_status.carry)),
       .a(a_bus),
       .b(b_bus),
-      .out(result_bus),
+      .out(result),
       .status(alu_status)
   );
 
@@ -98,7 +107,7 @@ module cpu (
       .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
-      .in(result_bus),
+      .in(result),
       .oe_a(oe_a_reg),
       .oe_b(oe_b_reg),
       .ld(ld_reg),
@@ -113,7 +122,7 @@ module cpu (
       .rst(rst),
       .a(a_reg_bus[5:0]),
       .b(b_reg_bus[5:0]),
-      .in(result_bus[5:0]),
+      .in(result[5:0]),
       .oe_a(sel_a_reg === reg_pkg::STATUS && oe_a_reg),
       .oe_b(sel_b_reg === reg_pkg::STATUS && oe_b_reg),
       .ld(sel_in_reg === reg_pkg::STATUS && ld_reg),
@@ -131,7 +140,7 @@ module cpu (
       .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
-      .in(result_bus),
+      .in(result),
       .oe_a(sel_a_reg === reg_pkg::SP && oe_a_reg),
       .oe_b(sel_b_reg === reg_pkg::SP && oe_b_reg),
       .ld(sel_in_reg === reg_pkg::SP && ld_reg),
@@ -146,7 +155,7 @@ module cpu (
       .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
-      .in(result_bus),
+      .in(result),
       .oe_a(sel_a_reg === reg_pkg::LR && oe_a_reg),
       .oe_b(sel_b_reg === reg_pkg::LR && oe_b_reg),
       .ld(sel_in_reg === reg_pkg::LR && ld_reg),
@@ -160,7 +169,7 @@ module cpu (
       .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
-      .in(result_bus),
+      .in(result),
       .oe_a((sel_a_reg === reg_pkg::PC || sel_a_reg === reg_pkg::PCLINK) && oe_a_reg),
       .oe_b((sel_b_reg === reg_pkg::PC || sel_b_reg === reg_pkg::PCLINK) && oe_b_reg),
       .ld((sel_in_reg === reg_pkg::PC || sel_in_reg === reg_pkg::PCLINK) && ld_reg),
@@ -185,7 +194,7 @@ module cpu (
       .rst(rst),
       .a(a_reg_bus),
       .b(b_reg_bus),
-      .in(result_bus),
+      .in(result),
       .oe_a(oe_a_ir),
       .oe_b(oe_b_ir),
       .ld(ld_ir),

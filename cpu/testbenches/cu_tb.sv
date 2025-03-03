@@ -10,8 +10,8 @@ module cu_tb;
   status_t status;
 
   // control signals
-  logic mem_rd;
-  logic mem_wr;
+  logic rd;
+  logic wr;
 
   logic oe_alu;
   logic [3:0] alu_op;
@@ -80,10 +80,10 @@ module cu_tb;
       clk = 0;
       #1;
 
-      $display("sel_b_reg: %d, oe_b_reg_file: %d, mem_rd: %d, ld_ir: %d, post_inc_pc: %d",
-               sel_b_reg, oe_b_reg, mem_rd, ld_ir, post_inc_pc);
+      $display("sel_b_reg: %d, oe_b_reg_file: %d, rd: %d, ld_ir: %d, post_inc_pc: %d",
+               sel_b_reg, oe_b_reg, rd, ld_ir, post_inc_pc);
 
-      assert (sel_b_reg === reg_pkg::PC && oe_b_reg === 1 && mem_rd === 1 && post_inc_pc === 1)
+      assert (sel_b_reg === reg_pkg::PC && oe_b_reg === 1 && rd === 1 && post_inc_pc === 1)
       else $fatal;
     end
   endtask

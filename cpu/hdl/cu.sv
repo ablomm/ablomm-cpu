@@ -12,8 +12,8 @@ module cu (
     input wire ir_t ir,
     input wire status_t status,
 
-    output logic mem_rd,
-    output logic mem_wr,
+    output logic rd,
+    output logic wr,
 
     output logic oe_alu,
     output alu_op_e alu_op,
@@ -165,8 +165,8 @@ module cu (
   // outputs
   always_comb begin
     //defaults
-    mem_rd = 0;
-    mem_wr = 0;
+    rd = 0;
+    wr = 0;
 
     oe_alu = 0;
     alu_op = alu_op_e'(0);
@@ -206,7 +206,7 @@ module cu (
       FETCH: begin
         sel_b_reg = reg_pkg::PC;
         oe_b_reg = 1;
-        mem_rd = 1;
+        rd = 1;
         ld_ir = 1;
         post_inc_pc = 1;
       end
@@ -217,7 +217,7 @@ module cu (
       LD: begin
         oe_b_ir = 1;
         b_reg_mask = 32'hffff;
-        mem_rd = 1;
+        rd = 1;
         sel_in_reg = reg_e'(ir.operands.ld.reg_a);
         ld_reg = 1;
 
@@ -228,7 +228,7 @@ module cu (
         sel_b_reg = reg_e'(ir.operands.ldr.reg_b);
         oe_b_reg = 1;
         b_reg_offset = ir.operands.ldr.offset;
-        mem_rd = 1;
+        rd = 1;
         sel_in_reg = reg_e'(ir.operands.ldr.reg_a);
         ld_reg = 1;
       end
@@ -249,7 +249,7 @@ module cu (
         oe_a_reg = 1;
         oe_b_ir = 1;
         b_reg_mask = 32'hffff;
-        mem_wr = 1;
+        wr = 1;
       end
 
       // *reg_b <- reg_a
@@ -259,7 +259,7 @@ module cu (
         sel_b_reg = reg_e'(ir.operands.str.reg_b);
         oe_b_reg = 1;
         b_reg_offset = ir.operands.str.offset;
-        mem_wr = 1;
+        wr = 1;
       end
 
       // *(--sp) <- reg_a
@@ -269,14 +269,14 @@ module cu (
         oe_a_reg = 1;
         sel_b_reg = reg_pkg::SP;
         oe_b_reg = 1;
-        mem_wr = 1;
+        wr = 1;
       end
 
       // reg_a <- *(sp++)
       POP: begin
         sel_b_reg = reg_pkg::SP;
         oe_b_reg = 1;
-        mem_rd = 1;
+        rd = 1;
         sel_in_reg = reg_e'(ir.operands.pop.reg_a);
         ld_reg = 1;
         post_inc_sp = 1;
@@ -323,7 +323,7 @@ module cu (
         oe_a_reg = 1;
         sel_b_reg = reg_pkg::SP;
         oe_b_reg = 1;
-        mem_wr = 1;
+        wr = 1;
       end
 
       // PC <- 00000001
