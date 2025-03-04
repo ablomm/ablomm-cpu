@@ -2,7 +2,7 @@ module simulator;
   logic clk = 0;
   wire irq;  // set by ic
   wire rst;  // set by power controller
-  logic start = 1;
+  logic en = 1;
   wire [31:0] addr;
   tri [31:0] data;
   wire rd, wr;

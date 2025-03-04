@@ -4,7 +4,7 @@ import reg_pkg::*;
 
 module cpu (
     input clk,
-    input start,
+    input en,
     input rst,
     input irq,
     inout tri [31:0] data,

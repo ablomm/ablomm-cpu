@@ -2,9 +2,9 @@ module cu_tb;
   import cu_pkg::*;
   import reg_pkg::*;
 
-  logic clk;
-  logic start;
-  logic irq;
+  logic clk = 0;
+  logic en = 0;
+  logic irq = 0;
   logic rst = 0;
   ir_t ir;
   status_t status;
@@ -51,37 +51,30 @@ module cu_tb;
   initial begin
     #300;
     $display("\ntesting cu");
-    test_start;
+
+    en = 1;
+    test_fetch;
     test_alu(alu_pkg::AND);
     test_fetch;
     test_alu(alu_pkg::SHL);
     test_fetch;
   end
 
-  task static test_start;
+  task static next_state;
     begin
-      // STOP state
+      clk = 1;
+      #1;
       clk = 0;
-      #1;
-
-      start = 1;
-      clk   = 1;
-      #1;
-
-      test_fetch;
-      start = 0;
       #1;
     end
   endtask
 
   task static test_fetch;
     begin
+      next_state;
       // FETCH state
-      clk = 0;
-      #1;
-
-      $display("sel_b_reg: %d, oe_b_reg_file: %d, rd: %d, ld_ir: %d, post_inc_pc: %d",
-               sel_b_reg, oe_b_reg, rd, ld_ir, post_inc_pc);
+      $display("sel_b_reg: %d, oe_b_reg_file: %d, rd: %d, ld_ir: %d, post_inc_pc: %d", sel_b_reg,
+               oe_b_reg, rd, ld_ir, post_inc_pc);
 
       assert (sel_b_reg === reg_pkg::PC && oe_b_reg === 1 && rd === 1 && post_inc_pc === 1)
       else $fatal;
@@ -102,12 +95,7 @@ module cu_tb;
       ir.operands.alu_op.reg_b = reg_b_in;
       ir.operands.alu_op.reg_c = reg_c_in;
 
-      clk = 1;
-      #1;
-
-      // CPU state
-      clk = 0;
-      #1;
+      next_state;
 
       $display(
           "sel_a_reg: %d, oe_a_reg_file: %d, sel_b_reg: %d, oe_b_reg_file: %d, alu_op: %d, sel_in_reg: %d, ld_reg_file: %d",
@@ -115,9 +103,6 @@ module cu_tb;
 
       assert (sel_a_reg === reg_b_in && oe_a_reg === 1 && sel_b_reg === reg_c_in && oe_b_reg === 1 && alu_op === op_in && sel_in_reg === reg_a_in && ld_reg === 1)
       else $fatal;
-
-      clk = 1;
-      #1;
     end
   endtask
 endmodule
