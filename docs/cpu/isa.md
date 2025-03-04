@@ -1,7 +1,3 @@
-# Starting
-
-The CPU powers on in the `STOP` state. To start the CPU you must assert the `start` line. On the next falling edge of the clock, if the `start` line is high, then the CPU will begin fetching instructions starting at address 0, as outlined in the [Interrupt Vector Table section](#interrupt-vector-table).  
-
 # Public Registers
 
 There are 11, 32-bit, general purpose register (`R0` to `R10`)
@@ -76,7 +72,7 @@ The first four of these flags are used for conditional execution. The following 
 > [!NOTE]
 > The assembler has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Upercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
 
-# Instruction
+# Instructions
 
 There is only 10 instruction from the CPU's perspective. The ALU instruction is generic and works with all supported ALU operations. The instructions are enumerated in the following table:
 

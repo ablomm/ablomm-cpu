@@ -1,5 +1,7 @@
 # Simulator
 
+![simulator](https://github.com/user-attachments/assets/01388fa4-644b-4158-ab46-c0e254e26f2f)
+
 The simulator will simulate the CPU along with some devices.
 
 The simulator can be ran, as outlined in the [Setup document](../setup.md#simulate).

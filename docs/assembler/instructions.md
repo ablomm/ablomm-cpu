@@ -1,6 +1,6 @@
 # Assembly Instructions
 
-The assembly contains a small number of instructions. The assembler has a different (but similar) set of instructions than the CPU instructions listed in the [ISA document](../cpu/isa.md#instruction). 
+The assembly contains a small number of instructions. The assembler has a different (but similar) set of instructions than the CPU instructions listed in the [ISA document](../cpu/isa.md#instructions). 
 
 Each assembly instruction maps 1:1 to a CPU instruction, and the different set is merely a convinence as you shall see.
 
