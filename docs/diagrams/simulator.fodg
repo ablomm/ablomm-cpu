@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <office:document xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xmlns:smil="urn:oasis:names:tc:opendocument:xmlns:smil-compatible:1.0" xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0" xmlns:css3t="http://www.w3.org/TR/css3-text/" xmlns:grddl="http://www.w3.org/2003/g/data-view#" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xforms="http://www.w3.org/2002/xforms" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:ooo="http://openoffice.org/2004/office" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" xmlns:ooow="http://openoffice.org/2004/writer" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:drawooo="http://openoffice.org/2010/draw" xmlns:oooc="http://openoffice.org/2004/calc" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" xmlns:tableooo="http://openoffice.org/2009/table" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:rpt="http://openoffice.org/2005/report" xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:officeooo="http://openoffice.org/2009/office" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0" office:version="1.4" office:mimetype="application/vnd.oasis.opendocument.graphics">
- <office:meta><meta:creation-date>2025-03-03T22:20:11.043356816</meta:creation-date><dc:date>2025-03-04T00:45:43.127211622</dc:date><meta:editing-duration>PT23M49S</meta:editing-duration><meta:editing-cycles>7</meta:editing-cycles><meta:generator>LibreOffice/25.2.1.2$Linux_X86_64 LibreOffice_project/d3abf4aee5fd705e4a92bba33a32f40bc4e56f49</meta:generator><meta:document-statistic meta:object-count="165"/></office:meta>
+ <office:meta><meta:creation-date>2025-03-03T22:20:11.043356816</meta:creation-date><dc:date>2025-03-04T23:54:48.525514292</dc:date><meta:editing-duration>PT29M34S</meta:editing-duration><meta:editing-cycles>9</meta:editing-cycles><meta:generator>LibreOffice/25.2.1.2$Linux_X86_64 LibreOffice_project/d3abf4aee5fd705e4a92bba33a32f40bc4e56f49</meta:generator><meta:document-statistic meta:object-count="166"/></office:meta>
  <office:settings>
   <config:config-item-set config:name="ooo:view-settings">
-   <config:config-item config:name="VisibleAreaTop" config:type="int">-21054</config:config-item>
-   <config:config-item config:name="VisibleAreaLeft" config:type="int">-83653</config:config-item>
+   <config:config-item config:name="VisibleAreaTop" config:type="int">-33413</config:config-item>
+   <config:config-item config:name="VisibleAreaLeft" config:type="int">30011</config:config-item>
    <config:config-item config:name="VisibleAreaWidth" config:type="int">101023</config:config-item>
    <config:config-item config:name="VisibleAreaHeight" config:type="int">76910</config:config-item>
    <config:config-item-map-indexed config:name="Views">
@@ -35,10 +35,10 @@
      <config:config-item config:name="IsClickChangeRotation" config:type="boolean">true</config:config-item>
      <config:config-item config:name="SlidesPerRow" config:type="short">4</config:config-item>
      <config:config-item config:name="EditMode" config:type="int">0</config:config-item>
-     <config:config-item config:name="VisibleAreaTop" config:type="int">-43428</config:config-item>
-     <config:config-item config:name="VisibleAreaLeft" config:type="int">-16149</config:config-item>
-     <config:config-item config:name="VisibleAreaWidth" config:type="int">132566</config:config-item>
-     <config:config-item config:name="VisibleAreaHeight" config:type="int">116691</config:config-item>
+     <config:config-item config:name="VisibleAreaTop" config:type="int">-39602</config:config-item>
+     <config:config-item config:name="VisibleAreaLeft" config:type="int">22959</config:config-item>
+     <config:config-item config:name="VisibleAreaWidth" config:type="int">124014</config:config-item>
+     <config:config-item config:name="VisibleAreaHeight" config:type="int">109163</config:config-item>
      <config:config-item config:name="GridCoarseWidth" config:type="int">1000</config:config-item>
      <config:config-item config:name="GridCoarseHeight" config:type="int">1000</config:config-item>
      <config:config-item config:name="GridFineWidth" config:type="int">250</config:config-item>
@@ -424,11 +424,18 @@
    <loext:graphic-properties draw:fill="solid" draw:fill-color="#729fcf" draw:opacity="0%"/>
    <style:paragraph-properties fo:text-align="center"/>
   </style:style>
+  <style:style style:name="P8" style:family="paragraph">
+   <loext:graphic-properties draw:fill="none" draw:fill-color="#ffffff"/>
+   <style:text-properties fo:color="#808080" loext:opacity="100%" fo:font-size="14pt"/>
+  </style:style>
   <style:style style:name="T1" style:family="text">
    <style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T2" style:family="text">
    <style:text-properties fo:color="#808080" loext:opacity="100%"/>
+  </style:style>
+  <style:style style:name="T3" style:family="text">
+   <style:text-properties fo:color="#808080" loext:opacity="100%" fo:font-size="14pt"/>
   </style:style>
   <text:list-style style:name="L1">
    <text:list-level-style-bullet text:level="1" text:bullet-char="●">
@@ -603,7 +610,7 @@
      <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:type="rectangle" draw:enhanced-path="M 0 0 L 21600 0 21600 21600 0 21600 0 0 Z N"/>
     </draw:custom-shape>
     <draw:custom-shape draw:style-name="gr13" draw:text-style-name="P2" draw:layer="layout" svg:width="6cm" svg:height="8cm" svg:x="41.025cm" svg:y="7.998cm">
-     <text:p text:style-name="P1"><text:span text:style-name="T1">ROM</text:span></text:p>
+     <text:p text:style-name="P1"><text:span text:style-name="T1">R</text:span><text:span text:style-name="T1">O</text:span><text:span text:style-name="T1">M</text:span></text:p>
      <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:type="rectangle" draw:enhanced-path="M 0 0 L 21600 0 21600 21600 0 21600 0 0 Z N"/>
     </draw:custom-shape>
     <draw:custom-shape draw:style-name="gr13" draw:text-style-name="P2" draw:layer="layout" svg:width="6cm" svg:height="8cm" svg:x="52cm" svg:y="8.03cm">
@@ -611,11 +618,11 @@
      <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:mirror-horizontal="false" draw:mirror-vertical="false" draw:type="rectangle" draw:enhanced-path="M 0 0 L 21600 0 21600 21600 0 21600 0 0 Z N"/>
     </draw:custom-shape>
     <draw:custom-shape draw:style-name="gr13" draw:text-style-name="P2" draw:layer="layout" svg:width="6cm" svg:height="8cm" svg:x="63cm" svg:y="8cm">
-     <text:p text:style-name="P1"><text:span text:style-name="T1">Po</text:span><text:span text:style-name="T1">wer </text:span><text:span text:style-name="T1">Con</text:span><text:span text:style-name="T1">troll</text:span><text:span text:style-name="T1">er</text:span></text:p>
+     <text:p text:style-name="P1"><text:span text:style-name="T1">Po</text:span><text:span text:style-name="T1">we</text:span><text:span text:style-name="T1">r </text:span><text:span text:style-name="T1">Co</text:span><text:span text:style-name="T1">ntr</text:span><text:span text:style-name="T1">oll</text:span><text:span text:style-name="T1">er</text:span></text:p>
      <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:mirror-horizontal="false" draw:mirror-vertical="false" draw:type="rectangle" draw:enhanced-path="M 0 0 L 21600 0 21600 21600 0 21600 0 0 Z N"/>
     </draw:custom-shape>
     <draw:custom-shape draw:style-name="gr13" draw:text-style-name="P2" draw:layer="layout" svg:width="6cm" svg:height="8cm" svg:x="73.005cm" svg:y="7.993cm">
-     <text:p text:style-name="P1"><text:span text:style-name="T1">Inte</text:span><text:span text:style-name="T1">rru</text:span><text:span text:style-name="T1">pt </text:span><text:span text:style-name="T1">Con</text:span><text:span text:style-name="T1">troll</text:span><text:span text:style-name="T1">er</text:span></text:p>
+     <text:p text:style-name="P1"><text:span text:style-name="T1">In</text:span><text:span text:style-name="T1">te</text:span><text:span text:style-name="T1">rr</text:span><text:span text:style-name="T1">u</text:span><text:span text:style-name="T1">pt </text:span><text:span text:style-name="T1">C</text:span><text:span text:style-name="T1">o</text:span><text:span text:style-name="T1">nt</text:span><text:span text:style-name="T1">ro</text:span><text:span text:style-name="T1">lle</text:span><text:span text:style-name="T1">r</text:span></text:p>
      <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:mirror-horizontal="false" draw:mirror-vertical="false" draw:type="rectangle" draw:enhanced-path="M 0 0 L 21600 0 21600 21600 0 21600 0 0 Z N"/>
     </draw:custom-shape>
     <draw:custom-shape draw:style-name="gr13" draw:text-style-name="P2" draw:layer="layout" svg:width="6cm" svg:height="8cm" svg:x="84.005cm" svg:y="7.986cm">
@@ -678,7 +685,7 @@
     </draw:line>
     <draw:frame draw:style-name="gr14" draw:text-style-name="P4" draw:layer="layout" svg:width="2.175cm" svg:height="2.384cm" svg:x="87.075cm" svg:y="5.55cm">
      <draw:text-box>
-      <text:p><text:span text:style-name="T2">[</text:span><text:span text:style-name="T2">1</text:span><text:span text:style-name="T2">:</text:span><text:span text:style-name="T2">0</text:span><text:span text:style-name="T2">]</text:span></text:p>
+      <text:p><text:span text:style-name="T2">[1:0]</text:span></text:p>
      </draw:text-box>
     </draw:frame>
     <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="89cm" svg:y1="8cm" svg:x2="89cm" svg:y2="4cm">
@@ -788,7 +795,7 @@
     </draw:line>
     <draw:frame draw:style-name="gr17" draw:text-style-name="P4" draw:layer="layout" svg:width="1.75cm" svg:height="1.673cm" svg:x="27cm" svg:y="8.203cm">
      <draw:text-box>
-      <text:p><text:span text:style-name="T2">[1</text:span><text:span text:style-name="T2">5]</text:span></text:p>
+      <text:p><text:span text:style-name="T2">[15]</text:span></text:p>
      </draw:text-box>
     </draw:frame>
     <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="29cm" svg:y1="14cm" svg:x2="29cm" svg:y2="4.038cm">
@@ -808,7 +815,7 @@
     </draw:line>
     <draw:frame draw:style-name="gr17" draw:text-style-name="P4" draw:layer="layout" svg:width="2.5cm" svg:height="1.673cm" svg:x="37.675cm" svg:y="7.751cm">
      <draw:text-box>
-      <text:p><text:span text:style-name="T2">[1</text:span><text:span text:style-name="T2">5:</text:span><text:span text:style-name="T2">1</text:span><text:span text:style-name="T2">4]</text:span></text:p>
+      <text:p><text:span text:style-name="T2">[15:14]</text:span></text:p>
      </draw:text-box>
     </draw:frame>
     <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="40.075cm" svg:y1="13.998cm" svg:x2="40.075cm" svg:y2="3.986cm">
@@ -922,14 +929,6 @@
       <text:p>wr</text:p>
      </draw:text-box>
     </draw:frame>
-    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="74.955cm" svg:y1="18cm" svg:x2="74.955cm" svg:y2="15.955cm">
-     <text:p/>
-    </draw:line>
-    <draw:frame draw:style-name="gr5" draw:text-style-name="P5" draw:layer="layout" svg:width="1.132cm" svg:height="0.962cm" svg:x="74.373cm" svg:y="14.993cm">
-     <draw:text-box>
-      <text:p>rd</text:p>
-     </draw:text-box>
-    </draw:frame>
     <draw:line draw:style-name="gr2" draw:text-style-name="P3" draw:layer="layout" svg:x1="74.975cm" svg:y1="6.978cm" svg:x2="76.975cm" svg:y2="4.978cm">
      <text:p/>
     </draw:line>
@@ -946,26 +945,6 @@
       <text:p>out</text:p>
      </draw:text-box>
     </draw:frame>
-    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="72cm" svg:y1="13.904cm" svg:x2="73cm" svg:y2="13.904cm">
-     <text:p/>
-    </draw:line>
-    <draw:frame draw:style-name="gr19" draw:text-style-name="P5" draw:layer="layout" svg:width="5.487cm" svg:height="3.806cm" svg:x="73.013cm" svg:y="13.404cm">
-     <draw:text-box>
-      <text:p>en </text:p>
-      <text:p>[15:0] == 0x4005</text:p>
-     </draw:text-box>
-    </draw:frame>
-    <draw:line draw:style-name="gr2" draw:text-style-name="P3" draw:layer="layout" svg:x1="71cm" svg:y1="9.392cm" svg:x2="73cm" svg:y2="7.392cm">
-     <text:p/>
-    </draw:line>
-    <draw:frame draw:style-name="gr17" draw:text-style-name="P4" draw:layer="layout" svg:width="2.5cm" svg:height="1.673cm" svg:x="69.6cm" svg:y="7.719cm">
-     <draw:text-box>
-      <text:p><text:span text:style-name="T2">[15:0]</text:span></text:p>
-     </draw:text-box>
-    </draw:frame>
-    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="72cm" svg:y1="13.956cm" svg:x2="72cm" svg:y2="3.954cm">
-     <text:p/>
-    </draw:line>
     <draw:line draw:style-name="gr2" draw:text-style-name="P3" draw:layer="layout" svg:x1="84.021cm" svg:y1="7.074cm" svg:x2="86.021cm" svg:y2="5.074cm">
      <text:p/>
     </draw:line>
@@ -1135,6 +1114,35 @@
      <text:p/>
      <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:glue-points="10800 0 3163 3163 0 10800 3163 18437 10800 21600 18437 18437 21600 10800 18437 3163" draw:text-areas="3163 3163 18437 18437" draw:type="ellipse" draw:enhanced-path="U 10800 10800 10800 10800 0 360 Z N"/>
     </draw:custom-shape>
+    <draw:frame draw:style-name="gr18" draw:text-style-name="P5" draw:layer="layout" svg:width="1.258cm" svg:height="1.048cm" svg:x="77.7cm" svg:y="12.452cm">
+     <draw:text-box>
+      <text:p>rd</text:p>
+     </draw:text-box>
+    </draw:frame>
+    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="78.963cm" svg:y1="12.95cm" svg:x2="80.463cm" svg:y2="12.95cm">
+     <text:p/>
+    </draw:line>
+    <draw:custom-shape draw:style-name="gr22" draw:text-style-name="P6" draw:layer="layout" svg:width="0.75cm" svg:height="1.556cm" draw:transform="rotate (-3.14159265358979) translate (81.212cm 13.706cm)">
+     <text:p/>
+     <draw:enhanced-geometry svg:viewBox="0 0 21600 21600" draw:glue-points="10800 0 0 10800 10800 21600 21600 10800" draw:text-areas="0 3100 18500 18500" draw:type="flowchart-delay" draw:enhanced-path="M 10800 0 X 21600 10800 10800 21600 L 0 21600 0 0 Z N"/>
+    </draw:custom-shape>
+    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="82.949cm" svg:y1="4cm" svg:x2="82.949cm" svg:y2="12.5cm">
+     <text:p/>
+    </draw:line>
+    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="82.949cm" svg:y1="12.5cm" svg:x2="81.199cm" svg:y2="12.5cm">
+     <text:p/>
+    </draw:line>
+    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="81.949cm" svg:y1="18cm" svg:x2="81.949cm" svg:y2="13.4cm">
+     <text:p/>
+    </draw:line>
+    <draw:line draw:style-name="gr4" draw:text-style-name="P3" draw:layer="layout" svg:x1="81.948cm" svg:y1="13.413cm" svg:x2="81.198cm" svg:y2="13.413cm">
+     <text:p/>
+    </draw:line>
+    <draw:frame draw:style-name="gr24" draw:text-style-name="P8" draw:layer="layout" svg:width="3.125cm" svg:height="1.75cm" svg:x="80.625cm" svg:y="10.9cm">
+     <draw:text-box>
+      <text:p><text:span text:style-name="T3">[15:0] == 0x4004</text:span></text:p>
+     </draw:text-box>
+    </draw:frame>
    </draw:page>
   </office:drawing>
  </office:body>
