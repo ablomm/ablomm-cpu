@@ -12,7 +12,8 @@ start:
 	// set up timer
 	// set timer interval to 0x1000 clock cycles
 	ld r0, 0x1000;
-	ld timer_interval, r0;
+	ld timer_interval, r0; // only needed if timer_ctrl_continue
+	ld timer_timer, r0;
 
 	// start timer
 	ld r0, timer_ctrl_start;

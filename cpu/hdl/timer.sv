@@ -38,15 +38,7 @@ module timer #(
     if (wr) begin
       unique case (reg_sel)
         timer_pkg::ACK: timeout <= 'b0;
-        timer_pkg::CTRL: begin
-          // checks for posedge of start bit
-          // need to do this instead of `always @(posedge control_reg._start) timer_reg <= interval_reg;`
-          // because apparently it's not good to drive the same values in
-          // different sequential blocks
-          if (control_reg._start !== 'b1 && data[0] === 'b1) timer_reg <= interval_reg;
-
-          control_reg <= timer_ctrl_t'(data);
-        end
+        timer_pkg::CTRL: control_reg <= timer_ctrl_t'(data);
         timer_pkg::INTERVAL: interval_reg <= data;
         timer_pkg::TIMER: timer_reg <= data;
         default: ;

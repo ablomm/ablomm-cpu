@@ -1,6 +1,6 @@
 # Simulator
 
-![simulator](https://github.com/user-attachments/assets/52188091-eb58-4de0-93a3-b093e408534e)
+![simulator](https://github.com/user-attachments/assets/42db1f45-844a-4b26-a4e6-133aef39a986)
 
 The simulator will simulate the CPU along with some devices.
 

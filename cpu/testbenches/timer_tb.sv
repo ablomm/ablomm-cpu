@@ -16,13 +16,14 @@ module timer_tb;
     test_timer(4);
     test_timer(8);
     test_timer(10);
+    test_continue(10, 3);
   end
 
-  task static load_interval(input logic [31:0] interval);
+  task static load_reg(input timer_reg_e reg_in, input logic [31:0] data_in);
     begin
       clk = 0;
-      data = interval;
-      reg_sel = timer_pkg::INTERVAL;
+      data = data_in;
+      reg_sel = reg_in;
       wr = 1;
       #1;
 
@@ -35,24 +36,15 @@ module timer_tb;
     end
   endtask
 
-  task static start_timer();
+  task static read_register(input timer_reg_e reg_in, output logic [31:0] value_out);
     begin
-      timer_ctrl_t timer_ctrl;
-      // for some reason icarus verilog doesn't work with the '{_start: 1, default: 0} stynax
-      timer_ctrl._start = 1;
-      timer_ctrl._continue = 0;
-
-      clk = 0;
-      reg_sel = timer_pkg::CTRL;
-      data = 32'(timer_ctrl);
-      wr = 1;
+      reg_sel = reg_in;
+      rd = 1;
+      wr = 0;
       #1;
 
-      clk = 1;
-      #1;
-
-      wr  = 0;
-      clk = 0;
+      value_out = out;
+      rd = 0;
       #1;
     end
   endtask
@@ -86,19 +78,6 @@ module timer_tb;
     end
   endtask
 
-  task static read_register(input timer_reg_e reg_in, output logic [31:0] value_out);
-    begin
-      reg_sel = reg_in;
-      rd = 1;
-      wr = 0;
-      #1;
-
-      value_out = out;
-      rd = 0;
-      #1;
-    end
-  endtask
-
   task static test_read_expected(input timer_reg_e reg_in, input logic [31:0] expected);
     begin
       logic [31:0] read_value;
@@ -115,11 +94,11 @@ module timer_tb;
     begin
       integer i;
 
-      $display("interval = %d", interval);
-      load_interval(interval);
-      test_read_expected(timer_pkg::INTERVAL, interval);
+      $display("\ninterval = %d", interval);
+      load_reg(timer_pkg::TIMER, interval);
+      test_read_expected(timer_pkg::TIMER, interval);
 
-      start_timer();
+      load_reg(timer_pkg::CTRL, 'b01);
       test_read_expected(timer_pkg::CTRL, 'b01);
 
       for (i = 1; i <= interval; i++) begin
@@ -134,6 +113,56 @@ module timer_tb;
       ack_interupt();
       assert (timeout === 'b0)
       else $fatal;
+
+      load_reg(timer_pkg::CTRL, 'b00);
+    end
+  endtask
+
+  task static test_continue(input logic [31:0] interval, input integer continue_count);
+    begin
+      integer i;
+      integer j;
+
+      $display("\ncontinue interval = %d", interval);
+      load_reg(timer_pkg::INTERVAL, interval);
+      load_reg(timer_pkg::TIMER, interval);
+      test_read_expected(timer_pkg::TIMER, interval);
+      test_read_expected(timer_pkg::INTERVAL, interval);
+
+      load_reg(timer_pkg::CTRL, 'b11);
+      test_read_expected(timer_pkg::CTRL, 'b11);
+
+      // need to clock before to be consistent with the the continue case
+      // which will have an interrupt when the timer is reset to interval.
+      // This just makes it possible to use the for loop for when the timer
+      // starts initially, and when it resets with the interval
+      clock_timer();
+      test_read_expected(timer_pkg::TIMER, interval - 1);
+
+      // outer loop: number of times continued
+      for (i = 0; i < continue_count; i++) begin
+        // inner loop: counting down, -1 because the timer will reset at 0
+        for (j = 2; j <= interval - 1; j++) begin
+          assert (timeout === 'b0)
+          else $fatal;
+          clock_timer();
+          test_read_expected(timer_pkg::TIMER, interval - j);
+        end
+
+        // clock once more to get last value
+        clock_timer();
+        test_read_expected(timer_pkg::TIMER, interval);
+        assert (timeout === 'b1)
+        else $fatal;
+
+        // this takes one clock cycle, so the timer will be decremented
+        ack_interupt();
+        test_read_expected(timer_pkg::TIMER, interval - 1);
+        assert (timeout === 'b0)
+        else $fatal;
+      end
+
+      load_reg(timer_pkg::CTRL, 'b00);
     end
   endtask
 endmodule

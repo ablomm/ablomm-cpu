@@ -11,15 +11,15 @@ The timer has the following registers:
 | Register | Code | Purpose | Width |
 |---|---|---|---|
 | ACK | 0b00 | Writing will acknowledge an interrupt | 0 |
-| CTRL | 0b01 | Used to control the timer (start and continue bits) | 2 |
-| INTERVAL | 0b10 | Used to set how many clock cycles until the timer produces an inerrupt | 32 |
-| TIMER | 0b11 | The current timer value | 32 |
+| CTRL | 0b01 | Used to control the timer (`START` and `CONTINUE` bits) | 2 |
+| INTERVAL | 0b10 | What to reset the `TIMER` register to if the `CONTINUE` bit is set | 32 |
+| TIMER | 0b11 | Used to set how many clock cycles until the timer produces an interrupt | 32 |
 
 A more detailed description of each register is as follows:
 
 ## ACK Register
 
-The `ACK` register does not contain any values, and can be though more of a pseudo register. 
+The `ACK` register does not contain any values, and can be thought more of a pseudo register. 
 
 ### Reading
 
@@ -39,19 +39,22 @@ The `CTRL` register contains flags to control the behaviour of the timer. The la
 |---|---|
 | CONTINUE | START |
 
-Setting the `START` bit will cause the timer to start. Starting the timer means loading the `TIMER` register with the value in the `INTERVAL` register, and then decrementing the `TIMER` register until it reaches 0. After which, the timer will trigger an interrupt. This is called a "timeout".
+Setting the `START` bit will cause the timer to start. Starting will start decrementing the `TIMER` register until it reaches 0. After which, the timer will trigger an interrupt. This is called a "timeout".
 
 If the `CONTINUE` bit is clear, then the `START` bit will be cleared after a timeout; this stops the timer from running again.
 
 If the `CONTINUE` bit is set, then the `START` bit will not be cleared after a timeout, and the `TIMER` register will be reset to the `INTERVAL` register, and will start counting down again; this continues the timer after a timeout.
 
+> [!NOTE]
+> If the `CONTINUE` bit is set, then the timer never reaches 0: it will instead be loaded with the `INTERVAL` value. This ensures a consistent timeout period.
+
 ## INTERVAL Register
 
-The `INTERVAL` register contains the number of clock cycles that the timer will count down. The `TIMER` register will load the `INTERVAL` register when the timer is started or continued.
+The `INTERVAL` register contains the value the `TIMER` register will be reset to when a timeout occurs and the `CONTINUE` bit is set.
 
 ## TIMER Register
 
-The `TIMER` register contains the current value of the timer. The timer raises an interrupt when the `TIMER` register reaches 0. The `TIMER` register is set to the `INTERVAL` register when the timer is started or continued.
+The `TIMER` register contains the current value of the timer. The timer raises an interrupt when the `TIMER` register reaches 0. The `TIMER` register is set to the `INTERVAL` register when a timeout occurs and the `CONTINUE` bit is set.
 
 ## Memory Map
 
@@ -77,13 +80,13 @@ A complete working example can be found in the [Interrupts example](../../exampl
 ### Starting the timer to count 0x1000 clock cycles
 ```asm
 timer_ctrl = *0x4001;
-timer_interval = *0x4002;
+timer_timer = *0x4003;
 timer_ctrl_start = 0b01;
 
   // set up timer
   // set timer interval to 0x1000 clock cycles
   ld r0, 0x1000;
-  ld timer_interval, r0;
+  ld timer_timer, r0;
 
   // start timer
   ld r0, timer_ctrl_start;
@@ -94,6 +97,7 @@ timer_ctrl_start = 0b01;
 ```asm
 timer_ctrl = *0x4001;
 timer_interval = *0x4002;
+timer_timer = *0x4003;
 timer_ctrl_start = 0b01;
 timer_ctrl_continue = 0b10;
 
@@ -101,6 +105,7 @@ timer_ctrl_continue = 0b10;
   // set timer interval to 0x1000 clock cycles
   ld r0, 0x1000;
   ld timer_interval, r0;
+  ld timer_timer, r0;
 
   // start timer
   ld r0, timer_ctrl_start | timer_ctrl_continue;
