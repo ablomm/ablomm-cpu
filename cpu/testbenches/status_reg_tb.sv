@@ -28,6 +28,7 @@ module status_reg_tb;
     test_ld_mode(reg_pkg::SUPERVISOR);
     test_ld_mode(reg_pkg::USER);
     test_ld_oe(status_t'('b111111));
+    test_ld_user_oe(status_t'('b101001));
 
   end
 
@@ -74,6 +75,8 @@ module status_reg_tb;
     begin
       status_t read_value;
 
+      test_ld_mode(reg_pkg::SUPERVISOR);
+
       load(data_in);
 
       get_from_a(read_value);
@@ -84,6 +87,43 @@ module status_reg_tb;
       get_from_b(read_value);
       $display("ld oe b: b = %d, expected = %d", read_value, data_in);
       assert (read_value === data_in)
+      else $fatal;
+    end
+  endtask
+
+  task static test_ld_user_oe(input status_t data_in);
+    begin
+      status_t read_value;
+      status_t value_before;
+      value_before = value;
+
+      test_ld_mode(reg_pkg::USER);
+
+      // change the imask to test
+      data_in.imask = ~value_before.imask;
+
+      load(data_in);
+
+      get_from_a(read_value);
+      $display("ld user oe a: a = %d, data_in = %d", read_value, data_in);
+      assert (read_value.alu_status === data_in.alu_status)
+      else $fatal;
+
+      assert (read_value.imask !== data_in.imask && read_value.imask === value_before.imask)
+      else $fatal;
+
+      assert (read_value.mode === reg_pkg::USER)
+      else $fatal;
+
+      get_from_b(read_value);
+      $display("ld user oe b: b = %d, data_in = %d", read_value, data_in);
+      assert (read_value.alu_status === data_in.alu_status)
+      else $fatal;
+
+      assert (read_value.imask !== data_in.imask && read_value.imask === value_before.imask)
+      else $fatal;
+
+      assert (read_value.mode === reg_pkg::USER)
       else $fatal;
     end
   endtask

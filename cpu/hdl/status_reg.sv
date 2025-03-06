@@ -5,9 +5,9 @@ module status_reg #(
 ) (
     input clk,
     input rst,
-    output tri [5:0] a,
-    output tri [5:0] b,
-    input [5:0] in,
+    output tri status_t a,
+    output tri status_t b,
+    input status_t in,
     input oe_a,
     input oe_b,
     input ld,
@@ -27,7 +27,9 @@ module status_reg #(
   always_ff @(posedge clk or posedge rst)
     if (rst) value <= INITIAL_VAL;
     else begin
-      if (ld) value <= in;
+      if (ld && value.mode === reg_pkg::SUPERVISOR) value <= in;
+      // only allow loading alu status if in user mode
+      if (ld && value.mode === reg_pkg::USER) value.alu_status <= alu_status_in;
       if (ld_alu_status) value.alu_status <= alu_status_in;
       if (ld_imask) value.imask <= imask_in;
       if (ld_mode) value.mode <= mode_in;
