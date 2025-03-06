@@ -5,7 +5,7 @@ module alu #(
 ) (
     input oe,
     input alu_op_e operation,
-    input carry_in,
+    input carry_in,  // not used, but maybe in the future
     input [WIDTH-1:0] a,
     input [WIDTH-1:0] b,
     output tri [WIDTH-1:0] out,
@@ -16,22 +16,17 @@ module alu #(
   assign out = oe ? out_var : 'hz;
 
   logic [WIDTH-1:0] adder_a, adder_b, adder_out;
-  logic adder_carry_in, adder_borrow_in;
   wire adder_carry_out, adder_overflow;
   full_adder adder (
       .a(adder_a),
       .b(adder_b),
-      .carry_in(adder_carry_in),
-      .borrow_in(adder_borrow_in),
       .out(adder_out),
       .carry_out(adder_carry_out),
       .overflow(adder_overflow)
   );
 
   always_comb begin
-    status = 0;
-    adder_carry_in = 0;
-    adder_borrow_in = 0;
+    status  = 0;
     adder_a = a;
     adder_b = b;
 
@@ -53,27 +48,9 @@ module alu #(
         status.overflow = adder_overflow;
       end
 
-      // a + b + carry_in
-      alu_pkg::ADDC: begin
-        adder_carry_in = carry_in;
-        out_var = adder_out;
-        status.carry = adder_carry_out;
-        status.overflow = adder_overflow;
-      end
-
       //  a - b
       alu_pkg::SUB: begin
         adder_b = -b;
-        out_var = adder_out;
-        status.carry = adder_carry_out;
-        status.overflow = adder_overflow;
-      end
-
-      // a - b - ~carry_in
-      // borrow is simply the not of carry
-      alu_pkg::SUBB: begin
-        adder_b = -b;
-        adder_borrow_in = ~carry_in;
         out_var = adder_out;
         status.carry = adder_carry_out;
         status.overflow = adder_overflow;
@@ -83,6 +60,8 @@ module alu #(
       alu_pkg::SHL:  {status.carry, out_var} = (WIDTH + 1)'(a) << (WIDTH + 1)'(b);
       alu_pkg::SHR:  out_var = a >> b;
       alu_pkg::ASHR: out_var = $signed(a) >>> b;
+      alu_pkg::ROL:  out_var = WIDTH'({a, a} >> (32 - b[4:0]));
+      alu_pkg::ROR:  out_var = WIDTH'({a, a} >> b[4:0]);
 
       default: out_var = 0;
     endcase

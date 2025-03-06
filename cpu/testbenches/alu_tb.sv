@@ -41,43 +41,11 @@ module alu_tb;
     test_alu(alu_pkg::ADD, 32'hffffffff, 2, 1, 4'b0010);  // i.e. -1 + 2
     test_alu(alu_pkg::ADD, 32'h7fffffff, 1, 32'h80000000, 4'b1001);  // 2^31-1 + 1 (signed overflow)
 
-    $display("\nADDC:");
-    carry_in = 1;
-    #1;
-    test_alu(alu_pkg::ADDC, 1, 1, 3, 4'b0000);  // 1 + 1 + 1
-    test_alu(alu_pkg::ADDC, 2, 1, 4, 4'b0000);  // 2 + 1 + 1
-    test_alu(alu_pkg::ADDC, 32'hffffffff, 2, 2, 4'b0010);  // -1 + 2 + 1
-    test_alu(alu_pkg::ADDC, 32'h7fffffff, 1, 32'h80000001, 4'b1001);  // 2^31-1 + 1 + 1
-
-    carry_in = 0;
-    #1;
-    test_alu(alu_pkg::ADDC, 1, 1, 2, 4'b0000);  // 1 + 1 + 0
-    test_alu(alu_pkg::ADDC, 2, 1, 3, 4'b0000);  // 2 + 1 + 0
-    test_alu(alu_pkg::ADDC, 32'hffffffff, 2, 1, 4'b0010);  // -1 + 2 + 0
-    test_alu(alu_pkg::ADDC, 32'h7fffffff, 1, 32'h80000000, 4'b1001);  // 2^31-1 + 1 + 0
-
     $display("\nSUB:");
     test_alu(alu_pkg::SUB, 1, 1, 0, 4'b0110);  // 1 - 1
     test_alu(alu_pkg::SUB, 2, 1, 1, 4'b0010);  // 2 - 1
     test_alu(alu_pkg::SUB, 2, 3, -1, 4'b1000);  // 2 - 3
     test_alu(alu_pkg::SUB, 32'h80000000, 1, 32'h7fffffff, 4'b0011);  // 2^32 - 1 (signed underflow)
-
-    $display("\nSUBB:");
-    carry_in = 0;
-    #1;
-    test_alu(alu_pkg::SUBB, 5, 1, 3, 4'b0010);  // 5 - 1 - 1
-    test_alu(alu_pkg::SUBB, 1, 1, -1, 4'b1000);  // 1 - 1 - 1
-    test_alu(alu_pkg::SUBB, 2, 1, 0, 4'b0110);  // 2 - 1 - 1
-    test_alu(alu_pkg::SUBB, 2, 3, -2, 4'b1000);  // 2 - 3 - 1
-    test_alu(alu_pkg::SUBB, 32'h80000000, 1, 32'h7ffffffe, 4'b0011);  // 2^32 - 1 - 1
-
-    carry_in = 1;
-    #1;
-    test_alu(alu_pkg::SUBB, 5, 1, 4, 4'b0010);  // 5 - 1
-    test_alu(alu_pkg::SUBB, 1, 1, 0, 4'b0110);  // 1 - 1
-    test_alu(alu_pkg::SUBB, 2, 1, 1, 4'b0010);  // 2 - 1
-    test_alu(alu_pkg::SUBB, 2, 3, -1, 4'b1000);  // 2 - 3
-    test_alu(alu_pkg::SUBB, 32'h80000000, 1, 32'h7fffffff, 4'b0011);  // 2^32 - 1
 
     $display("\nNEG:");
     test_alu(alu_pkg::NEG, 0, 0, 0, 4'b0100);  // -0
@@ -101,6 +69,22 @@ module alu_tb;
     test_alu(alu_pkg::ASHR, -'b100, 3, -1, 4'b1000);  // -0b100 >>> 3
     test_alu(alu_pkg::ASHR, 'b100, 1, 'b10, 4'b0000);  // 0b100 >>> 1
     test_alu(alu_pkg::ASHR, 'b100, 3, 0, 4'b0100);  // 0b100 >>> 3
+
+    $display("\nROL:");
+    test_alu(alu_pkg::ROL, 1, 1, 'b10, 4'b0000);  // 1 rol 1
+    test_alu(alu_pkg::ROL, 'h7fffffff, 2, 'hfffffffd, 4'b1000);  // 0x7fffffff rol 2
+    test_alu(alu_pkg::ROL, 'h7fffffff, 7, 'hffffffbf, 4'b1000);  // 0x7fffffff rol 7
+    test_alu(alu_pkg::ROL, 'hbeefdddd, 16, 'hddddbeef, 4'b1000);  // 0xbeefdddd rol 16
+    test_alu(alu_pkg::ROL, 'hbeefdddd, 64, 'hbeefdddd, 4'b1000);  // 0xbeefdddd rol 64
+    test_alu(alu_pkg::ROL, 'hbeefdddd, 68, 'heefddddb, 4'b1000);  // 0xbeefdddd rol 68
+
+    $display("\nROR:");
+    test_alu(alu_pkg::ROR, 'b10, 1, 1, 4'b0000);  // 1 ror 1
+    test_alu(alu_pkg::ROR, 'hfffffffd, 2, 'h7fffffff, 4'b0000);  // 0xfffffffd ror 2
+    test_alu(alu_pkg::ROR, 'hffffffbf, 7, 'h7fffffff, 4'b0000);  // 0xffffffbf ror 7
+    test_alu(alu_pkg::ROR, 'hddddbeef, 16, 'hbeefdddd, 4'b1000);  // 0xddddbeef ror 16
+    test_alu(alu_pkg::ROR, 'hbeefdddd, 64, 'hbeefdddd, 4'b1000);  // 0xbeefdddd ror 64
+    test_alu(alu_pkg::ROR, 'heefddddb, 68, 'hbeefdddd, 4'b1000);  // 0xeefddddb ror 68
   end
 
   task static test_alu(input alu_op_e operation_in, input logic [31:0] a_in,

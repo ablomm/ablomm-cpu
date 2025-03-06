@@ -45,7 +45,9 @@ The status register is made of various flags. These flags are sumarized in the t
 | C | The last ALU operation that with S=1 resulted in a carry |
 | V | The last ALU operation that with S=1 resuted in a signed overflow |
 | I | Hardware interrupt mask, i.e., I=0 means no hardware interrupts will occur |
-| M | If set to 0, CPU is in supervisor mode, if set to 1, CPU is in user mode | 
+| M | If set to 0, CPU is in supervisor mode, if set to 1, CPU is in user mode |
+
+The `I` and `M` flags can only be set in supervisor mode. All other flags can be set in both modes.
 
 The first four of these flags are used for conditional execution. The following table details the condition, the corresponding NZCV flags, and the condition code.
 
@@ -228,24 +230,21 @@ The CPU Operation "ALU" shown above allows passing in an "ALU Instruction Code."
 > [!NOTE]
 > "Register A", "Register B", and "Register C" correspond to A, B, and C in the table below, although, if I=1 (immediate bit it set), then C = immediate, and if R=1 (reverse bit is set), then "Register B" corresponds to C, and "Register C" (or an immediate) corresponds to B (i.e., reversed), and if Ln=1 (Loadn bit is set), then A is not set to any register.
 
-| Op | Code | Pseudo Code |
-|---|---|---|
-| PASS | 0x0 | `A = C` |
-| AND | 0x1 | `A = B & C` |
-| OR | 0x2 | `A = B \| C` |
-| XOR | 0x3 | `A = B ^ C` |
-| NOT | 0x4 | `A = ~C` |
-| ADD | 0x5 | `A = B + C` |
-| ADDC | 0x6 | `A = B + C + carry` |
-| SUB | 0x7 | `A = B - C` |
-| SUBB | 0x8 | `A = B - C - borrow` |
-| NEG | 0x9 | `A = -C` |
-| SHL | 0xa | `A = B << C` |
-| SHR | 0xb | `A = B >> C` |
-| ASHR | 0xc | `A = B >>> C` |
-
-> [!NOTE]
-> Borrow is simply ~carry
+| Op | Code | Description | Pseudo Code |
+|---|---|---|---|
+| PASS | 0x0 | Pass through | `A = C` |
+| AND | 0x1 | Bitwise AND | `A = B & C` |
+| OR | 0x2 | Bitwise OR |`A = B \| C` |
+| XOR | 0x3 | Bitwise exclusive OR | `A = B ^ C` |
+| NOT | 0x4 | Bitwise NOT | `A = ~C` |
+| ADD | 0x5 | Addition | `A = B + C` |
+| SUB | 0x6 | Subtraction | `A = B - C` |
+| NEG | 0x7 | Binary negation | `A = -C` |
+| SHL | 0x8 | Shift left | `A = B << C` |
+| SHR | 0x9 | Logical shift right | `A = B >> C` |
+| ASHR | 0xa | Arithmetic shift right | `A = B >>> C` |
+| ROL | 0xb | Rotate left | `A = (B << C % 32) \| (B >> (32 - C) % 32)` |
+| ROR | 0xc | Rotate right | `A = (B >> C % 32) \| (B << (32 - C) % 32)` |
 
 ## ALU Flags
 
@@ -267,7 +266,7 @@ The addresses of various locations in memory the CPU may jump to in each case ar
 | Start | 0 | When CPU turns on or resets |
 | Hardware interrupt | 1 | When interupt mask is set and the IRQ line is high |
 | Software interrupt | 2 | When the instruction `int` is ran |
-| Exception | 3 | When a privledged operation is ran in user mode |
+| Exception | 3 | When an unknown instruction is ran |
 
 When a hardware interupt is triggered, the interupt mask is set to 0, meaning no more hardware inerrupts will occur until it is unmasked.
 

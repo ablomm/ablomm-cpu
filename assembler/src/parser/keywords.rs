@@ -12,13 +12,13 @@ pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = ParseError> {
         just("xor").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Xor)),
         just("not").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Not)),
         just("add").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Add)),
-        just("addc").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Addc)),
         just("sub").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Sub)),
-        just("subb").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Subb)),
         just("neg").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Neg)),
         just("shl").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shl)),
         just("shr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shr)),
         just("ashr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ashr)),
+        just("rol").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Rol)),
+        just("ror").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ror)),
     ));
 }
 

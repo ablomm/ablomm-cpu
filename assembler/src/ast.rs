@@ -159,13 +159,13 @@ pub enum CpuMnemonic {
     Xor,
     Not,
     Add,
-    Addc,
     Sub,
-    Subb,
     Neg,
     Shl,
     Shr,
     Ashr,
+    Rol,
+    Ror,
 }
 
 #[derive(Debug, Copy, Clone)]

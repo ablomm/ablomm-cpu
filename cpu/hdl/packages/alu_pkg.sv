@@ -7,13 +7,13 @@ package alu_pkg;
     XOR,
     NOT,
     ADD,
-    ADDC,
     SUB,
-    SUBB,
     NEG,
     SHL,
     SHR,
-    ASHR
+    ASHR,
+    ROL,
+    ROR
   } alu_op_e;
 
   typedef struct packed {

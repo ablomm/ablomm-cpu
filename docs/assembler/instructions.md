@@ -273,28 +273,6 @@ Each assembly instruction is enumerated in the following table:
       
 </td>
 </tr>
-
-<tr>
-<td>addc</td>
-<td>Addition with carry</td>
-<td>ALU.ADDC</td>
-<td>
-      
-`addc r1, r2, r3;` <br>
-`addc r1, r2, 123;` <br>
-`addc r1, r2;` <br>
-`addc r1, 123;`
-      
-</td>
-<td>
-
-`r1 = r2 + r3 + carry` <br>
-`r1 = r2 + 123 + carry` <br>
-`r1 = r1 + r2 + carry` <br>
-`r1 = r1 + 123 + carry`
-      
-</td>
-</tr>
   
 <tr>
 <td>sub</td>
@@ -318,32 +296,6 @@ Each assembly instruction is enumerated in the following table:
 `r1 = r1 - r2` <br>
 `r1 = r1 - 123` <br>
 `r1 = 123 - r1`
-
-</td>
-</tr>
-
-<tr>
-<td>subb</td>
-<td>Subtraction with borrow</td>
-<td>ALU.SUBB</td>
-<td>
-      
-`subb r1, r2, r3;` <br>
-`subb r1, r2, 123;` <br>
-`subb r1, 123, r2;` <br>
-`subb r1, r2;` <br>
-`subb r1, 123;` <br>
-`subb 123, r1;`
-      
-</td>
-<td>
-
-`r1 = r2 - r3 - borrow` <br>
-`r1 = r2 - 123 - borrow` <br>
-`r1 = 123 - r2 - borrow` <br>
-`r1 = r1 - r2 - borrow` <br>
-`r1 = r1 - 123 - borrow` <br>
-`r1 = 123 - r1 - borrow`
 
 </td>
 </tr>
@@ -432,6 +384,51 @@ Each assembly instruction is enumerated in the following table:
       
 </td>
 </tr>
+
+<tr>
+<td>rol</td>
+<td>Rotate left</td>
+<td>ALU.ROL</td>
+<td>
+      
+`rol r1, r2, r3;` <br>
+`rol r1, r2, 123;` <br>
+`rol r1, r2;` <br>
+`rol r1, 123;`
+      
+</td>
+<td>
+
+`r1 = (r2 << r3 % 32) | (r2 >> (32 - r3) % 32)` <br>
+`r1 = (r2 << 123 % 32) | (r2 >> (32 - 123) % 32)` <br>
+`r1 = (r1 << r2 % 32) | (r1 >> (32 - r2) % 32)` <br>
+`r1 = (r1 << 123 % 32) | (r1 >> (32 - 123) % 32)` <br>
+      
+</td>
+</tr>
+
+<tr>
+<td>ror</td>
+<td>Rotate right</td>
+<td>ALU.ROR</td>
+<td>
+      
+`ror r1, r2, r3;` <br>
+`ror r1, r2, 123;` <br>
+`ror r1, r2;` <br>
+`ror r1, 123;`
+      
+</td>
+<td>
+
+`r1 = (r2 >> r3 % 32) | (r2 << (32 - r3) % 32)` <br>
+`r1 = (r2 >> 123 % 32) | (r2 << (32 - 123) % 32)` <br>
+`r1 = (r1 >> r2 % 32) | (r1 << (32 - r2) % 32)` <br>
+`r1 = (r1 >> 123 % 32) | (r1 << (32 - 123) % 32)` <br>
+      
+</td>
+</tr>
+
 </table>
 
 # Instruction Modifiers
