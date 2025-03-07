@@ -16,7 +16,7 @@ module rom #(
 
   initial begin
     string src;
-    $value$plusargs("src=%s", src);
-    $readmemh(src, mem);
+    if ($value$plusargs("src=%s", src)) $readmemh(src, mem);
+    else $error("No +src passed in");
   end
 endmodule

@@ -17,3 +17,8 @@ export power_shutdown_code = 0;
 export power_restart_code = 1;
 
 export tty = *0x4006;
+
+export negative_bit = 1 << 5;
+export zero_bit = 1 << 4;
+export carry_bit = 1 << 3;
+export overflow_bit = 1 << 2;

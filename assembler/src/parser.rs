@@ -125,6 +125,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
             .map_with_span(Spanned::new)
             .padded()
             .repeated()
+            .padded() // if there is no statements in the block
             .delimited_by(just('{'), just('}'))
             .map(|statements| Block {
                 statements,

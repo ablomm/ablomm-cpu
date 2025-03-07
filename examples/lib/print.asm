@@ -34,3 +34,32 @@ export print: {
 		pop r1;
 		ld pc, lr;
 }
+
+// r0 = num
+export print_num: {
+	import div from "num.asm";
+
+		push lr;
+		push r0;
+		push r1;
+		push r2;
+		push r3;
+	num = r0;
+		ld r1, 10;
+		ld pc.link, div;
+	quotent = r2;
+	remainder = r3;
+
+		ld.s num, quotent;
+		ld.zc pc.link, print_num;
+
+		add remainder, remainder, '0';
+		ld tty, remainder;
+
+	return:
+		pop r3;
+		pop r2;
+		pop r1;
+		pop r0;
+		pop pc;
+}

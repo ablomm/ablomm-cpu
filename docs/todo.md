@@ -47,3 +47,7 @@ I tried this for a while, but couldn't figure out how to make it work with the b
 ### Tests
 
 There is no test currently for the assembler.
+
+### Empty blocks gives an error
+
+### identifiers that start with a register name gives an error
