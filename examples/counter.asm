@@ -1,9 +1,13 @@
+/*
+	prints 0 to 9 to the tty
+*/
+
 import * from "lib/defines.asm";
 
 num = r0;
 new_line = r1;
 
-	ld r0, '0';
+	ld num, '0';
 loop:
 	ld tty, num;
 	add num, 1;

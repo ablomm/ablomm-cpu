@@ -2,6 +2,7 @@ import * from "defines.asm";
 
 // input: r0 = string to print
 export print: {
+		push r0;
 		push r1;
 		push r2;
 
@@ -34,6 +35,7 @@ export print: {
 	return:
 		pop r2;
 		pop r1;
+		pop r0;
 		ld pc, lr;
 }
 
@@ -49,13 +51,14 @@ export print_num: {
 	num = r0;
 		ld r1, 10;
 		ld pc.link, div;
-	quotent = r2;
-	remainder = r3;
+	quotent = r2; // will contain all but last digit of num
+	remainder = r3; // will contain last digit of num
 
+		 // recursively print the remaning digits to print in correct order
 		ld.s num, quotent;
-		ld.zc pc.link, print_num;
+		ld.zc pc.link, print_num; // when quotoent is 0, we are done
 
-		add remainder, remainder, '0';
+		add remainder, '0'; // get ascii of digit
 		ld tty, remainder;
 
 	return:

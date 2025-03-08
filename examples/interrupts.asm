@@ -1,6 +1,11 @@
+/*
+	sets up the interupt vector table, and initalises the timer to create an interrupt
+*/
+
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
+	// interrupt vector table
 	ld pc, start;
 	ld pc, isr;
 	ld pc, sw_isr;

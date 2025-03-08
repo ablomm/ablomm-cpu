@@ -1,3 +1,7 @@
+/*
+	hello world program using only characters
+*/
+
 import * from "lib/defines.asm";
 
 	ld r0, 'H';

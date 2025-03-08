@@ -1,3 +1,7 @@
+/*
+	prints a few strings
+*/
+
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
