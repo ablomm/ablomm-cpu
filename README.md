@@ -57,8 +57,9 @@ loop:
 ```asm
 import * from "defines.asm";
 
-// params: r0 = string to be printed
+// input: r0 = string to print
 export print: {
+		push r0;
 		push r1;
 		push r2;
 
@@ -72,25 +73,28 @@ export print: {
 
 	/* 
 		since memory is only word addressible
-		we need to do some shifts to get each byte
+		we need to do some rotates to get each byte
 		individually
 	*/
 
 	print_byte:
+		rol string_word, 8;
 		and.t string_word, 0xff;
-		ld.eq pc, return; // i.e. lsb is null '\0'
+		ld.zs pc, return; // i.e. lsb is null '\0'
 		ld tty, string_word;
-		shr string_word, 8;
 		sub.s bytes_left, 1;
 		ld.ne pc, print_byte;
+
 		// we have printed all the bytes in the word
 		add string_ptr, 1;
 		ld pc, print_word;
+
 	return:
 		pop r2;
 		pop r1;
+		pop r0;
 		ld pc, lr;
-  }
+}
 ```
 
 ### Print hello world using the print function defined above:

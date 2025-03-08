@@ -1,8 +1,8 @@
 import * from "defines.asm";
 
+// does long divison
 // input: r0 = numerator, r1 = divisor
 // output: r2 = quotent, r3 = remainder
-// does long divison
 export div: {
 		push r4;
 		push r5;

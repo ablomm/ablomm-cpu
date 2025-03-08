@@ -106,10 +106,8 @@ impl Spanned<&Expression> {
                 // addressible, not byte addressible)
                 for chunk in string.as_bytes().chunks(4) {
                     let mut opcode: u32 = 0;
-                    // big endian, although not technically since it all exists in the same memory
-                    // address
                     for (i, c) in chunk.iter().enumerate() {
-                        opcode |= (*c as u32) << (i * 8);
+                        opcode |= (*c as u32) << ((3 - i) * 8);
                     }
                     opcodes.push(opcode);
                 }
