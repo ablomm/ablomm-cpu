@@ -56,12 +56,14 @@ module alu #(
         status.overflow = adder_overflow;
       end
 
-      alu_pkg::NEG:  out_var = -b;
-      alu_pkg::SHL:  {status.carry, out_var} = (WIDTH + 1)'(a) << (WIDTH + 1)'(b);
-      alu_pkg::SHR:  out_var = a >> b;
-      alu_pkg::ASHR: out_var = $signed(a) >>> b;
-      alu_pkg::ROL:  out_var = WIDTH'({a, a} >> (32 - b[4:0]));
-      alu_pkg::ROR:  out_var = WIDTH'({a, a} >> b[4:0]);
+      alu_pkg::NEG: out_var = -b;
+
+      alu_pkg::SHL:  {status.carry, out_var} = (WIDTH + 1)'(a) << b;
+      alu_pkg::SHR:  {out_var, status.carry} = {a, 1'b0} >> b;
+      alu_pkg::ASHR: {out_var, status.carry} = $signed({a, 1'b0}) >>> b;
+
+      alu_pkg::ROL: {status.carry, out_var} = (WIDTH + 1)'({a, a} >> (32 - b[4:0]));
+      alu_pkg::ROR: {out_var, status.carry} = (WIDTH + 1)'({a, a, 1'b0} >> b[4:0]);
 
       default: out_var = 0;
     endcase

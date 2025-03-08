@@ -61,30 +61,31 @@ module alu_tb;
 
     $display("\nSHR:");
     test_alu(alu_pkg::SHR, 'b100, 1, 'b10, 4'b0000);  // 0b100 >> 1
-    test_alu(alu_pkg::SHR, 1, 1, 0, 4'b0100);  // 1 >> 1
+    test_alu(alu_pkg::SHR, 1, 1, 0, 4'b0110);  // 1 >> 1
     test_alu(alu_pkg::SHR, 'b1010000, 4, 'b101, 4'b0000);  // 0b1010000 >> 4
 
     $display("\nASHR:");
     test_alu(alu_pkg::ASHR, -'b100, 1, -'b10, 4'b1000);  // -0b100 >>> 1
-    test_alu(alu_pkg::ASHR, -'b100, 3, -1, 4'b1000);  // -0b100 >>> 3
+    test_alu(alu_pkg::ASHR, -'b100, 3, -1, 4'b1010);  // -0b100 >>> 3
     test_alu(alu_pkg::ASHR, 'b100, 1, 'b10, 4'b0000);  // 0b100 >>> 1
-    test_alu(alu_pkg::ASHR, 'b100, 3, 0, 4'b0100);  // 0b100 >>> 3
+    test_alu(alu_pkg::ASHR, 'b100, 3, 0, 4'b0110);  // 0b100 >>> 3
 
     $display("\nROL:");
     test_alu(alu_pkg::ROL, 1, 1, 'b10, 4'b0000);  // 1 rol 1
-    test_alu(alu_pkg::ROL, 'h7fffffff, 2, 'hfffffffd, 4'b1000);  // 0x7fffffff rol 2
-    test_alu(alu_pkg::ROL, 'h7fffffff, 7, 'hffffffbf, 4'b1000);  // 0x7fffffff rol 7
-    test_alu(alu_pkg::ROL, 'hbeefdddd, 16, 'hddddbeef, 4'b1000);  // 0xbeefdddd rol 16
+    test_alu(alu_pkg::ROL, 'h7fffffff, 2, 'hfffffffd, 4'b1010);  // 0x7fffffff rol 2
+    test_alu(alu_pkg::ROL, 'h7fffffff, 7, 'hffffffbf, 4'b1010);  // 0x7fffffff rol 7
+    test_alu(alu_pkg::ROL, 'h0fffffff, 4, 'hfffffff0, 4'b1000);  // 0x7fffffff rol 2
+    test_alu(alu_pkg::ROL, 'hbeefdddd, 16, 'hddddbeef, 4'b1010);  // 0xbeefdddd rol 16
     test_alu(alu_pkg::ROL, 'hbeefdddd, 64, 'hbeefdddd, 4'b1000);  // 0xbeefdddd rol 64
-    test_alu(alu_pkg::ROL, 'hbeefdddd, 68, 'heefddddb, 4'b1000);  // 0xbeefdddd rol 68
+    test_alu(alu_pkg::ROL, 'hbeefdddd, 68, 'heefddddb, 4'b1010);  // 0xbeefdddd rol 68
 
     $display("\nROR:");
     test_alu(alu_pkg::ROR, 'b10, 1, 1, 4'b0000);  // 1 ror 1
     test_alu(alu_pkg::ROR, 'hfffffffd, 2, 'h7fffffff, 4'b0000);  // 0xfffffffd ror 2
     test_alu(alu_pkg::ROR, 'hffffffbf, 7, 'h7fffffff, 4'b0000);  // 0xffffffbf ror 7
-    test_alu(alu_pkg::ROR, 'hddddbeef, 16, 'hbeefdddd, 4'b1000);  // 0xddddbeef ror 16
+    test_alu(alu_pkg::ROR, 'hddddbeef, 16, 'hbeefdddd, 4'b1010);  // 0xddddbeef ror 16
     test_alu(alu_pkg::ROR, 'hbeefdddd, 64, 'hbeefdddd, 4'b1000);  // 0xbeefdddd ror 64
-    test_alu(alu_pkg::ROR, 'heefddddb, 68, 'hbeefdddd, 4'b1000);  // 0xeefddddb ror 68
+    test_alu(alu_pkg::ROR, 'heefddddb, 68, 'hbeefdddd, 4'b1010);  // 0xeefddddb ror 68
   end
 
   task static test_alu(input alu_op_e operation_in, input logic [31:0] a_in,
