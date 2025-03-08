@@ -17,7 +17,9 @@ module alu #(
 
   logic [WIDTH-1:0] adder_a, adder_b, adder_out;
   wire adder_carry_out, adder_overflow;
-  full_adder adder (
+  full_adder #(
+      .WIDTH(WIDTH)
+  ) adder (
       .a(adder_a),
       .b(adder_b),
       .out(adder_out),
@@ -62,13 +64,13 @@ module alu #(
       alu_pkg::SHR:  {out_var, status.carry} = {a, 1'b0} >> b;
       alu_pkg::ASHR: {out_var, status.carry} = $signed({a, 1'b0}) >>> b;
 
-      alu_pkg::ROL: {status.carry, out_var} = (WIDTH + 1)'({a, a} >> (32 - b[4:0]));
-      alu_pkg::ROR: {out_var, status.carry} = (WIDTH + 1)'({a, a, 1'b0} >> b[4:0]);
+      alu_pkg::ROL: {status.carry, out_var} = (WIDTH + 1)'({a, a} >> (32 - b[$clog2(WIDTH)-1:0]));
+      alu_pkg::ROR: {out_var, status.carry} = (WIDTH + 1)'({a, a, 1'b0} >> b[$clog2(WIDTH)-1:0]);
 
       default: out_var = 0;
     endcase
 
-    status.negative = out_var[31];
+    status.negative = out_var[WIDTH-1];
     status.zero = out_var === 0;
   end
 endmodule
