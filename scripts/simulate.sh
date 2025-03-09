@@ -1,4 +1,4 @@
 #!/bin/bash
 
 simulator_path="$(dirname "$BASH_SOURCE")/../cpu/build/$1/Vsimulator"
-./$simulator_path "${@:2}"
+./$simulator_path ${@:2}
