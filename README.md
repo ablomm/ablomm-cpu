@@ -49,8 +49,7 @@ loop:
 	ld power, r0;
 ```
 
-![image](https://github.com/user-attachments/assets/a562133a-cbc3-48e3-945d-33867e017e60)
-
+![image](https://github.com/user-attachments/assets/d6a8093b-0f3b-4abb-8116-9a1a80520f6d)
 
 ### Print a null terminated string to the terminal:
 
@@ -115,7 +114,7 @@ string1: "Hello world!👻\n\0";
 string2: "Hello world, again!😵\n\0";
 ```
 
-![image](https://github.com/user-attachments/assets/d3693ec4-e594-45c5-b75d-19c36e0dd057)
+![image](https://github.com/user-attachments/assets/30173b03-6720-46de-b36c-b3b418158c31)
 
 For more examples, check out the [Examples directory](examples)!
  
@@ -202,14 +201,14 @@ ld r2, label; // r2 = address of label
 
 ```
 
-![image](https://github.com/user-attachments/assets/bed91bf9-f8e8-414b-8f7d-6e7e06c0c66c)
+![image](https://github.com/user-attachments/assets/bab51f30-499b-4016-8289-4002d5419d5a)
 
 ```asm
 import * from "lib/print.asm";
 print = 123;
 ```
 
-![image](https://github.com/user-attachments/assets/7b8ce2c5-7be1-403a-9f54-5c1601878204)
+![image](https://github.com/user-attachments/assets/26d1c547-e1e1-45e0-a528-f46f0ffc836b)
 
 ---
 

@@ -48,6 +48,16 @@ I tried this for a while, but couldn't figure out how to make it work with the b
 
 There is no test currently for the assembler.
 
-### Empty blocks gives an error
-
 ### identifiers that start with a register name gives an error
+
+For example the following currently does not work:
+
+```asm
+status_ident = 123;
+```
+
+because there is a register called `status`.
+
+### A literal number that is above 32 bits will cause a panic
+
+Rust doesn't seem to support wrapping string to u32 :(

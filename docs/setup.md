@@ -1,8 +1,8 @@
 # Building
 
-To build the appliaction, you must have installed the following:
+To build the application, you must have installed the following:
 - [Rust](https://www.rust-lang.org/)
-- Either [Verilator](https://www.veripool.org/verilator/) and/or [Icarus Verilog](https://steveicarus.github.io/iverilog/) (recommended Verilator, as it is much faster)
+- Either [Verilator](https://www.veripool.org/verilator/) and/or [Icarus Verilog](https://steveicarus.github.io/iverilog/) (I recommend Verilator, as it is much faster)
 - Bash (to use the scripts, otherwise you will need to run the commands / write scripts manually for your shell)
   - For Windows, you can get Bash through [Mingw](https://www.mingw-w64.org/)
  
