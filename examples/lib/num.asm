@@ -4,6 +4,7 @@ import * from "defines.asm";
 // input: r2 = numerator, r3 = divisor
 // output: r0 = quotent, r1 = remainder
 export div: {
+		push status;
 		push r4;
 		push r5;
 
@@ -34,12 +35,14 @@ export div: {
 	return:
 		pop r5;
 		pop r4;
+		pop status;
 		ld pc, lr;
 }
 
 // input r2, r3 = operands
 // output: r0 = result low, r1 = result high
 export mul: {
+		push status;
 		push r2;
 		push r3;
 		push r4;
@@ -71,5 +74,6 @@ export mul: {
 		pop r4;
 		pop r3;
 		pop r2;
+		pop status;
 		ld pc, lr;
 }

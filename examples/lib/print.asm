@@ -2,6 +2,7 @@ import * from "defines.asm";
 
 // input: r0 = string to print
 export print: {
+		push status;
 		push r0;
 		push r1;
 		push r2;
@@ -36,6 +37,7 @@ export print: {
 		pop r2;
 		pop r1;
 		pop r0;
+		pop status;
 		ld pc, lr;
 }
 
@@ -44,6 +46,7 @@ export print_num: {
 	import div from "num.asm";
 
 		push lr;
+		push status;
 		push r0;
 		push r1;
 		push r2;
@@ -69,5 +72,6 @@ export print_num: {
 		pop r2;
 		pop r1;
 		pop r0;
+		pop status;
 		pop pc;
 }

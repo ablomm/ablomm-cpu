@@ -35,6 +35,7 @@ return:
 // output: r0 = fib(n)
 fib: {
 		push lr;
+		push status;
 		push r1;
 		push r2;
 	
@@ -69,5 +70,6 @@ fib: {
 	return:
 		pop r2;
 		pop r1;
+		pop status;
 		pop pc;
 }
