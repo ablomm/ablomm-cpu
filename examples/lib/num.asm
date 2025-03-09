@@ -1,32 +1,32 @@
 import * from "defines.asm";
 
 // does long divison
-// input: r0 = numerator, r1 = divisor
-// output: r2 = quotent, r3 = remainder
+// input: r2 = numerator, r3 = divisor
+// output: r0 = quotent, r1 = remainder
 export div: {
 		push r4;
 		push r5;
 
-	numerator = r0;
-	divisor = r1;
+	numerator = r2;
+	divisor = r3;
 
-	result_low = r2;
-	result_high = r3;
+	quotent = r0;
+	remainder = r1;
 
 	counter = r4;
 		ld counter, 32;
 
-		ld result_low, numerator;
-		ld result_high, 0;
+		ld quotent, numerator;
+		ld remainder, 0;
 
 	shift_numerator:
-		shl.s result_low, 1;
-		shl result_high, 1;
-		or.cs result_high, 1;
+		shl.s quotent, 1;
+		shl remainder, 1;
+		or.cs remainder, 1;
 
-		sub.s r5, result_high, divisor;
-		ld.cs result_high, r5;
-		or.cs result_low, 1;
+		sub.s r5, remainder, divisor;
+		ld.cs remainder, r5;
+		or.cs quotent, 1;
 
 		sub.s counter, 1;
 		ld.ne pc, shift_numerator;
@@ -37,17 +37,17 @@ export div: {
 		ld pc, lr;
 }
 
-// input r0, r1 = operands
-// output: r2 = result low, r3 = result high
+// input r2, r3 = operands
+// output: r0 = result low, r1 = result high
 export mul: {
-		push r0;
-		push r1;
+		push r2;
+		push r3;
 		push r4;
 
-	operand1 = r0;
-	operand2 = r1;
-	result_low = r2;
-	result_high = r3;
+	operand1 = r2;
+	operand2 = r3;
+	result_low = r0;
+	result_high = r1;
 
 		ld result_low, 0;
 		ld result_high, 0;
@@ -69,7 +69,7 @@ export mul: {
 
 	return:
 		pop r4;
-		pop r1;
-		pop r0;
+		pop r3;
+		pop r2;
 		ld pc, lr;
 }

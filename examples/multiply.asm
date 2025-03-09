@@ -6,13 +6,11 @@ import * from "lib/defines.asm";
 import print_num from "lib/print.asm";
 import mul from "lib/num.asm";
 
-	ld r0, *operand1;
-	ld r1, *operand2;
+	ld r2, *operand1;
+	ld r3, *operand2;
 	ld pc.link, mul;
 
-result = r2;
-
-	ld r0, result;
+	// r0 contains the result of the multiplication
 	ld pc.link, print_num;
 
 	ld r0, '\n';

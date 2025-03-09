@@ -1,5 +1,6 @@
 /*
 	prints first 10 fibinatchi numbers, starting at 0
+	yes, I know this is incredibly inefficient
 */
 
 import * from "lib/defines.asm";
@@ -11,9 +12,10 @@ counter = r2;
 	ld counter, 0;
 
 loop:
-	ld r0, counter;
+	ld r1, counter;
 	ld pc.link, fib;
-	ld r0, r1;
+
+	// r0 contains the result of fib(n)
 	ld pc.link, print_num;
 
 	ld r0, '\n';
@@ -29,17 +31,15 @@ return:
 
 
 // calculates the n'th fibinatchi number
-// input: r0 = n
-// output: r1 = fib(n)
+// input: r1 = n
+// output: r0 = fib(n)
 fib: {
-	result = r1;
-
 		push lr;
-		push r0;
+		push r1;
 		push r2;
 	
-	n = r0;
-		ld n, r0;
+	n = r1;
+	result = r0;
 
 		// if n == 0;
 		sub.t n, 0;
@@ -53,21 +53,21 @@ fib: {
 
 		// calculate fib(n-1)
 		sub n, 1;
-		ld pc.link, fib;
+		ld pc.link, fib; // recursion!
 
 	fib_n_minus_1 = r2;
-		ld fib_n_minus_1, r1;
+		ld fib_n_minus_1, r0;
 
 		// calculate fib(n-2)
 		sub n, 1;
-		ld pc.link, fib;
+		ld pc.link, fib; // more recursion!
 		
-	fib_n_minus_2 = r1;
+	fib_n_minus_2 = r0;
 
 		add result, fib_n_minus_1, fib_n_minus_2;
 
 	return:
 		pop r2;
-		pop r0;
+		pop r1;
 		pop pc;
 }

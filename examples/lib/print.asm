@@ -48,13 +48,16 @@ export print_num: {
 		push r1;
 		push r2;
 		push r3;
-	num = r0;
-		ld r1, 10;
-		ld pc.link, div;
-	quotent = r2; // will contain all but last digit of num
-	remainder = r3; // will contain last digit of num
 
-		 // recursively print the remaning digits to print in correct order
+	num = r0;
+
+		ld r2, num;
+		ld r3, 10;
+		ld pc.link, div;
+	quotent = r0; // will contain all but the last digit of num
+	remainder = r1; // will contain the last digit of num
+
+		 // recursively print the remaning digits first
 		ld.s num, quotent;
 		ld.zc pc.link, print_num; // when quotoent is 0, we are done
 
