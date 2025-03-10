@@ -35,7 +35,7 @@ import * from "lib/defines.asm";
 num = r0;
 new_line = r1;
 
-	ld r0, '0';
+	ld num, '0';
 loop:
 	ld tty, num;
 	add num, 1;
@@ -56,16 +56,20 @@ loop:
 ```asm
 import * from "defines.asm";
 
-// input: r0 = string to print
 export print: {
+		// setup stack frame
+		push fp;
+		ld fp, sp;
+
+		// saved registers
 		push status;
-		push r0;
-		push r1;
 		push r2;
 
 	string_ptr = r0;
 	string_word = r1;
 	bytes_left = r2;
+
+		ld string_ptr, *(fp + 1);
 
 	print_word:
 		ld string_word, *string_ptr;
@@ -91,9 +95,14 @@ export print: {
 
 	return:
 		pop r2;
-		pop r1;
-		pop r0;
 		pop status;
+
+		ld sp, fp;
+		pop fp;
+
+		// remove arguments
+		add sp, 1;
+
 		ld pc, lr;
 }
 ```
@@ -105,8 +114,11 @@ import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
 	ld r0, string1;
+	push r0;
 	ld pc.link, print;
+
 	ld r0, string2;
+	push r0;
 	ld pc.link, print;
 
 	ld r0, power_shutdown_code;

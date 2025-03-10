@@ -1,15 +1,20 @@
 import * from "defines.asm";
 
-// input: r0 = string to print
+// inputs: string to print
 export print: {
+		// setup stack frame
+		push fp;
+		ld fp, sp;
+
+		// saved registers
 		push status;
-		push r0;
-		push r1;
 		push r2;
 
 	string_ptr = r0;
 	string_word = r1;
 	bytes_left = r2;
+
+		ld string_ptr, *(fp + 1);
 
 	print_word:
 		ld string_word, *string_ptr;
@@ -35,43 +40,59 @@ export print: {
 
 	return:
 		pop r2;
-		pop r1;
-		pop r0;
 		pop status;
+
+		ld sp, fp;
+		pop fp;
+
+		// remove arguments
+		add sp, 1;
+
 		ld pc, lr;
 }
 
-// input: r0 = num to print
+// inputs: num to print
 export print_num: {
 	import div from "num.asm";
+		// setup stack frame
+		push fp;
+		ld fp, sp;
 
+		// saved registers
 		push lr;
 		push status;
-		push r0;
-		push r1;
 		push r2;
-		push r3;
 
-	num = r0;
+	num = *(fp + 1);
+		ld r0, num;
+		push r0;
 
-		ld r2, num;
-		ld r3, 10;
+		ld r0, 10;
+		push r0;
+
 		ld pc.link, div;
 	quotent = r0; // will contain all but the last digit of num
-	remainder = r1; // will contain the last digit of num
+	remainder = r2; // will contain the last digit of num
+		ld remainder, r1;
 
-		 // recursively print the remaning digits first
-		ld.s num, quotent;
-		ld.zc pc.link, print_num; // when quotoent is 0, we are done
+		// recursively print the remaning digits first
+		sub.t quotent, '\0';
+		push.ne quotent;
+		ld.ne pc.link, print_num; // when quotoent is 0, we are done
 
 		add remainder, '0'; // get ascii of digit
 		ld tty, remainder;
 
 	return:
-		pop r3;
 		pop r2;
-		pop r1;
-		pop r0;
 		pop status;
-		pop pc;
+		pop lr;
+
+		ld sp, fp;
+		pop fp;
+
+		// remove arguments
+		add sp, 1;
+
+		ld pc, lr;
 }

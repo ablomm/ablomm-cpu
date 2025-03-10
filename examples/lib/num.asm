@@ -1,20 +1,29 @@
 import * from "defines.asm";
 
 // does long divison
-// input: r2 = numerator, r3 = divisor
+// inputs: numerator, divisor
 // output: r0 = quotent, r1 = remainder
 export div: {
+		// setup stack frame
+		push fp;
+		ld fp, sp;
+
+		// saved registers
 		push status;
+		push r2;
+		push r3;
 		push r4;
 		push r5;
 
-	numerator = r2;
-	divisor = r3;
-
 	quotent = r0;
 	remainder = r1;
-
+	numerator = r2;
+	divisor = r3;
 	counter = r4;
+
+		ld numerator, *(fp + 2);
+		ld divisor, *(fp + 1);
+
 		ld counter, 32;
 
 		ld quotent, numerator;
@@ -30,32 +39,50 @@ export div: {
 		or.cs quotent, 1;
 
 		sub.s counter, 1;
-		ld.ne pc, shift_numerator;
+		ld.zc pc, shift_numerator;
+
 
 	return:
 		pop r5;
 		pop r4;
+		pop r3;
+		pop r2;
 		pop status;
+
+		ld sp, fp;
+		pop fp;
+
+		// remove arguments
+		add sp, 2;
+
 		ld pc, lr;
 }
 
-// input r2, r3 = operands
+// inputs: operand1, operand2
 // output: r0 = result low, r1 = result high
 export mul: {
+		// setup stack frame
+		push fp;
+		ld fp, sp;
+
+		// saved registers
 		push status;
 		push r2;
 		push r3;
 		push r4;
 
-	operand1 = r2;
-	operand2 = r3;
 	result_low = r0;
 	result_high = r1;
+	operand1 = r2;
+	operand2 = r3;
+	operand2_high = r4;
+
+		ld operand1, *(fp + 2);
+		ld operand2, *(fp + 1);
 
 		ld result_low, 0;
 		ld result_high, 0;
 
-	operand2_high = r4;
 		ld operand2_high, 0;
 	
 	loop:
@@ -71,9 +98,17 @@ export mul: {
 		ld.ne pc, loop;
 
 	return:
+
 		pop r4;
 		pop r3;
 		pop r2;
 		pop status;
+
+		ld sp, fp;
+		pop fp;
+		
+		// remove arguments
+		add sp, 2;
+
 		ld pc, lr;
 }

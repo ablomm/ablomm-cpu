@@ -7,16 +7,17 @@ import print_num from "lib/print.asm";
 
 loop_max = 100;
 
-count = r1;
+count = r2;
 	ld count, 2;
 
 loop:
+	push count;
 	ld pc.link, is_prime;
 
 is_prime_result = r0;
 
 	sub.t is_prime_result, 1;
-	ld.eq r0, count;
+	push.eq count;
 	ld.eq pc.link, print_num;
 	ld.eq r0, '\n';
 	ld.eq tty, r0;
@@ -30,29 +31,34 @@ return:
 	ld power, r0;
 
 
-// input: r1 = num
-// output: r0 = boolean, 1 if num is prime, else 0
+// inputs: num
+// outputs: r0 = 1 if num is prime, else 0
 // note: assumes 1 is prime, although it is not actually prime
 is_prime: {
 	import * from "lib/num.asm";
+	
+		// setup stack frame
+		push fp;
+		ld fp, sp;
 
+		// saved registers
 		push lr;
 		push status;
-		push r1;
 		push r2;
 		push r3;
-		push r4;
 
 	result = r0;
-	num = r4;
-		ld num, r1;
-
+	num = r2;
 	count = r3;
+
+		ld num, *(fp + 1);
+
 		ld count, 2;
 
 	loop:
 		// while (count * count < num) i.e. (count < sqrt(num))
-		ld r2, count;
+		push count;
+		push count;
 		ld pc.link, mul;
 	count_squared = r0;
 
@@ -62,7 +68,8 @@ is_prime: {
 		ld.uge pc, return;
 
 		// divide by the count
-		ld r2, num;
+		push num;
+		push count;
 		ld pc.link, div;
 	remainder = r1;
 
@@ -75,10 +82,16 @@ is_prime: {
 		ld pc, loop;
 
 	return:
-		pop r4;
 		pop r3;
 		pop r2;
-		pop r1;
 		pop status;
-		pop pc;
+		pop lr;
+
+		ld sp, fp;
+		pop fp;
+		
+		// remove arguments
+		add sp, 1;
+
+		ld pc, lr;
 }

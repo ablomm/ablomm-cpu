@@ -12,10 +12,11 @@ counter = r2;
 	ld counter, 0;
 
 loop:
-	ld r1, counter;
+	push counter;
 	ld pc.link, fib;
 
 	// r0 contains the result of fib(n)
+	push r0;
 	ld pc.link, print_num;
 
 	ld r0, '\n';
@@ -31,16 +32,22 @@ return:
 
 
 // calculates the n'th fibinatchi number
-// input: r1 = n
-// output: r0 = fib(n)
+// inputs: n
+// outputs: r0 = fib(n)
 fib: {
+		// setup stack frame
+		push fp;
+		ld fp, sp;
+
+		// saved registers
 		push lr;
 		push status;
-		push r1;
 		push r2;
+		push r3;
 	
-	n = r1;
 	result = r0;
+	n = r2;
+		ld n, *(fp + 1);
 
 		// if n == 0;
 		sub.t n, 0;
@@ -54,13 +61,15 @@ fib: {
 
 		// calculate fib(n-1)
 		sub n, 1;
+		push n;
 		ld pc.link, fib; // recursion!
 
-	fib_n_minus_1 = r2;
+	fib_n_minus_1 = r3;
 		ld fib_n_minus_1, r0;
 
 		// calculate fib(n-2)
 		sub n, 1;
+		push n;
 		ld pc.link, fib; // more recursion!
 		
 	fib_n_minus_2 = r0;
@@ -68,8 +77,16 @@ fib: {
 		add result, fib_n_minus_1, fib_n_minus_2;
 
 	return:
+		pop r3;
 		pop r2;
-		pop r1;
 		pop status;
-		pop pc;
+		pop lr;
+
+		ld sp, fp;
+		pop fp;
+
+		// remove arguments
+		add sp, 1;
+
+		ld pc, lr;
 }
