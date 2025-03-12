@@ -53,20 +53,7 @@ module cu (
   typedef enum {
     FETCH,
 
-    HWINT1,
-    HWINT2,
-	HWINT3,
-
-    SWINT1,
-    SWINT2,
-	SWINT3,
-
-    EXCEPT1,
-    EXCEPT2,
-	EXCEPT3,
-
     NOP,
-    NOT,
     LD,
     LDR,
     LDI,
@@ -74,7 +61,19 @@ module cu (
     STR,
     PUSH,
     POP,
-    ALU
+    ALU,
+
+    HWINT1,
+    HWINT2,
+    HWINT3,
+
+    SWINT1,
+    SWINT2,
+    SWINT3,
+
+    EXCEPT1,
+    EXCEPT2,
+    EXCEPT3
   } states_e;
 
   states_e state = FETCH;
@@ -118,14 +117,14 @@ module cu (
           end
         end
 
-        SWINT1:  state <= SWINT2;
-		SWINT2: state <= SWINT3;
+        SWINT1: state <= SWINT2;
+        SWINT2: state <= SWINT3;
 
-        HWINT1:  state <= HWINT2;
-		HWINT2: state <= HWINT3;
+        HWINT1: state <= HWINT2;
+        HWINT2: state <= HWINT3;
 
         EXCEPT1: state <= EXCEPT2;
-		EXCEPT2: state <= EXCEPT3;
+        EXCEPT2: state <= EXCEPT3;
 
         default: begin
           if (irq & status.imask) state <= HWINT1;
@@ -323,7 +322,7 @@ module cu (
           wr = 1;
         end
 
-		// push status
+        // push status
         SWINT2, HWINT2, EXCEPT2: begin
           pre_dec_sp = 1;
           sel_a_reg = reg_pkg::STATUS;
