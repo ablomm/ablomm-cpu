@@ -1,8 +1,7 @@
 module register_file #(
     parameter integer WORD_SIZE = 32,
-    parameter integer SEL_WIDTH = 4,
-    parameter integer DEPTH = 2 ** SEL_WIDTH
-
+    parameter integer DEPTH = 16,
+    parameter integer SEL_WIDTH = $clog2(DEPTH)
 ) (
     input clk,
     input rst,

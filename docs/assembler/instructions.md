@@ -2,7 +2,7 @@
 
 The assembly contains a small number of instructions. The assembler has a different (but similar) set of instructions than the CPU instructions listed in the [ISA document](../cpu/isa.md#instructions). 
 
-Each assembly instruction maps 1:1 to a CPU instruction, and the different set is merely a convinence as you shall see.
+Each assembly instruction may map to many CPU instructions. The different set is merely a convinence as you shall see.
 
 Each assembly instruction is enumerated in the following table:
 
@@ -117,36 +117,6 @@ Each assembly instruction is enumerated in the following table:
       
 </td>
 </tr>
-<tr>
-<td>push</td>
-<td>Push to stack</td>
-<td>PUSH</td>
-<td>
-
-`push r1;`
-      
-</td>
-<td>
-
-`*(--sp) = r1`
-      
-</td>
-</tr>
-<tr>
-<td>pop</td>
-<td>Pop from stack</td>
-<td>POP</td>
-<td>
-
-`pop r1;`
-      
-</td>
-<td>
-
-`r1 = *(sp++)`
-      
-</td>
-</tr>
 
 <tr>
 <td>int</td>
@@ -160,7 +130,7 @@ Each assembly instruction is enumerated in the following table:
 <td>
 
 `*(--sp) = pc` <br>
-`status &= 0b111110` <br>
+`status &= 0b111100` <br>
 `pc = 2`
       
 </td>
@@ -727,7 +697,7 @@ Carry flag is set; alias for `uge`
 
 <td>
 
-`push.slt lr;`
+`ld.slt pc lr;`
       
 </td>
 <td>SLT</td>
@@ -746,7 +716,7 @@ Carry flag is set; alias for `uge`
 
 <td>
 
-`pop.sgt r0;`
+`not.sgt r0;`
       
 </td>
 <td>SGT</td>

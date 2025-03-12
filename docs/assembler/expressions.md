@@ -395,7 +395,7 @@ The list of registers allowed in the assembly is as follows:
 <td>General purpose</td>
 <td>
 
-`push r5;`
+`not r5;`
 
 </td>
 <td>R5</td>
@@ -414,57 +414,24 @@ The list of registers allowed in the assembly is as follows:
 
 <tr>
 <td>r7</td>
-<td>General purpose</td>
+<td>
+  
+General purpose (if not using as `fp`)
+  
+</td>
 <td>
 
 `shr.s r7, r2;`
 
 </td>
-<td>R7</td>
-</tr>
-
-<tr>
-<td>r8</td>
-<td>General purpose</td>
-<td>
-
-`ld r8, *123;`
-
-</td>
-<td>R8</td>
-</tr>
-
-<tr>
-<td>r9</td>
-<td>General purpose</td>
-<td>
-
-`ld *123, r9;`
-
-</td>
-<td>R9</td>
-</tr>
-
-<tr>
-<td>r10</td>
-<td>
-  
-General purpose (if not using as `fp`)
-
-</td>
-<td>
-
-`ld r10, r5;`
-
-</td>
-<td rowspan="2">R10</td>
+<td rowspan="2">R7</td>
 </tr>
 
 <tr>
 <td>fp</td>
 <td>
   
-Frame pointer; aliases to `r10`
+Frame pointer; aliases to `r7`
 
 </td>
 <td>
@@ -490,6 +457,36 @@ State of the CPU; conditions, interupt mask, and mode. Refer to the [ISA documen
 </tr>
 
 <tr>
+<td>sp.inc</td>
+<td>
+  
+Stack pointer post increment; A pseudo register that will post increment `sp` after reading or writing
+
+</td>
+<td>
+
+`ld r1, *sp.inc;`
+
+</td>
+<td>SPINC</td>
+</tr>
+
+<tr>
+<td>sp.dec</td>
+<td>
+  
+Stack pointer pre decrement; A pseudo register that will pre decrement `sp` after reading or writing
+
+</td>
+<td>
+
+`ld *sp.dec, r1;`
+
+</td>
+<td>SPDEC</td>
+</tr>
+
+<tr>
 <td>sp</td>
 <td>Stack pointer; points to last item in stack, and grows down</td>
 <td>
@@ -498,6 +495,21 @@ State of the CPU; conditions, interupt mask, and mode. Refer to the [ISA documen
 
 </td>
 <td>SP</td>
+</tr>
+
+<tr>
+<td>ilr</td>
+<td>
+  
+Interrupt link register; is set to previous `pc` value if any interrupt is triggered
+
+</td>
+<td>
+
+`ld pc, ilr;`
+
+</td>
+<td>ILR</td>
 </tr>
 
 <tr>
@@ -513,6 +525,7 @@ Link register; is set to previous `pc` value if `pc.link` is written to
 
 </td>
 <td>LR</td>
+</tr>
 
 <tr>
 <td>pc.link</td>

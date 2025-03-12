@@ -21,14 +21,12 @@ package cu_pkg;
   } cond_e;
 
   typedef enum logic [7:0] {
-    NOP  = 8'h00,
+    NOP = 8'h00,
     LD,
     LDR,
     LDI,
     ST,
     STR,
-    PUSH,
-    POP,
     INT
     // alu ops not shown here, start with 0xf*
   } instruction_e;
@@ -78,11 +76,6 @@ package cu_pkg;
     logic signed [11:0] offset;
   } register_register_offset_operands_t;
 
-  typedef struct packed {
-    reg_e reg_a;
-    logic [15:0] unused;
-  } register_operands_t;
-
   typedef union packed {
     unknown_alu_op_operands_t unknown_alu_op;
     alu_op_operands_t alu_op;
@@ -93,9 +86,6 @@ package cu_pkg;
     register_immediate_operands_t ldi;
     register_address_operands_t st;
     register_register_offset_operands_t str;
-
-    register_operands_t push;
-    register_operands_t pop;
   } ir_operands_t;
 
   typedef struct packed {

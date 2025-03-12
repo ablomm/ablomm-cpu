@@ -11,13 +11,13 @@ count = r2;
 	ld count, 2;
 
 loop:
-	push count;
+	ld *sp.dec, count;
 	ld pc.link, is_prime;
 
 is_prime_result = r0;
 
 	sub.t is_prime_result, 1;
-	push.eq count;
+	ld.eq *sp.dec, count;
 	ld.eq pc.link, print_num;
 	ld.eq r0, '\n';
 	ld.eq tty, r0;
@@ -38,14 +38,14 @@ is_prime: {
 	import * from "lib/num.asm";
 	
 		// setup stack frame
-		push fp;
+		ld *sp.dec, fp;
 		ld fp, sp;
 
 		// saved registers
-		push lr;
-		push status;
-		push r2;
-		push r3;
+		ld *sp.dec, lr;
+		ld *sp.dec, status;
+		ld *sp.dec, r2;
+		ld *sp.dec, r3;
 
 	result = r0;
 	num = r2;
@@ -57,8 +57,8 @@ is_prime: {
 
 	loop:
 		// while (count * count < num) i.e. (count < sqrt(num))
-		push count;
-		push count;
+		ld *sp.dec, count;
+		ld *sp.dec, count;
 		ld pc.link, mul;
 	count_squared = r0;
 
@@ -68,8 +68,8 @@ is_prime: {
 		ld.uge pc, return;
 
 		// divide by the count
-		push num;
-		push count;
+		ld *sp.dec, num;
+		ld *sp.dec, count;
 		ld pc.link, div;
 	remainder = r1;
 
@@ -82,13 +82,13 @@ is_prime: {
 		ld pc, loop;
 
 	return:
-		pop r3;
-		pop r2;
-		pop status;
-		pop lr;
+		ld r3, *sp.inc;
+		ld r2, *sp.inc;
+		ld status, *sp.inc;
+		ld lr, *sp.inc;
 
 		ld sp, fp;
-		pop fp;
+		ld fp, *sp.inc;
 		
 		// remove arguments
 		add sp, 1;

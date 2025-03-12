@@ -4,8 +4,6 @@ pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = ParseError> {
     return choice((
         just("nop").to(AsmMnemonic::Nop),
         just("ld").to(AsmMnemonic::Ld),
-        just("push").to(AsmMnemonic::Push),
-        just("pop").to(AsmMnemonic::Pop),
         just("int").to(AsmMnemonic::Int),
         just("and").to(AsmMnemonic::BinaryAlu(CpuMnemonic::And)),
         just("or").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Or)),
@@ -32,14 +30,14 @@ pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
         just("r5").to(Register::R5),
         just("r6").to(Register::R6),
         just("r7").to(Register::R7),
-        just("r8").to(Register::R8),
-        just("r9").to(Register::R9),
-        just("r10").to(Register::R10),
-        just("fp").to(Register::R10), // just an alias
+        just("fp").to(Register::R7), // just an alias
         just("status").to(Register::Status),
+        just("sp.inc").to(Register::SpInc),
+        just("sp.dec").to(Register::SpDec),
         just("sp").to(Register::Sp),
+        just("ilr").to(Register::ILr),
         just("lr").to(Register::Lr),
-        just("pc.link").to(Register::Pclink), // psuedo register, used to jump with link
+        just("pc.link").to(Register::PcLink), // psuedo register, used to jump with link
         just("pc").to(Register::Pc),
     ));
 }

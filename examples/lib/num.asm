@@ -5,15 +5,15 @@ import * from "defines.asm";
 // output: r0 = quotent, r1 = remainder
 export div: {
 		// setup stack frame
-		push fp;
+		ld *sp.dec, fp;
 		ld fp, sp;
 
 		// saved registers
-		push status;
-		push r2;
-		push r3;
-		push r4;
-		push r5;
+		ld *sp.dec, status;
+		ld *sp.dec, r2;
+		ld *sp.dec, r3;
+		ld *sp.dec, r4;
+		ld *sp.dec, r5;
 
 	quotent = r0;
 	remainder = r1;
@@ -43,14 +43,14 @@ export div: {
 
 
 	return:
-		pop r5;
-		pop r4;
-		pop r3;
-		pop r2;
-		pop status;
+		ld r5, *sp.inc;
+		ld r4, *sp.inc;
+		ld r3, *sp.inc;
+		ld r2, *sp.inc;
+		ld status, *sp.inc;
 
 		ld sp, fp;
-		pop fp;
+		ld fp, *sp.inc;
 
 		// remove arguments
 		add sp, 2;
@@ -62,14 +62,14 @@ export div: {
 // output: r0 = result low, r1 = result high
 export mul: {
 		// setup stack frame
-		push fp;
+		ld *sp.dec, fp;
 		ld fp, sp;
 
 		// saved registers
-		push status;
-		push r2;
-		push r3;
-		push r4;
+		ld *sp.dec, status;
+		ld *sp.dec, r2;
+		ld *sp.dec, r3;
+		ld *sp.dec, r4;
 
 	result_low = r0;
 	result_high = r1;
@@ -99,13 +99,13 @@ export mul: {
 
 	return:
 
-		pop r4;
-		pop r3;
-		pop r2;
-		pop status;
+		ld r4, *sp.inc;
+		ld r3, *sp.inc;
+		ld r2, *sp.inc;
+		ld status, *sp.inc;
 
 		ld sp, fp;
-		pop fp;
+		ld fp, *sp.inc;
 		
 		// remove arguments
 		add sp, 2;

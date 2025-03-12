@@ -43,8 +43,8 @@ module cpu (
   wire oe_b_reg;
   wire ld_reg;
 
-  wire post_inc_sp;
-  wire pre_dec_sp;
+  wire ld_ilr_pc;
+
   wire post_inc_pc;
 
   wire oe_a_consts;
@@ -99,9 +99,10 @@ module cpu (
   );
 
   // public registers
-  // 0-10 => general registers (including fp)
+  // 0-8 => general registers (including fp)
   register_file #(
-      .DEPTH(11)
+      .DEPTH(8),
+      .SEL_WIDTH(4)
   ) reg_file (
       .clk(clk),
       .rst(rst),
@@ -141,15 +142,30 @@ module cpu (
       .a(a_reg_bus),
       .b(b_reg_bus),
       .in(result),
-      .oe_a(sel_a_reg === reg_pkg::SP && oe_a_reg),
-      .oe_b(sel_b_reg === reg_pkg::SP && oe_b_reg),
-      .ld(sel_in_reg === reg_pkg::SP && ld_reg),
-      .post_inc(post_inc_sp),
-      .pre_dec(pre_dec_sp),
+      .oe_a(oe_a_reg && (sel_a_reg === reg_pkg::SP || sel_a_reg === reg_pkg::SPINC || sel_a_reg === reg_pkg::SPDEC)),
+      .oe_b(oe_b_reg && (sel_b_reg === reg_pkg::SP || sel_b_reg === reg_pkg::SPINC || sel_b_reg === reg_pkg::SPDEC)),
+      .ld(ld_reg && (sel_in_reg === reg_pkg::SP || sel_in_reg === reg_pkg::SPINC || sel_in_reg === reg_pkg::SPDEC)),
+      .post_inc(sel_in_reg === reg_pkg::SPINC && ld_reg || sel_a_reg === reg_pkg::SPINC && oe_a_reg || sel_b_reg === reg_pkg::SPINC && oe_b_reg),
+      .pre_dec(sel_in_reg === reg_pkg::SPDEC && ld_reg || sel_a_reg === reg_pkg::SPDEC && oe_a_reg || sel_b_reg === reg_pkg::SPDEC && oe_b_reg),
       .value()
   );
 
   wire [31:0] pc_val;
+
+  lr_reg ilr (
+      .clk(clk),
+      .rst(rst),
+      .a(a_reg_bus),
+      .b(b_reg_bus),
+      .in(result),
+      .oe_a(sel_a_reg === reg_pkg::ILR && oe_a_reg),
+      .oe_b(sel_b_reg === reg_pkg::ILR && oe_b_reg),
+      .ld(sel_in_reg === reg_pkg::ILR && ld_reg),
+      .pc(pc_val),
+      .ld_pc(ld_ilr_pc),
+      .value()
+  );
+
   lr_reg lr (
       .clk(clk),
       .rst(rst),

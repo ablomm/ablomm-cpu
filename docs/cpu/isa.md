@@ -1,8 +1,8 @@
 # Public Registers
 
-There are 11, 32-bit, general purpose register (`R0` to `R10`)
+There are 8, 32-bit, general purpose register (`R0` to `R7`)
 
-There are 4 special purpose registers with varying widths. The table below enumerates all registers and their purpose.
+There are 8 special purpose registers with varying widths. The table below enumerates all registers and their purpose.
 
 | Register | Code | Description | Width |
 |---|---|---|---|
@@ -14,17 +14,17 @@ There are 4 special purpose registers with varying widths. The table below enume
 | R5 | 0x5 | General purpose | 32 |
 | R6 | 0x6 | General purpose | 32 |
 | R7 | 0x7 | General purpose | 32 |
-| R8 | 0x8 | General purpose | 32 |
-| R9 | 0x9 | General purpose | 32 |
-| R10 | 0xa | General purpose | 32 |
-| STATUS | 0xb | State of the CPU; conditions, interupt mask, and mode | 6 |
-| SP | 0xc | Stack pointer; points to last item in stack, and grows down | 32 |
+| STATUS | 0x8 | State of the CPU; conditions, interupt mask, and mode | 6 |
+| SPINC | 0x9 | Stack pointer post increment; A pseudo register that will post increment `SP` after reading or writing | 32 |
+| SPDEC | 0xa | Stack pointer pre decrement; A pseudo register that will pre decrement `SP` after reading or writing | 32 |
+| SP | 0xb | Stack pointer | 32 |
+| ILR | 0xc | Interrupt link register; is set to previous `PC` value if any interrupt is triggered | 32 |
 | LR | 0xd | Link register; is set to previous `PC` value if `PCLINK` is written to | 32 |
 | PCLINK | 0xe | Program counter; A pseudo register used to load `PC` and load `LR` with the previous `PC` value (much like some ISA's jump with link) | 32 |
 | PC | 0xf | Program counter; points to next instruction to run | 32 |
 
 > [!NOTE]
-> The assembler has more registers that will alias to this set, notably `fp` which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Upercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
+> The assembler has more registers that will alias to this set, notably `fp` which aliases to `r7`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Upercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
 
 ## Status Register
 
@@ -86,9 +86,7 @@ There is only 10 instruction from the CPU's perspective. The ALU instruction is 
 | LDI | 0x03 | Load immediate | `register = immediate` |
 | ST | 0x04 | Store | `*address = register` |
 | STR | 0x05 | Store to register | `*(register + offset) = register` |
-| PUSH | 0x06 | Push to stack | `*(--sp) = register` |
-| POP | 0x07 | Pop from stack | `register = *(sp++)` |
-| INT | 0x08 | Software interrupt; see [Interupt Vector Table section](#interrupt-vector-table) | `*(--sp) = pc` <br> `status &= 0b111110` <br> `pc = 2` |
+| INT | 0x06 | Software interrupt; see [Interupt Vector Table section](#interrupt-vector-table) | `*(--sp) = pc` <br> `status &= 0b111110` <br> `pc = 2` |
 | ALU | 0xf_ | Performs an ALU operation as shown in the [ALU Operations section](#alu-operations) | `A = B <op> C` <br> `if (S) { status.NZCV = <new flags> }` |
 
 > [!NOTE]
@@ -261,16 +259,16 @@ You may have noticed the ALU CPU instruction contains four bits named "I", "R", 
 
 The addresses of various locations in memory the CPU may jump to in each case are as follows:
 
-| Purpose | Address | When |
+| Event | Address | When |
 |---|---|---|
 | Start | 0 | When CPU turns on or resets |
 | Hardware interrupt | 1 | When interupt mask is set and the IRQ line is high |
 | Software interrupt | 2 | When the instruction `int` is ran |
 | Exception | 3 | When an unknown instruction is ran |
 
-When a hardware interupt is triggered, the interupt mask is set to 0, meaning no more hardware inerrupts will occur until it is unmasked.
+When any event is triggered, the interupt mask is set to 0, meaning no more hardware inerrupts will occur until it is unmasked.
 
-Hardware and software interrupts, as well as exceptions, will push pc before jumping.
+Hardware and software interrupts, as well as exceptions, will load `ILR` to `PC` before jumping.
 
 Start will reset all registers to 0.
 

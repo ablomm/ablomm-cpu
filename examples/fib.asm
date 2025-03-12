@@ -12,11 +12,11 @@ counter = r2;
 	ld counter, 0;
 
 loop:
-	push counter;
+	ld *sp.dec, counter;
 	ld pc.link, fib;
 
 	// r0 contains the result of fib(n)
-	push r0;
+	ld *sp.dec, r0;
 	ld pc.link, print_num;
 
 	ld r0, '\n';
@@ -36,14 +36,14 @@ return:
 // outputs: r0 = fib(n)
 fib: {
 		// setup stack frame
-		push fp;
+		ld *sp.dec, fp;
 		ld fp, sp;
 
 		// saved registers
-		push lr;
-		push status;
-		push r2;
-		push r3;
+		ld *sp.dec, lr;
+		ld *sp.dec, status;
+		ld *sp.dec, r2;
+		ld *sp.dec, r3;
 	
 	result = r0;
 	n = r2;
@@ -61,7 +61,7 @@ fib: {
 
 		// calculate fib(n-1)
 		sub n, 1;
-		push n;
+		ld *sp.dec, n;
 		ld pc.link, fib; // recursion!
 
 	fib_n_minus_1 = r3;
@@ -69,7 +69,7 @@ fib: {
 
 		// calculate fib(n-2)
 		sub n, 1;
-		push n;
+		ld *sp.dec, n;
 		ld pc.link, fib; // more recursion!
 		
 	fib_n_minus_2 = r0;
@@ -77,13 +77,13 @@ fib: {
 		add result, fib_n_minus_1, fib_n_minus_2;
 
 	return:
-		pop r3;
-		pop r2;
-		pop status;
-		pop lr;
+		ld r3, *sp.inc;
+		ld r2, *sp.inc;
+		ld status, *sp.inc;
+		ld lr, *sp.inc;
 
 		ld sp, fp;
-		pop fp;
+		ld fp, *sp.inc;
 
 		// remove arguments
 		add sp, 1;

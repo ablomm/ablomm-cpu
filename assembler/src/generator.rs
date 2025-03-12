@@ -10,8 +10,6 @@ mod alu_op;
 mod int;
 mod ld;
 mod nop;
-mod pop;
-mod push;
 
 // cannot include span because blocks may span multiple different files
 pub fn compile_ast(ast: &Ast) -> Result<String, Vec<Error>> {
@@ -78,8 +76,6 @@ impl Spanned<&Operation> {
         match self.full_mnemonic.mnemonic.val {
             AsmMnemonic::Nop => nop::generate_nop(self),
             AsmMnemonic::Ld => ld::generate_ld(self, symbol_table),
-            AsmMnemonic::Push => push::generate_push(self, symbol_table),
-            AsmMnemonic::Pop => pop::generate_pop(self, symbol_table),
             AsmMnemonic::Int => int::generate_int(self),
             AsmMnemonic::UnaryAlu(_) => alu_op::generate_unary_alu_op(self, symbol_table),
             AsmMnemonic::BinaryAlu(_) => alu_op::generate_alu_op(self, symbol_table),

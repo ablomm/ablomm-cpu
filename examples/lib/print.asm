@@ -3,12 +3,12 @@ import * from "defines.asm";
 // inputs: string to print
 export print: {
 		// setup stack frame
-		push fp;
+		ld *sp.dec, fp;
 		ld fp, sp;
 
 		// saved registers
-		push status;
-		push r2;
+		ld *sp.dec, status;
+		ld *sp.dec, r2;
 
 	string_ptr = r0;
 	string_word = r1;
@@ -39,11 +39,11 @@ export print: {
 		ld pc, print_word;
 
 	return:
-		pop r2;
-		pop status;
+		ld r2, *sp.inc;
+		ld status, *sp.inc;
 
 		ld sp, fp;
-		pop fp;
+		ld fp, *sp.inc;
 
 		// remove arguments
 		add sp, 1;
@@ -55,20 +55,20 @@ export print: {
 export print_num: {
 	import div from "num.asm";
 		// setup stack frame
-		push fp;
+		ld *sp.dec, fp;
 		ld fp, sp;
 
 		// saved registers
-		push lr;
-		push status;
-		push r2;
+		ld *sp.dec, lr;
+		ld *sp.dec, status;
+		ld *sp.dec, r2;
 
 	num = *(fp + 1);
 		ld r0, num;
-		push r0;
+		ld *sp.dec, r0;
 
 		ld r0, 10;
-		push r0;
+		ld *sp.dec, r0;
 
 		ld pc.link, div;
 	quotent = r0; // will contain all but the last digit of num
@@ -77,19 +77,19 @@ export print_num: {
 
 		// recursively print the remaning digits first
 		sub.t quotent, '\0';
-		push.ne quotent;
+		ld.ne *sp.dec, quotent;
 		ld.ne pc.link, print_num; // when quotoent is 0, we are done
 
 		add remainder, '0'; // get ascii of digit
 		ld tty, remainder;
 
 	return:
-		pop r2;
-		pop status;
-		pop lr;
+		ld r2, *sp.inc;
+		ld status, *sp.inc;
+		ld lr, *sp.inc;
 
 		ld sp, fp;
-		pop fp;
+		ld fp, *sp.inc;
 
 		// remove arguments
 		add sp, 1;

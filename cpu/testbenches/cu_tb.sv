@@ -28,8 +28,8 @@ module cu_tb;
   logic oe_b_reg;
   logic ld_reg;
 
-  logic post_inc_sp;
-  logic pre_dec_sp;
+  logic ld_ilr_pc;
+
   logic post_inc_pc;
 
   logic oe_a_consts;

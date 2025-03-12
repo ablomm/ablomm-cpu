@@ -6,11 +6,11 @@ import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
 	ld r0, string1;
-	push r0;
+	ld *sp.dec, r0;
 	ld pc.link, print;
 
 	ld r0, string2;
-	push r0;
+	ld *sp.dec, r0;
 	ld pc.link, print;
 
 	ld r0, power_shutdown_code;

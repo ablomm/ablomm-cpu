@@ -239,8 +239,8 @@ fn generate_ld_ireg_reg(
     let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Str.generate();
-    opcode |= register1.generate() << 16;
-    opcode |= register2.generate() << 12;
+    opcode |= register2.generate() << 16;
+    opcode |= register1.generate() << 12;
     Ok(opcode)
 }
 

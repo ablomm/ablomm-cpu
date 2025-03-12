@@ -21,11 +21,11 @@ package reg_pkg;
     R5,
     R6,
     R7,
-    R8,
-    R9,
-    R10,
     STATUS,
+    SPINC,
+    SPDEC,
     SP,
+    ILR,
     LR,
     PCLINK,  // pseudo register: same as PC, except loading will also load LR to previous PC state
     PC

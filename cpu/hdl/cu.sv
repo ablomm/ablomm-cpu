@@ -30,8 +30,8 @@ module cu (
     output logic oe_b_reg,
     output logic ld_reg,
 
-    output logic post_inc_sp,
-    output logic pre_dec_sp,
+    output logic ld_ilr_pc,
+
     output logic post_inc_pc,
 
     output logic oe_a_consts,
@@ -53,24 +53,16 @@ module cu (
   typedef enum {
     FETCH,
 
-    HWINT1,
-    HWINT2,
-
-    SWINT1,
-    SWINT2,
-
-    EXCEPT1,
-    EXCEPT2,
+    HWINT,
+    SWINT,
+    EXCEPT,
 
     NOP,
-    NOT,
     LD,
     LDR,
     LDI,
     ST,
     STR,
-    PUSH,
-    POP,
     ALU
   } states_e;
 
@@ -104,23 +96,17 @@ module cu (
               cu_pkg::LDI: state <= LDI;
               cu_pkg::ST: state <= ST;
               cu_pkg::STR: state <= STR;
-              cu_pkg::PUSH: state <= PUSH;
-              cu_pkg::POP: state <= POP;
-              cu_pkg::INT: state <= SWINT1;
+              cu_pkg::INT: state <= SWINT;
               // all alu ops will have a f in first instruction nibble
               // the second nibble will be the alu_op
               'hf?: state <= ALU;
-              default: state <= EXCEPT1;
+              default: state <= EXCEPT;
             endcase
           end
         end
 
-        SWINT1:  state <= SWINT2;
-        HWINT1:  state <= HWINT2;
-        EXCEPT1: state <= EXCEPT2;
-
         default: begin
-          if (irq & status.imask) state <= HWINT1;
+          if (irq & status.imask) state <= HWINT;
           else state <= FETCH;
         end
       endcase
@@ -167,8 +153,8 @@ module cu (
     oe_b_reg = 0;
     ld_reg = 0;
 
-    post_inc_sp = 0;
-    pre_dec_sp = 0;
+    ld_ilr_pc = 0;
+
     post_inc_pc = 0;
 
     oe_a_consts = 0;
@@ -251,26 +237,6 @@ module cu (
           wr = 1;
         end
 
-        // *(--sp) <- reg_a
-        PUSH: begin
-          pre_dec_sp = 1;
-          sel_a_reg = reg_e'(ir.operands.push.reg_a);
-          oe_a_reg = 1;
-          sel_b_reg = reg_pkg::SP;
-          oe_b_reg = 1;
-          wr = 1;
-        end
-
-        // reg_a <- *(sp++)
-        POP: begin
-          sel_b_reg = reg_pkg::SP;
-          oe_b_reg = 1;
-          rd = 1;
-          sel_in_reg = reg_e'(ir.operands.pop.reg_a);
-          ld_reg = 1;
-          post_inc_sp = 1;
-        end
-
         ALU: begin
           if (ir.operands.unknown_alu_op.flags.immediate) begin
             if (ir.operands.alu_op_i.flags.reverse) begin
@@ -305,20 +271,12 @@ module cu (
           ld_alu_status = ir.operands.unknown_alu_op.flags.set_status;
         end
 
-        // push PC
-        SWINT1, HWINT1, EXCEPT1: begin
-          pre_dec_sp = 1;
-          sel_a_reg = reg_pkg::PC;
-          oe_a_reg = 1;
-          sel_b_reg = reg_pkg::SP;
-          oe_b_reg = 1;
-          wr = 1;
-        end
-
+        // ILR <- PC
         // PC <- 00000001
         // imask <- 0
         // mode <- SUPERVISOR
-        HWINT2: begin
+        HWINT: begin
+          ld_ilr_pc = 1;
           sel_b_reg = reg_e'(4'h1);
           oe_b_consts = 1;
           alu_op = alu_pkg::PASS;
@@ -331,28 +289,38 @@ module cu (
           ld_mode = 1;
         end
 
+        // ILR <- PC
         // PC <- 00000002
+        // imask <- 0
         // mode <- SUPERVISOR
-        SWINT2: begin
+        SWINT: begin
+          ld_ilr_pc = 1;
           sel_b_reg = reg_e'(4'h2);
           oe_b_consts = 1;
           alu_op = alu_pkg::PASS;
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
+          imask_in = 0;
+          ld_imask = 1;
           mode_in = reg_pkg::SUPERVISOR;
           ld_mode = 1;
         end
 
-        // pc <- 00000003
+        // ILR <- PC
+        // PC <- 00000003
+        // imask <- 0
         // mode <- SUPERVISOR
-        EXCEPT2: begin
+        EXCEPT: begin
+          ld_ilr_pc = 1;
           sel_b_reg = reg_e'(4'h3);
           oe_b_consts = 1;
           alu_op = alu_pkg::PASS;
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
+          imask_in = 0;
+          ld_imask = 1;
           mode_in = reg_pkg::SUPERVISOR;
           ld_mode = 1;
         end

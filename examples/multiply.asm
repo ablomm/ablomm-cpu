@@ -7,13 +7,13 @@ import print_num from "lib/print.asm";
 import mul from "lib/num.asm";
 
 	ld r0, *operand1;
-	push r0;
+	ld *sp.dec, r0;
 	ld r0, *operand2;
-	push r0;
+	ld *sp.dec, r0;
 	ld pc.link, mul;
 
 mul_result = r0;
-	push mul_result;
+	ld *sp.dec, mul_result;
 	ld pc.link, print_num;
 
 	ld r0, '\n';

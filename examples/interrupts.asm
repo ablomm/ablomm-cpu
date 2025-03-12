@@ -32,11 +32,14 @@ end:
 	ld pc, end;
 
 isr:
-	push lr;
-	push status;
-	push r0;
+	// all registers need to be saved (except ilr)
+	ld *sp.dec, lr;
+	ld *sp.dec, status;
+	ld *sp.dec, r0;
+	ld *sp.dec, r1;
 
 	ld r0, isr_string;
+	ld *sp.dec, r0;
 	ld pc.link, print;
 
 	// check the interupt and acknowledge it
@@ -44,20 +47,20 @@ isr:
 	and.t r0, timer_interupt_mask;
 	ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
 
-	pop r0;
-	pop status;
-	pop lr;
+	ld r1, *sp.inc;
+	ld r0, *sp.inc;
+	ld status, *sp.inc;
+	ld lr, *sp.inc;
 
 	// enable interupts again (the cpu disabled interupts for us)
 	or status, interupt_enable_bit;
 
-	// the cpu pushed pc for us, we just need to pop it
-	pop pc;
+	ld pc, ilr;
 
 sw_isr:
-	pop pc;
+	ld pc, ilr;
 
 exception_handler:
-	pop pc;
+	ld pc, ilr;
 
 isr_string: "got an irq!\n\0";
