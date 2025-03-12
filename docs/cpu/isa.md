@@ -261,20 +261,20 @@ You may have noticed the ALU CPU instruction contains four bits named "I", "R", 
 
 The addresses of various locations in memory the CPU may jump to in each case are as follows:
 
-| Purpose | Address | When |
+| Event | Jump Address | Trigger |
 |---|---|---|
-| Start | 0 | When CPU turns on or resets |
-| Hardware interrupt | 1 | When interupt mask is set and the IRQ line is high |
-| Software interrupt | 2 | When the instruction `int` is ran |
-| Exception | 3 | When an unknown instruction is ran |
+| Start | 0 | CPU turns on or resets |
+| Hardware interrupt | 1 | Interupt mask is set and the IRQ line is high |
+| Software interrupt | 2 | The instruction `int` is ran |
+| Exception | 3 | An unknown instruction is ran |
 
-When a hardware interupt is triggered, the interupt mask is set to 0, meaning no more hardware inerrupts will occur until it is unmasked.
+When any event is triggered, the interupt mask is set to 0, meaning no more hardware interrupts will occur until it is unmasked.
 
-Hardware and software interrupts, as well as exceptions, will push pc before jumping.
+All events will result in entering supervisor mode.
+
+Hardware and software interrupts, as well as exceptions, will push `pc` and `status` before jumping.
 
 Start will reset all registers to 0.
-
-All of these jumps will result in entering supervisor mode.
 
 Check out the [Interrupts example](../../examples/interrupts.asm) for how to set up the interupt vector table.
 

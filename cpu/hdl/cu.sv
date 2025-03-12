@@ -55,12 +55,15 @@ module cu (
 
     HWINT1,
     HWINT2,
+	HWINT3,
 
     SWINT1,
     SWINT2,
+	SWINT3,
 
     EXCEPT1,
     EXCEPT2,
+	EXCEPT3,
 
     NOP,
     NOT,
@@ -116,8 +119,13 @@ module cu (
         end
 
         SWINT1:  state <= SWINT2;
+		SWINT2: state <= SWINT3;
+
         HWINT1:  state <= HWINT2;
+		HWINT2: state <= HWINT3;
+
         EXCEPT1: state <= EXCEPT2;
+		EXCEPT2: state <= EXCEPT3;
 
         default: begin
           if (irq & status.imask) state <= HWINT1;
@@ -315,10 +323,20 @@ module cu (
           wr = 1;
         end
 
+		// push status
+        SWINT2, HWINT2, EXCEPT2: begin
+          pre_dec_sp = 1;
+          sel_a_reg = reg_pkg::STATUS;
+          oe_a_reg = 1;
+          sel_b_reg = reg_pkg::SP;
+          oe_b_reg = 1;
+          wr = 1;
+        end
+
         // PC <- 00000001
         // imask <- 0
         // mode <- SUPERVISOR
-        HWINT2: begin
+        HWINT3: begin
           sel_b_reg = reg_e'(4'h1);
           oe_b_consts = 1;
           alu_op = alu_pkg::PASS;
@@ -332,27 +350,33 @@ module cu (
         end
 
         // PC <- 00000002
+        // imask <- 0
         // mode <- SUPERVISOR
-        SWINT2: begin
+        SWINT3: begin
           sel_b_reg = reg_e'(4'h2);
           oe_b_consts = 1;
           alu_op = alu_pkg::PASS;
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
+          imask_in = 0;
+          ld_imask = 1;
           mode_in = reg_pkg::SUPERVISOR;
           ld_mode = 1;
         end
 
         // pc <- 00000003
+        // imask <- 0
         // mode <- SUPERVISOR
-        EXCEPT2: begin
+        EXCEPT3: begin
           sel_b_reg = reg_e'(4'h3);
           oe_b_consts = 1;
           alu_op = alu_pkg::PASS;
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
+          imask_in = 0;
+          ld_imask = 1;
           mode_in = reg_pkg::SUPERVISOR;
           ld_mode = 1;
         end

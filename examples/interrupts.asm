@@ -12,7 +12,10 @@ import print from "lib/print.asm";
 	ld pc, exception_handler;
 
 start:
-	or status, interupt_enable_bit; // enable interupts
+	int; // software interrupt!
+	0x0e000000; // invalid instruction -- exception!
+
+	or status, interupt_enable_bit; // enable hardware interupts
 
 	// set up timer
 	// set timer interval to 0x1000 clock cycles
@@ -29,14 +32,15 @@ start:
 	ld timer_ctrl, r0;
 
 end:
+	// loop while we wait for a hardware interrupt
 	ld pc, end;
 
 isr:
 	push lr;
-	push status;
 	push r0;
 
-	ld r0, isr_string;
+	ld r0, hwint_string;
+	push r0;
 	ld pc.link, print;
 
 	// check the interupt and acknowledge it
@@ -45,19 +49,42 @@ isr:
 	ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
 
 	pop r0;
-	pop status;
 	pop lr;
 
-	// enable interupts again (the cpu disabled interupts for us)
-	or status, interupt_enable_bit;
-
-	// the cpu pushed pc for us, we just need to pop it
+	// the cpu pushed status and pc for us, we just need to pop them!
+	pop status;
 	pop pc;
 
 sw_isr:
+	push lr;
+	push r0;
+	
+	ld r0, swint_string;
+	push r0;
+	ld pc.link, print;
+
+	pop r0;
+	pop lr;
+
+	// the cpu pushed status and pc for us, we just need to pop them!
+	pop status;
 	pop pc;
 
 exception_handler:
+	push lr;
+	push r0;
+	
+	ld r0, except_string;
+	push r0;
+	ld pc.link, print;
+
+	pop r0;
+	pop lr;
+
+	// the cpu pushed status and pc for us, we just need to pop them!
+	pop status;
 	pop pc;
 
-isr_string: "got an irq!\n\0";
+hwint_string: "got a hardware interrupt!\n\0";
+swint_string: "got a software interrupt!\n\0";
+except_string: "got an exception!\n\0";
