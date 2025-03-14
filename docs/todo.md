@@ -14,8 +14,6 @@ Currently PUSH and POP only works on one register at a time.
 
 E.g.: `push r1, r2, r3;`
 
-### Create timer and interupt controller in simulator
-
 ## Assembler
 
 ### Progress bar
@@ -47,7 +45,3 @@ I tried this for a while, but couldn't figure out how to make it work with the b
 ### Tests
 
 There is no test currently for the assembler.
-
-### A literal number that is above 32 bits will cause a panic
-
-Rust doesn't seem to support wrapping string to u32 :(
