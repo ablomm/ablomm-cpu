@@ -6,7 +6,7 @@ The simulator will simulate the CPU along with some devices.
 
 The simulator can be ran, as outlined in the [Setup document](../setup.md#simulate).
 
-The simulator allowing passing in a plusargs `+src=<FILE>` which contains the machine code file to read into ROM.
+The simulator allows passing in a plusargs `+src=<FILE>` which contains the machine code file to read into ROM.
 
 ## Memory Map
 
@@ -21,4 +21,4 @@ The memory map of the simulator is as follows:
 | [TTY](tty.md) | `0x4006` |
 | [RAM](memory.md#random-access-memory) | `0x8000` to `0xffff` |
 
-More information for each device can be found in their respective documentation.
+More information for each device can be found in their respective documents.

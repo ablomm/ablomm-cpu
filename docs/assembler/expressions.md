@@ -11,7 +11,7 @@ For example:
 
 This example will compile to a machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is discribed in the [Gen Literals section](#gen-literals).
 
-You may also include expression in constant identifier assignments and instruction operands:
+You may also include expressions in constant identifier assignments and instruction operands:
 
 ```asm
 value = 4 * 2;
@@ -35,7 +35,7 @@ value = r4 - 3;
 
  
 > [!NOTE]
-> A register in an expression does to evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are compile-time and so cannot evaluate any run-time values such as registers. This is explained more in the [Constants document](constants.md).
+> A register in an expression does to evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are evaluated at compile time, and so cannot evaluate any run time values such as registers. This is explained more in the [Constants document](constants.md).
 
 A list of all the possible operators in an expression are detailed in the table below in the order of precedence:
 
@@ -254,10 +254,10 @@ A list of all the possible operators in an expression are detailed in the table 
 </table>
 
 > [!NOTE]
-> As seen in the [Constants document seciton on numbers](constants.md#number), a number is always unsigned. This means there is no unary negation operator, as it would result in unexpected results. If you must get the negative of a number, then use `0 - value` instead. Additionally, the division operator is always unsigned integer division.
+> As seen in the [Number section](#number), a number is always unsigned. This means there is no unary negation operator, as it would result in unexpected results. If you must get the 2's compliment of a number, then use `0 - value` instead. Additionally, the division operator is always unsigned integer division.
 
 > [!NOTE]
-> The dereference operator does not actually evaluate anything; it simply converts the type into an indirect type, as described in the [Constants document on the indirect type](constants.md#indirect). The reference operator simply gets whatever is inside and indirect type and converts it to a number, and so also does not actually evaluate anything.
+> The dereference operator does not actually evaluate anything; it simply converts the type into an indirect type, as described in the [Indirect section](#indirect). The reference operator simply gets whatever is inside and indirect type and converts it to a number, and so does not actually evaluate anything.
 
 Operations are evaluated left-to-right if the precedence is the same.
 

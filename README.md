@@ -228,7 +228,7 @@ print = 123;
 
 ### Compile time expressions
 
-The assembler has support for compile time variables and expressions similar to c++ constexpr:
+The assembler has support for compile time variables and expressions similar to c++'s constexpr:
 
 ```asm
 tty = *0x4000; // the tty device

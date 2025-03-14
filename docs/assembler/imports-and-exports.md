@@ -35,7 +35,7 @@ import value from "exports.asm"; // imports identifier "value"
 value2 = value + 2;
 ```
 
-The imported file is written relative to the current file (relative to importee).
+The imported file is written relative to the current file (relative to importer).
 
 > [!WARNING]
 > Circular imports is currently not supported, but may in the future.
@@ -52,7 +52,7 @@ value2 = value + label;
 
 ### Import Aliases
 
-You may also import an identifier from another file and alias it to a different name than what was defined in the importee.
+You may also import an identifier from another file and alias it to a different name than what was defined by the exporter.
 
 For example:
 
@@ -93,7 +93,7 @@ The block exports will only raise an identifier one scope up. If you want to rai
 export value; // file level export
 ```
 
-# Structure of Machine Code of Imports
+# Imports Structure in Machine Code
 
 Consider the following import graph:
 
@@ -107,7 +107,7 @@ graph TD;
     lib/tty.asm-->defines.asm;
 ```
 
-The machine code will be generated for each file in a pre-order traversal, while already generated files are pruned, so multiple imports does not cause duplications in the machine code.
+The machine code will be generated for each file in a pre-order traversal, while already generated files are pruned, so multiple imports to the same file does not cause duplications in the machine code; it is generated once.
 
 The above graph would be generated to machine code in the following order (pre-order traversal):
 
@@ -131,12 +131,12 @@ import print from "lib/print.asm";
 import * from "lib/defines.asm";
 
   ld r0, string_address;;
-  ld pc, print;
+  ld pc.link, print;
 ```
 
 This would cause the program to print whatever `string_address` is pointing to, but then it will not stop executing and start executing whatever is in `strings.asm`.
 
-To prevent such a case you can either shutdown (specific to hardware/simulator), or you can loop indefinately:
+To prevent such a case you can either shutdown (specific to hardware/simulator), or you can loop indefinitely:
 
 ``` asm
 import string_address from "strings.asm";
@@ -144,7 +144,7 @@ import print from "lib/print.asm";
 import * from "lib/defines.asm";
 
   ld r0, string_address;;
-  ld pc, print;
+  ld pc.link, print;
 end:
   ld pc, end;
 ```

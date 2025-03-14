@@ -2,7 +2,7 @@
 
 The assembly contains a small number of instructions. The assembler has a different (but similar) set of instructions than the CPU instructions listed in the [ISA document](../cpu/isa.md#instructions). 
 
-Each assembly instruction maps 1:1 to a CPU instruction, and the different set is merely a convinence as you shall see.
+Each assembly instruction may map to different CPU instructions, and the different set is merely a convinence as you shall see.
 
 Each assembly instruction is enumerated in the following table:
 
@@ -160,7 +160,8 @@ Each assembly instruction is enumerated in the following table:
 <td>
 
 `*(--sp) = pc` <br>
-`status &= 0b111110` <br>
+`*(--sp) = status` <br>
+`status &= 0b111100` <br>
 `pc = 2`
       
 </td>
@@ -452,7 +453,7 @@ The below table enumerates each modifier:
 
 These modifiers work on all instructions.
 
-The condition modifiers allow for conditional operation, which makes the instruction only execute if the condition is met.
+The condition modifiers allow for conditional execution, which makes the instruction only execute if the condition is met.
 
 These conditions are mapped to CPU conditions as seen in the [ISA document](../cpu/isa.md#conditions)
 

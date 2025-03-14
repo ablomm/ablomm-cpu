@@ -49,7 +49,7 @@ $ ./scripts/assmeble.sh programs/hello_world.asm
 
 The simulator allows you to run a program by passing in the machine code for that program.
 
-Included in the repo is a [script to simulate the CPU](../scripts/simulate.sh).
+Included in the repo is a [script to run the simulator](../scripts/simulate.sh).
 
 To simulate a program `hello_world` (which contains the machine code), simply run from the project directory:
 

@@ -4,7 +4,7 @@ Included in the simulator is a power controller device, which allows terminating
 
 Writing the value `0` to the power controller will terminate the simulator.
 
-Writing the value `1` to the power controller will reset the CPU.
+Writing the value `1` to the power controller will reset the CPU. Resetting is documented in the [ISA document](isa.md#interrupt-vector-table).
 
 > [!NOTE]
 > Resetting the CPU will only cause the CPU registers to reset. Memory and devices are not reset.

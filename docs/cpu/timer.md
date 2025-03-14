@@ -29,7 +29,7 @@ Reading this register will result in 32-bits of 0s.
 
 Writing to this register will cause the current interrupt to be acknowledged. If there is no interrupt then acknowledging the interrupt will do nothing.
 
-The timer will keep it's `IRQ` line high until an interrupt is acknowledged.
+The timer will keep it's `irq` line high until an interrupt is acknowledged.
 
 ## CTRL Register
 
@@ -60,7 +60,7 @@ The `TIMER` register contains the current value of the timer. The timer raises a
 
 The simulator will map the timer to addresses `0x4000` to `0x4003`, as documented in the [Simulator document](simulator.md#memory-map).
 
-Therefore, the registers are memory mapped as follows:
+Therefore, the registers are memory-mapped as follows:
 
 | Register | Address |
 |---|---|

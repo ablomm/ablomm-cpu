@@ -2,7 +2,11 @@
 
 There are 11, 32-bit, general purpose register (`R0` to `R10`)
 
-There are 4 special purpose registers with varying widths. The table below enumerates all registers and their purpose.
+There are 4 special purpose registers with varying widths.
+
+There is 1 psuedo register.
+
+The table below enumerates all registers and their purpose.
 
 | Register | Code | Description | Width |
 |---|---|---|---|
@@ -24,7 +28,7 @@ There are 4 special purpose registers with varying widths. The table below enume
 | PC | 0xf | Program counter; points to next instruction to run | 32 |
 
 > [!NOTE]
-> The assembler has more registers that will alias to this set, notably `fp` which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Upercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
+> The assembler has more registers that will alias to this set, notably `fp`, which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Upercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
 
 ## Status Register
 
@@ -76,19 +80,19 @@ The first four of these flags are used for conditional execution. The following 
 
 # Instructions
 
-There is only 10 instruction from the CPU's perspective. The ALU instruction is generic and works with all supported ALU operations. The instructions are enumerated in the following table:
+There is only 10 instruction from the CPU's perspective. The ALU instruction is generic, and works with all supported ALU operations. The instructions are enumerated in the following table:
 
 | Instruction | Code | Description | Pseudo Code |
 |---|---|---|---|
 | NOP | 0x00 | No operation | `;` |
-| LD | 0x01 | Load | `register = *address` |
-| LDR | 0x02 | Load from register | `register = *(register + offset)` |
-| LDI | 0x03 | Load immediate | `register = immediate` |
-| ST | 0x04 | Store | `*address = register` |
-| STR | 0x05 | Store to register | `*(register + offset) = register` |
-| PUSH | 0x06 | Push to stack | `*(--sp) = register` |
-| POP | 0x07 | Pop from stack | `register = *(sp++)` |
-| INT | 0x08 | Software interrupt; see [Interupt Vector Table section](#interrupt-vector-table) | `*(--sp) = pc` <br> `status &= 0b111110` <br> `pc = 2` |
+| LD | 0x01 | Load | `register_a = *address` |
+| LDR | 0x02 | Load from register | `register_a = *(register_b + offset)` |
+| LDI | 0x03 | Load immediate | `register_a = immediate` |
+| ST | 0x04 | Store | `*address = register_a` |
+| STR | 0x05 | Store to register | `*(register_b + offset) = register_a` |
+| PUSH | 0x06 | Push to stack | `*(--sp) = register_a` |
+| POP | 0x07 | Pop from stack | `register_a = *(sp++)` |
+| INT | 0x08 | Software interrupt; see the [Interupt Vector Table section](#interrupt-vector-table) | `*(--sp) = pc` <br> `*(--sp) = status` <br> `status &= 0b111100` <br> `pc = 2` |
 | ALU | 0xf_ | Performs an ALU operation as shown in the [ALU Operations section](#alu-operations) | `A = B <op> C` <br> `if (S) { status.NZCV = <new flags> }` |
 
 > [!NOTE]
@@ -225,7 +229,7 @@ The registers codes can be found in the [Public Reigsters section](#public-regis
 
 # ALU Operations
 
-The CPU Operation "ALU" shown above allows passing in an "ALU Instruction Code." The ALU operations and their corresponding instruction code is shown below.
+The CPU Operation `ALU` shown above allows passing in an "ALU Instruction Code." The ALU operations and their corresponding instruction code is shown below.
 
 > [!NOTE]
 > "Register A", "Register B", and "Register C" correspond to A, B, and C in the table below, although, if I=1 (immediate bit it set), then C = immediate, and if R=1 (reverse bit is set), then "Register B" corresponds to C, and "Register C" (or an immediate) corresponds to B (i.e., reversed), and if Ln=1 (Loadn bit is set), then A is not set to any register.
@@ -248,12 +252,12 @@ The CPU Operation "ALU" shown above allows passing in an "ALU Instruction Code."
 
 ## ALU Flags
 
-You may have noticed the ALU CPU instruction contains four bits named "I", "R", "Ln", and "S". These flags modify the ALU's behaviour. The following table sumarizes these behaviours:
+You may have noticed the ALU CPU instruction contains four bits named `I`, `R`, `Ln`, and `S`. These flags modify the ALU's behaviour. The following table sumarizes these behaviours:
 
 | Flag | Description | Purpose |
 |---|---|---|
-| I | Immediate flag; if set to 1, then the last 16 bits of the instruction is interpreted as an immediate value | So we can do stuff like `add, R1, 123` |
-| R | Reverse flag; if set to 1, then the role of Register B, and Register C (or immediate) is flipped | So we can do stuff like `sub 123, R1`; not really useful for if I=0 |
+| I | Immediate flag; if set to 1, then the last 16 bits of the instruction is interpreted as an immediate value | So we can do stuff like `add, r1, 123` |
+| R | Reverse flag; if set to 1, then the role of Register B, and Register C (or immediate) is flipped | So we can do stuff like `sub 123, r1`; not really useful for if I=0 |
 | Ln | Loadn flag; if set to 1, then do not load the result of the operation into Register A | So we can do stuff like `sub.t, r1, r2`; not really useful for if S=0, but note the .t is like `TST` is other ISAs |
 | S | Set status flag; if set to 1, then sets the status register with it's various flags | So we can do stuff like `sub.s, r1, r2` |
 
@@ -264,31 +268,40 @@ The addresses of various locations in memory the CPU may jump to in each case ar
 | Event | Jump Address | Trigger |
 |---|---|---|
 | Start | 0 | CPU turns on or resets |
-| Hardware interrupt | 1 | Interupt mask is set and the IRQ line is high |
-| Software interrupt | 2 | The instruction `int` is ran |
+| Hardware interrupt | 1 | Interupt mask is set and the `irq` line is high |
+| Software interrupt | 2 | The instruction `INT` is ran |
 | Exception | 3 | An unknown instruction is ran |
 
 When any event is triggered, the interupt mask is set to 0, meaning no more hardware interrupts will occur until it is unmasked.
 
 All events will result in entering supervisor mode.
 
-Hardware and software interrupts, as well as exceptions, will push `pc` and `status` before jumping.
+Hardware and software interrupts, as well as exceptions, will push `PC` and `STATUS` before jumping.
 
 Start will reset all registers to 0.
 
 Check out the [Interrupts example](../../examples/interrupts.asm) for how to set up the interupt vector table.
 
+# Memory
+
+The CPU assumes memory is word-addressible. This means each address in memory should contain 32 bits.
+
+Additionally, the CPU assumes memory has asynchronous reads, but synchronous writes.
+
+> [!NOTE]
+> This might be changed in the future to allow for memory with synchronous reads and writes.
+
 # Addresses
 
 Although technically the CPU is 32-bit, it is most practical to keep code in the first 2<sup>16</sup> addresses. 
 
-This is because the instructions are fixed-width, and there is only space for 16 bits for an address or immediate, and so jumps to far away addresses would be a bit combersome, although still possible. You could still do jumps to addresses within 2<sup>8</sup> addresses by adding or subtracting to `pc`.
+This is because the instructions are fixed-width, and there is only space for 16 bits for an address or immediate, and so jumps to far away addresses would be a bit cumbersome, although still possible. You could still do relative jumps to addresses within 2<sup>8</sup> addresses of `PC` by adding or subtracting to `PC`.
 
 It is in theory possible to make it work with 32-bit addresses, but it would cause so much trouble to be not worth it. For example, you would have to do something similar to:
 
 ```asm
 // some code ...
-  sub pc, 1; // need to jump over the gen literal
+  add pc, 1; // need to jump over the gen literal
 far_away_label_address: far_away_label;
 // some more code ...
 // address 2^16

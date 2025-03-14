@@ -541,6 +541,8 @@ impl Spanned<&Expression> {
 
                     error.with_note(
                         "This is ultimately caused because the expression is dependent on a future address (label), but the value of the expression would effect that address (label)",
+                    ).with_note(
+                        "For more info, see https://github.com/ablomm/ablomm-cpu/blob/main/docs/assembler/errors.md#unknown-value-of-expression"
                     )
                 })?;
 

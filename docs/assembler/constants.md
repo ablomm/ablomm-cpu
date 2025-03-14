@@ -44,7 +44,7 @@ ld r1, *(r1 + 24);
 
 The location a constant is defined does not affect the result; constant's do not evaluate registers.
 
-For example, consider the following.
+For example, consider the following:
 
 ``` asm
   ld r1, 123;

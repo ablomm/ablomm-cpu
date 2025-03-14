@@ -2,7 +2,7 @@
 The assembler allows comments similar to C style comments.
 
 ## Single-line Comments
-Inline comments can be created by writing `//`. A newline character will end the comment.
+A single-line comment can be created by writing `//`. A newline character will end the comment.
 
 For example:
 
@@ -12,7 +12,7 @@ sub r1, r2;
 ```
 
 ## Multi-line Comments
-A multiline comment can be created by deliminating the comment with `/*` and `*/`.
+A multi-line comment can be created by deliminating the comment with `/*` and `*/`.
 
 For example:
 

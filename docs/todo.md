@@ -14,6 +14,10 @@ Currently PUSH and POP only works on one register at a time.
 
 E.g.: `push r1, r2, r3;`
 
+### Floating Point Arithemetic Unit
+
+Have a hardware-supported way to perform floating point operations.
+
 ## Assembler
 
 ### Progress bar
@@ -41,6 +45,10 @@ This would allow things like `add pc, label - $pc;` which is a jump using offset
 Currently `get_recursive()` returns a cloned value, but it might be possible to return some ref object.
 
 I tried this for a while, but couldn't figure out how to make it work with the borrow checker, but I think it might be possible.
+
+### Floating points
+
+Allow writing decimal values that are converted to floating points.
 
 ### Tests
 

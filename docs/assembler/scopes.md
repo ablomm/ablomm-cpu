@@ -1,12 +1,15 @@
 # Scopes
 
-The assembler supports lexical scopes. Each file has it's own scope, and each block within a file contains it's own scope. A file for our purposes can be considered just another block.  
+The assembler supports lexical scopes. Each file has it's own scope, and each block within a file contains it's own scope. A file for our purposes can be considered just another block.
+
 A scope is defined to be the span in which an identifier is valid.
 
 ## Blocks
 
-A block is simply a list of statements deliminated by `{` and `}`. This is quite similar to C blocks.  
-A block can reference identifiers defined in it's containing block.  
+A block is simply a list of statements deliminated by `{` and `}`. This is quite similar to C blocks.
+
+A block can reference identifiers defined in it's containing block.
+
 For example, this results in `r0` containing the value `123`:
 
 ``` asm
@@ -17,7 +20,8 @@ value = 123;
 
 ```
 
-An identifier defined in a child block cannot be referenced from the parent block.  
+An identifier defined in a child block cannot be referenced from the parent block.
+
 For example, this **DOES NOT ASSEMBLE**:
 
 ```asm
@@ -35,7 +39,8 @@ ld r0, value;
 
 ### Block Scoped Imports
 
-Blocks can contain import statments, in which case the imported identifiers are only valid within that block.  
+Blocks can contain import statments, in which case the imported identifiers are only valid within that block.
+
 For example:
 
 ```asm
