@@ -14,7 +14,7 @@ mod pop;
 mod push;
 
 // cannot include span because blocks may span multiple different files
-pub fn compile_ast(ast: &Ast) -> Result<String, Vec<Error>> {
+pub fn compile_ast(ast: &Ast) -> Result<String, Vec<SpannedError>> {
     let mut machine_code: String = "".to_owned();
 
     for opcode in ast.generate()? {
@@ -26,7 +26,7 @@ pub fn compile_ast(ast: &Ast) -> Result<String, Vec<Error>> {
 
 // no span because ast can span many different files
 impl Ast {
-    fn generate(&self) -> Result<Vec<u32>, Vec<Error>> {
+    fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
         let mut opcodes = Vec::new();
 
         for file in &self.files {
@@ -38,7 +38,7 @@ impl Ast {
 }
 
 impl Spanned<&Block> {
-    fn generate(&self) -> Result<Vec<u32>, Vec<Error>> {
+    fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
         let mut opcodes = Vec::new();
         let mut errors = Vec::new();
         for statement in &self.statements {
@@ -57,7 +57,7 @@ impl Spanned<&Block> {
 }
 
 impl Spanned<&Statement> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Vec<Error>> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Vec<SpannedError>> {
         match &self.val {
             Statement::Operation(operation) => self
                 .span_to(operation)
@@ -74,7 +74,7 @@ impl Spanned<&Statement> {
 }
 
 impl Spanned<&Operation> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, SpannedError> {
         match self.full_mnemonic.mnemonic.val {
             AsmMnemonic::Nop => nop::generate_nop(self),
             AsmMnemonic::Ld => ld::generate_ld(self, symbol_table),
@@ -89,7 +89,7 @@ impl Spanned<&Operation> {
 }
 
 impl Spanned<&Expression> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, SpannedError> {
         let result = self.eval(symbol_table)?.result;
 
         match result {
@@ -113,7 +113,7 @@ impl Spanned<&Expression> {
                 }
                 Ok(opcodes)
             }
-            _ => Err(Error::incorrect_value(
+            _ => Err(SpannedError::incorrect_value(
                 self.span,
                 "type",
                 vec!["number", "string"],
@@ -141,11 +141,13 @@ fn seperate_modifiers(
     (conditions, alu_modifiers)
 }
 
-fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
+fn generate_modifiers_non_alu(
+    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
+) -> Result<u32, SpannedError> {
     let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
 
     if conditions.len() > 1 {
-        return Err(Error::new(conditions[1].span, "Incorrect modifiers")
+        return Err(SpannedError::new(conditions[1].span, "Incorrect modifiers")
             .with_label(format!(
                 "Multiple {} is not supported",
                 "conditions".fg(ATTENTION_COLOR)
@@ -153,22 +155,26 @@ fn generate_modifiers_non_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Re
             .with_help("Try removing this condition"));
     }
     if !alu_modifiers.is_empty() {
-        return Err(Error::new(alu_modifiers[0].span, "Incorrect modifiers")
-            .with_label(format!(
-                "{} is not supported on this instruction",
-                "Alu modifiers".fg(ATTENTION_COLOR)
-            ))
-            .with_help("Try removing this modifier"));
+        return Err(
+            SpannedError::new(alu_modifiers[0].span, "Incorrect modifiers")
+                .with_label(format!(
+                    "{} is not supported on this instruction",
+                    "Alu modifiers".fg(ATTENTION_COLOR)
+                ))
+                .with_help("Try removing this modifier"),
+        );
     }
 
     Ok(conditions.generate())
 }
 
-fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
+fn generate_modifiers_alu(
+    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
+) -> Result<u32, SpannedError> {
     let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
 
     if conditions.len() > 1 {
-        return Err(Error::new(conditions[1].span, "Incorrect modifiers")
+        return Err(SpannedError::new(conditions[1].span, "Incorrect modifiers")
             .with_label(format!(
                 "Multiple {} is not supported",
                 "conditions".fg(ATTENTION_COLOR)
@@ -176,12 +182,14 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
             .with_help("Try removing this condition"));
     }
     if alu_modifiers.len() > 1 {
-        return Err(Error::new(alu_modifiers[1].span, "Incorrect modifiers")
-            .with_label(format!(
-                "Multiple {} is not supported",
-                "alu modifiers".fg(ATTENTION_COLOR)
-            ))
-            .with_help("Try removing this modifier"));
+        return Err(
+            SpannedError::new(alu_modifiers[1].span, "Incorrect modifiers")
+                .with_label(format!(
+                    "Multiple {} is not supported",
+                    "alu modifiers".fg(ATTENTION_COLOR)
+                ))
+                .with_help("Try removing this modifier"),
+        );
     }
 
     Ok(conditions.generate() | alu_modifiers.generate())
@@ -191,9 +199,9 @@ fn generate_modifiers_alu(modifiers: &Spanned<Vec<Spanned<Modifier>>>) -> Result
 fn assert_range<T: Display + PartialOrd>(
     number: &Spanned<T>,
     range: Range<T>,
-) -> Result<(), Error> {
+) -> Result<(), SpannedError> {
     if !range.contains(&number.val) {
-        return Err(Error::new(number.span, "Immediate outside range")
+        return Err(SpannedError::new(number.span, "Immediate outside range")
             .with_label(format!(
                 "Only argument in range of [{}, {}) is supported; expression evaluates to {}",
                 range.start.to_string().fg(ATTENTION_COLOR),

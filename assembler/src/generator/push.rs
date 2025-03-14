@@ -3,14 +3,14 @@ use crate::{expression::expression_result::ExpressionResult, generator::*};
 pub fn generate_push(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
-) -> Result<u32, Error> {
+) -> Result<u32, SpannedError> {
     assert!(matches!(
         operation.full_mnemonic.mnemonic.val,
         AsmMnemonic::Push
     ));
 
     if operation.operands.len() != 1 {
-        return Err(Error::incorrect_num(
+        return Err(SpannedError::incorrect_num(
             operation.operands.span,
             "operand",
             vec![1],
@@ -24,7 +24,7 @@ pub fn generate_push(
             let register = &register.unwrap();
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
-        _ => Err(Error::incorrect_value(
+        _ => Err(SpannedError::incorrect_value(
             operation.operands[0].span,
             "type",
             vec!["register"],
@@ -36,7 +36,7 @@ pub fn generate_push(
 fn generate_push_reg(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     register: &Register,
-) -> Result<u32, Error> {
+) -> Result<u32, SpannedError> {
     let mut opcode = 0;
     opcode |= generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Push.generate();

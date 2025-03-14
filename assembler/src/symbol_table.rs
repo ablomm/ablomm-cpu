@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Error, Span};
+use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Span, SpannedError};
 
 type Key = Intern<String>;
 type Value = STEntry;
@@ -80,9 +80,10 @@ impl SymbolTable {
     }
 
     // just returns a nice error instead of Option
-    pub fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, Error> {
+    pub fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, SpannedError> {
         self.get_recursive(ident.val).ok_or(
-            Error::new(ident.span, "Missing identifier").with_label("Could not find identifier"),
+            SpannedError::new(ident.span, "Missing identifier")
+                .with_label("Could not find identifier"),
         )
     }
 
@@ -90,10 +91,10 @@ impl SymbolTable {
         self.table.insert(key, value)
     }
 
-    pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), Error> {
+    pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
         // need to call get and not just contains_key because error will contain the entry
         if let Some(entry) = self.get(&key) {
-            return Err(Error::identifier_already_defined(
+            return Err(SpannedError::identifier_already_defined(
                 entry.key_span,
                 entry.import_span,
                 value.key_span,

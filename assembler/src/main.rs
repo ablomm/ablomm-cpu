@@ -1,3 +1,4 @@
+use ablomm_asm::error::Error;
 use clap::Parser;
 use std::{fs, process::ExitCode};
 
@@ -28,10 +29,13 @@ fn main() -> ExitCode {
 
             ExitCode::SUCCESS
         }
-        Err((errors, mut cache)) => {
-            errors.iter().for_each(|error| {
-                error.eprint(&mut cache).ok();
-            });
+        Err(error) => {
+            match error {
+                Error::Spanned(errors, mut cache) => errors.iter().for_each(|error| {
+                    error.eprint(&mut cache).ok();
+                }),
+                Error::Bare(error) => eprintln!("{}", error),
+            }
 
             ExitCode::FAILURE
         }

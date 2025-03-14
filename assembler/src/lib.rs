@@ -26,13 +26,13 @@ mod symbol_table;
 
 // return a string which is the machine code
 // error includes cache in order to print errors without re-reading files
-pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<Src>>)> {
+pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> {
     // fails if file not found
     // this is the root file, given in the comandline argument
-    let src = Intern::new(
-        Src::new(Path::new(src).to_path_buf())
-            .unwrap_or_else(|error| panic!("Error finding file '{}': {}", src, error)),
-    );
+    let src =
+        Intern::new(Src::new(Path::new(src).to_path_buf()).map_err(|error| {
+            Error::Bare(format!("Error in provided file \"{}\": {}", src, error))
+        })?);
 
     // create a dummy span because there is no actual span for the root file, as it doesn't have a
     // corresponding import statement
@@ -47,27 +47,27 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
     // can't do map_err because of borrow checker
     let mut file_queue = match generate_file_queue(&src, &mut cache, &mut IndexMap::new()) {
         Ok(file_queue) => file_queue,
-        Err(error) => return Err((error, sources(cache))),
+        Err(error) => return Err(Error::Spanned(error, sources(cache))),
     };
 
     // needed to get types (and as much values as possible without addresses) because the number of
     // words for a statement may depend on the type and value of symbols
     match fill_symbol_tables(&file_queue) {
         Ok(_) => (),
-        Err(error) => return Err((vec![error], sources(cache))),
+        Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
 
     // get file addresses (also technically does labels and assignments (but not imports / exports), but this is overwritten in the final
     // fill_symbol_tables pass)
     match calculate_addresses(&mut file_queue) {
         Ok(_) => (),
-        Err(error) => return Err((vec![error], sources(cache))),
+        Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
 
     // final fill after all addresses are calculated, all values should be filled in this pass
     match fill_symbol_tables(&file_queue) {
         Ok(_) => (),
-        Err(error) => return Err((vec![error], sources(cache))),
+        Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
 
     let ast = Ast {
@@ -76,7 +76,7 @@ pub fn assemble(src: &String) -> Result<String, (Vec<Error>, impl Cache<Intern<S
         files: file_queue.into_iter().rev().collect(),
     };
 
-    generator::compile_ast(&ast).map_err(|error| (error, sources(cache)))
+    generator::compile_ast(&ast).map_err(|error| Error::Spanned(error, sources(cache)))
 }
 
 // takes in a canonanical file path, address, and cache and returns a queue of the order in which to
@@ -85,7 +85,7 @@ fn generate_file_queue(
     src: &Spanned<Intern<Src>>,
     cache: &mut HashMap<Intern<Src>, String>,
     import_map: &mut IndexMap<Intern<Src>, Span>, // to detect cycles, IndexSet to preserve insert order; useful for errors
-) -> Result<Vec<Spanned<File>>, Vec<Error>> {
+) -> Result<Vec<Spanned<File>>, Vec<SpannedError>> {
     import_map.insert(src.val, src.span);
 
     let mut file_queue = Vec::new();
@@ -98,14 +98,17 @@ fn generate_file_queue(
         let import_src = match get_import_src(src, import) {
             Ok(import_src) => import.file.span_to(import_src),
             Err(error) => {
-                return Err(vec![Error::new(import.file.span, "Error finding file")
-                    .with_label(error.to_string())])
+                return Err(vec![SpannedError::new(
+                    import.file.span,
+                    "Error finding file",
+                )
+                .with_label(error.to_string())])
             }
         };
 
         if import_map.contains_key(&import_src.val) {
             // circular dependency
-            let mut error = Error::new(import_src.span, "Circular dependency");
+            let mut error = SpannedError::new(import_src.span, "Circular dependency");
 
             // skipping one because the first one is always the root file, which has no
             // corresponding import statement
@@ -138,11 +141,11 @@ fn generate_file_queue(
 fn parse_path(
     src: &Spanned<Intern<Src>>,
     cache: &mut HashMap<Intern<Src>, String>,
-) -> Result<Spanned<File>, Vec<Error>> {
+) -> Result<Spanned<File>, Vec<SpannedError>> {
     // need to do a match here because map_err causes the borrow checker to think that cache is
     // moved into the map_err closure
     let assembly_code = fs::read_to_string(src.as_path()).map_err(|error| {
-        vec![Error::new(src.span, "Error reading file").with_label(error.to_string())]
+        vec![SpannedError::new(src.span, "Error reading file").with_label(error.to_string())]
     })?;
 
     // need to insert before parsing so it can show parsing errors
@@ -166,7 +169,7 @@ fn parse_path(
             errors
                 .into_iter()
                 .map(|error| error.into())
-                .collect::<Vec<Error>>()
+                .collect::<Vec<SpannedError>>()
         })?;
     let file = File {
         src: src.val,
@@ -177,7 +180,7 @@ fn parse_path(
     Ok(block.span.spanned(file))
 }
 
-fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), Error> {
+fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), SpannedError> {
     let mut file_exports_map = HashMap::new();
     for file in file_queue {
         // can't do map_err because of borrow checker
@@ -201,7 +204,7 @@ fn fill_symbol_table(
     // without any addresses
     start_address: Option<u32>,
     file_exports_map: &HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
-) -> Result<HashMap<Intern<String>, STEntry>, Error> {
+) -> Result<HashMap<Intern<String>, STEntry>, SpannedError> {
     // start from scratch to prevent `symbol already defined` errors (yes technically not as fast as it could be,
     // but much easier to reason about)
     block.symbol_table.borrow_mut().table.clear();
@@ -321,7 +324,7 @@ fn fill_symbol_table(
 // needed because some future imports symbols depend on the size of the importer's length (yeah, I
 // know, it's confusing)
 // assume file_queue in in post_order
-fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), Error> {
+fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
     let mut address = 0;
     for file in file_queue.iter_mut().rev() {
         file.val.start_address = Some(address);
@@ -384,17 +387,19 @@ fn export(
     identifier: &Spanned<Intern<String>>,
     symbol_table: &SymbolTable,
     exports: &mut HashMap<Intern<String>, STEntry>,
-) -> Result<(), Error> {
+) -> Result<(), SpannedError> {
     if let Some(entry) = exports.get(&identifier.val) {
-        return Err(Error::new(identifier.span, "Identifier already exported")
-            .with_label_span(
-                entry
-                    .export_span
-                    .expect("Exported identifier doesn't have export_span"),
-                "Exported first here",
-            )
-            .with_label("Exported again here")
-            .with_note("Try removing one of these exports"));
+        return Err(
+            SpannedError::new(identifier.span, "Identifier already exported")
+                .with_label_span(
+                    entry
+                        .export_span
+                        .expect("Exported identifier doesn't have export_span"),
+                    "Exported first here",
+                )
+                .with_label("Exported again here")
+                .with_note("Try removing one of these exports"),
+        );
     }
 
     let mut export_val = symbol_table.try_get(&identifier.as_ref())?;
@@ -408,18 +413,17 @@ fn import(
     import: &Import,
     symbol_table: &mut SymbolTable,
     exports: &HashMap<Intern<String>, STEntry>,
-) -> Result<(), Error> {
+) -> Result<(), SpannedError> {
     match &import.specifier.val {
         // selective import (i.e. import <ident> [as <ident>][, ...] from <file>
         ImportSpecifier::Named(named_imports) => {
             for named_import in named_imports {
                 let import_val = exports.get(&named_import.identifier).ok_or(
-                    Error::new(named_import.identifier.span, "Identifier not found").with_label(
-                        format!(
+                    SpannedError::new(named_import.identifier.span, "Identifier not found")
+                        .with_label(format!(
                             "Identifier is not exported in '{}'",
                             import.file.val.as_str().fg(ATTENTION_COLOR)
-                        ),
-                    ),
+                        )),
                 )?;
 
                 let original_definition = import_val.key_span.spanned(named_import.identifier.val);
@@ -482,7 +486,7 @@ fn get_import_src(importer: &Intern<Src>, import: &Import) -> io::Result<Intern<
 }
 
 impl Block {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
         let mut num_words = 0;
         for statement in &self.statements {
             num_words += statement.as_ref().num_words(symbol_table)?;
@@ -507,7 +511,7 @@ impl Block {
 }
 
 impl Spanned<&Statement> {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
         match self.val {
             Statement::GenLiteral(literal) => self.span_to(literal).num_words(symbol_table),
             Statement::Block(block) => block.num_words(symbol_table),
@@ -518,7 +522,7 @@ impl Spanned<&Statement> {
 }
 
 impl Spanned<&Expression> {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
         let EvalReturn {
             result,
             waiting_map,
@@ -528,7 +532,7 @@ impl Spanned<&Expression> {
             ExpressionResult::Number(_number) => Ok(1),
             ExpressionResult::String(string) => {
                 let string = string.ok_or_else(|| {
-                    let mut error = Error::new(self.span, "Unknown value of expression").with_label(
+                    let mut error = SpannedError::new(self.span, "Unknown value of expression").with_label(
                         "Expression needs to be determined, but is not",
                     );
                     for span in waiting_map.values() {
@@ -542,7 +546,7 @@ impl Spanned<&Expression> {
 
                 Ok(((string.len() as f32) / 4.0).ceil() as u32)
             }
-            _ => Err(Error::incorrect_value(
+            _ => Err(SpannedError::incorrect_value(
                 self.span,
                 "type",
                 vec!["number", "string"],
@@ -553,7 +557,7 @@ impl Spanned<&Expression> {
 }
 
 impl Operation {
-    pub fn num_words(&self) -> Result<u32, Error> {
+    pub fn num_words(&self) -> Result<u32, SpannedError> {
         Ok(1)
     }
 }

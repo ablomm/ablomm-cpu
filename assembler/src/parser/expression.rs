@@ -1,36 +1,11 @@
 use super::*;
 
 pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> {
-    let bin_num = just("0b")
-        .ignore_then(text::digits(2).map(|s: String| u32::from_str_radix(&s, 2).unwrap()));
-    let oct_num = just("0o")
-        .ignore_then(text::digits(8).map(|s: String| u32::from_str_radix(&s, 8).unwrap()));
-    let hex_num = just("0x")
-        .ignore_then(text::digits(16).map(|s: String| u32::from_str_radix(&s, 16).unwrap()));
-    #[allow(clippy::from_str_radix_10)]
-    let dec_num = text::digits(10).map(|s: String| u32::from_str_radix(&s, 10).unwrap());
-
-    // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
-    // we're able to do that because empty chars ('') are not supported
-    let escape_char = just('\\').ignore_then(choice((
-        just('0').to('\0'),
-        just('t').to('\t'),
-        just('n').to('\n'),
-        just('r').to('\r'),
-    )));
-
-    let char_num = escape_char
-        .or(any())
-        .delimited_by(just('\''), just('\''))
-        .map(|c| c as u32);
-
-    let number = choice((bin_num, oct_num, hex_num, dec_num, char_num));
-
     let expr = recursive(|expression| {
         let atom = choice((
             keywords::register_parser().map(Expression::Register),
             string_parser().map(Expression::String),
-            number.map(Expression::Number),
+            number_parser().map(Expression::Number),
             text::ident().map(Intern::new).map(Expression::Ident),
             expression.delimited_by(just('('), just(')')),
         ))
@@ -149,4 +124,39 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
     });
 
     expr
+}
+
+pub fn number_parser() -> impl Parser<char, u32, Error = ParseError> {
+    let bin_num = just("0b").ignore_then(text::digits(2).try_map(|s: String, span| {
+        u32::from_str_radix(&s, 2).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    }));
+
+    let oct_num = just("0o").ignore_then(text::digits(8).try_map(|s: String, span| {
+        u32::from_str_radix(&s, 8).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    }));
+
+    let hex_num = just("0x").ignore_then(text::digits(16).try_map(|s: String, span| {
+        u32::from_str_radix(&s, 16).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    }));
+
+    #[allow(clippy::from_str_radix_10)]
+    let dec_num = text::digits(10).try_map(|s: String, span| {
+        u32::from_str_radix(&s, 10).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    });
+
+    // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
+    // we're able to do that because empty chars ('') are not supported
+    let escape_char = just('\\').ignore_then(choice((
+        just('0').to('\0'),
+        just('t').to('\t'),
+        just('n').to('\n'),
+        just('r').to('\r'),
+    )));
+
+    let char_num = escape_char
+        .or(any())
+        .delimited_by(just('\''), just('\''))
+        .map(|c| c as u32);
+
+    choice((bin_num, oct_num, hex_num, dec_num, char_num))
 }

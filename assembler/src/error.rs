@@ -1,13 +1,18 @@
 use std::{fmt::Display, io::Write};
 
 use crate::{src::Src, Span};
-use ariadne::{Color, Fmt};
+use ariadne::{Cache, Color, Fmt};
 use internment::Intern;
 
 pub const ATTENTION_COLOR: Color = Color::Fixed(12); // blue
 
+pub enum Error<T: Cache<Intern<Src>>> {
+    Spanned(Vec<SpannedError>, T),
+    Bare(String),
+}
+
 #[derive(Debug)]
-pub struct Error {
+pub struct SpannedError {
     span: Span, // main span
     message: String,
     labels: Vec<(Span, String)>,
@@ -15,9 +20,9 @@ pub struct Error {
     help: Option<String>,
 }
 
-impl Error {
+impl SpannedError {
     pub fn new(span: Span, message: impl Into<String>) -> Self {
-        Error {
+        SpannedError {
             span,
             message: message.into(),
             labels: Vec::new(),
@@ -86,7 +91,7 @@ impl Error {
 }
 
 // all the specific error type constructors
-impl Error {
+impl SpannedError {
     pub fn incorrect_num(
         span: Span,
         object_name: impl Display,
@@ -100,7 +105,7 @@ impl Error {
             object_name.to_string() + "s"
         };
 
-        Error::new(span, format!("Incorrect number of {object_name}s")).with_label(format!(
+        SpannedError::new(span, format!("Incorrect number of {object_name}s")).with_label(format!(
             "Expected {} {object_name_pluralized}, but found {}",
             expected
                 .into_iter()
@@ -133,7 +138,7 @@ impl Error {
             found.fg(ATTENTION_COLOR).to_string()
         });
 
-        Error::new(span, format!("Incorrect {object_name}"))
+        SpannedError::new(span, format!("Incorrect {object_name}"))
             .with_label(format!("Expected {}, but found {}", expected, found,))
     }
 
@@ -143,7 +148,7 @@ impl Error {
         second_define: Span,
         second_define_import: Option<Span>,
     ) -> Self {
-        let mut error = Error::new(second_define, "Identifier already defined")
+        let mut error = SpannedError::new(second_define, "Identifier already defined")
             .with_label_span(first_define, "Defined first here");
 
         if let Some(import) = first_define_import {
@@ -169,7 +174,7 @@ impl Error {
 // this isnt used right now because chumsky calls merge() multiple times for the same span which
 // does not work well with the structure of Error, so instead, we are using Chumsky's error::Simple
 // which will have merged everything, then just convert it into an Error
-impl chumsky::Error<char> for Error {
+impl chumsky::Error<char> for SpannedError {
     type Span = Span;
     type Label = String;
 
@@ -205,7 +210,7 @@ impl chumsky::Error<char> for Error {
 
 // workaround for chumsky calling merge() multiple times on the same span: simply convert
 // error::Simple to Error after everything is merged by error::Simple
-impl From<chumsky::error::Simple<char, Span>> for Error {
+impl From<chumsky::error::Simple<char, Span>> for SpannedError {
     fn from(value: chumsky::error::Simple<char, Span>) -> Self {
         Self::incorrect_value(
             value.span(),

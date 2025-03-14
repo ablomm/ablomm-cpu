@@ -6,7 +6,7 @@ use super::*;
 pub fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
-) -> Result<u32, Error> {
+) -> Result<u32, SpannedError> {
     let mnemonic = if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
         operation.full_mnemonic.mnemonic.span_to(mnemonic)
     } else {
@@ -28,7 +28,7 @@ pub fn generate_unary_alu_op(
             symbol_table,
         )
     } else {
-        Err(Error::incorrect_num(
+        Err(SpannedError::incorrect_num(
             operation.operands.span,
             "operand",
             vec![1, 2],
@@ -42,14 +42,14 @@ fn generate_unary_alu_op_1(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, Error> {
+) -> Result<u32, SpannedError> {
     let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
-        _ => Err(Error::incorrect_value(
+        _ => Err(SpannedError::incorrect_value(
             operands[0].span,
             "type",
             vec!["register"],
@@ -63,14 +63,14 @@ fn generate_unary_alu_op_2(
     modifiers: &Spanned<Vec<Spanned<Modifier>>>,
     operands: &Spanned<Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, Error> {
+) -> Result<u32, SpannedError> {
     let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
             let register = &register.unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
-        _ => Err(Error::incorrect_value(
+        _ => Err(SpannedError::incorrect_value(
             operands[0].span,
             "type",
             vec!["register"],

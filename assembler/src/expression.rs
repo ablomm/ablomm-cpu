@@ -7,7 +7,7 @@ use internment::Intern;
 use crate::{
     ast::{Expression, Register, Spanned},
     symbol_table::SymbolTable,
-    Error, Span, ATTENTION_COLOR,
+    Span, SpannedError, ATTENTION_COLOR,
 };
 
 pub mod expression_result;
@@ -30,7 +30,7 @@ pub struct EvalReturn {
 }
 
 impl Spanned<&Expression> {
-    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, Error> {
+    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, SpannedError> {
         let mut waiting_map = HashMap::new();
         let result = match self.val {
             Expression::Register(reg) => ExpressionResult::Register(Some(*reg)),
@@ -78,7 +78,7 @@ pub fn get_operand(
     val: &Spanned<Expression>,
     symbol_table: &SymbolTable,
     waiting_map: &mut HashMap<Intern<std::string::String>, Span>,
-) -> Result<Spanned<ExpressionResult>, Error> {
+) -> Result<Spanned<ExpressionResult>, SpannedError> {
     let EvalReturn {
         result,
         waiting_map: sub_waiting_map,

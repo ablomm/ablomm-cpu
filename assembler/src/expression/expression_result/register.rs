@@ -1,12 +1,12 @@
 use super::*;
 
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
-    type Output = Result<ExpressionResult, Error>;
+    type Output = Result<ExpressionResult, SpannedError>;
 
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
-            _ => Err(Error::incorrect_value(
+            _ => Err(SpannedError::incorrect_value(
                 rhs.span,
                 "type",
                 vec!["number"],
@@ -17,7 +17,7 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
 }
 
 impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<Register>> {
-    type Output = Result<ExpressionResult, Error>;
+    type Output = Result<ExpressionResult, SpannedError>;
 
     fn add(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let Some(lhs) = self.val {
@@ -35,12 +35,12 @@ impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<Register>> {
 }
 
 impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
-    type Output = Result<ExpressionResult, Error>;
+    type Output = Result<ExpressionResult, SpannedError>;
 
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(Error::incorrect_value(
+            _ => Err(SpannedError::incorrect_value(
                 rhs.span,
                 "type",
                 vec!["number"],
@@ -51,7 +51,7 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
 }
 
 impl Sub<&Spanned<&Option<Number>>> for &Spanned<&Option<Register>> {
-    type Output = Result<ExpressionResult, Error>;
+    type Output = Result<ExpressionResult, SpannedError>;
 
     fn sub(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let Some(lhs) = self.val {
