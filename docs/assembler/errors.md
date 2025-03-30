@@ -8,7 +8,7 @@ This error is a bit complicated, and is caused when an expression is dependent o
 
 If such a dependency causes an expression to be unknowable at a point were it must be knowable, then this error will appear.
 
-In general, if there is a situtation in which an expression's value `x = f(x)` where `f(x) != x`, then the error will appear.
+In general, if there is an expression value `x` such that `x = f(x)` where `f(x) != x`, then the error will appear.
 
 ### Examples
 
@@ -37,4 +37,4 @@ But, in general, it is not possible to solve these types of dependencies, as the
 The assembler does not try to solve it, and instead just gives up.
 
 > [!NOTE]
-> Imported files are ordered after the importer, as described in the [Import and Exports document](imports-and-exports.md#imports-structure-in-machine-code), which means, for all intents and purposes, an imported label is defined after all statements in the importer, regardless of where the import statement appears.
+> Imported files are ordered after the importer, as described in the [Imports and Exports document](imports-and-exports.md#imports-structure-in-machine-code), which means, for all intents and purposes, an imported identifier is defined after all statements in the importer, regardless of where the import statement appears.
