@@ -83,14 +83,14 @@ timer_ctrl = *0x4001;
 timer_timer = *0x4003;
 timer_ctrl_start = 0b01;
 
-  // set up timer
-  // set timer interval to 0x1000 clock cycles
-  ld r0, 0x1000;
-  ld timer_timer, r0;
+// set up timer
+// set timer interval to 0x1000 clock cycles
+ld r0, 0x1000;
+ld timer_timer, r0;
 
-  // start timer
-  ld r0, timer_ctrl_start;
-  ld timer_ctrl, r0;
+// start timer
+ld r0, timer_ctrl_start;
+ld timer_ctrl, r0;
 ```
 
 ### Starting the timer to count 0x1000 clock cycles and continue after timing out
@@ -101,21 +101,21 @@ timer_timer = *0x4003;
 timer_ctrl_start = 0b01;
 timer_ctrl_continue = 0b10;
 
-  // set up timer
-  // set timer interval to 0x1000 clock cycles
-  ld r0, 0x1000;
-  ld timer_interval, r0;
-  ld timer_timer, r0;
+// set up timer
+// set timer interval to 0x1000 clock cycles
+ld r0, 0x1000;
+ld timer_interval, r0;
+ld timer_timer, r0;
 
-  // start timer
-  ld r0, timer_ctrl_start | timer_ctrl_continue;
-  ld timer_ctrl, r0;
+// start timer
+ld r0, timer_ctrl_start | timer_ctrl_continue;
+ld timer_ctrl, r0;
 ```
 
 ### Reading current `TIMER` value
 ```asm
 timer_timer = *0x4003;
-  ld r0, timer_timer;
+ld r0, timer_timer;
 ```
 
 ### Acknowledging an interrupt
@@ -124,7 +124,7 @@ timer_ack = *0x4000;
 timer_interupt_mask = 0x0001;
 ic = *0x4004;
 
-  ld r0, ic;
-  and.t r0, timer_interupt_mask;
-  ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
+ld r0, ic;
+and.t r0, timer_interupt_mask;
+ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
 ```

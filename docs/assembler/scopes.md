@@ -15,7 +15,7 @@ For example, this results in `r0` containing the value `123`:
 ``` asm
 value = 123;
 {
-  ld r0, value;
+    ld r0, value;
 }
 
 ```
@@ -26,7 +26,7 @@ For example, this **DOES NOT ASSEMBLE**:
 
 ```asm
 {
-  value = 123;
+    value = 123;
 }
 ld r0, value;
 ```
@@ -45,10 +45,10 @@ For example:
 
 ```asm
 {
-  import print from "lib/print.asm";
+    import print from "lib/print.asm";
   
-    ld r0, string;
-    ld pc, print;
+        ld r0, string;
+        ld pc, print;
 
 }
 // cannot referance print from this scope!

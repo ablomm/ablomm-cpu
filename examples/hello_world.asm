@@ -1,5 +1,5 @@
 /*
-	prints a few strings
+prints a few strings
 */
 
 import * from "lib/defines.asm";

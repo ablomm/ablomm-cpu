@@ -1,29 +1,28 @@
 /*
-	prints the prime numbers up to 100
+prints the prime numbers up to 100
 */
 
 import * from "lib/defines.asm";
 import print_num from "lib/print.asm";
 
-loop_max = 100;
+	loop_max = 100;
 
-count = r2;
-	ld count, 2;
+	i = r2;
+	ld i, 2;
 
 loop:
-	push count;
+	push i;
 	ld pc.link, is_prime;
-
-is_prime_result = r0;
+	is_prime_result = r0;
 
 	sub.t is_prime_result, 1;
-	push.eq count;
+	push.eq i;
 	ld.eq pc.link, print_num;
 	ld.eq r0, '\n';
 	ld.eq tty, r0;
 
-	add count, 1;
-	sub.t count, loop_max;
+	add i, 1;
+	sub.t i, loop_max;
 	ld.ne pc, loop;
 
 return:
@@ -47,11 +46,13 @@ is_prime: {
 		push r2;
 		push r3;
 
-	result = r0;
-	num = r2;
-	count = r3;
+		num_in = *(fp + 1);
 
-		ld num, *(fp + 1);
+		result = r0;
+		num = r2;
+		count = r3;
+
+		ld num, num_in;
 
 		ld count, 2;
 
@@ -60,7 +61,7 @@ is_prime: {
 		push count;
 		push count;
 		ld pc.link, mul;
-	count_squared = r0;
+		count_squared = r0;
 
 		sub.t count_squared, num;
 		// if greater or equal, then we tested all values, so it's prime
@@ -71,7 +72,7 @@ is_prime: {
 		push num;
 		push count;
 		ld pc.link, div;
-	remainder = r1;
+		remainder = r1;
 
 		// check if remainder is 0 (not prime)
 		sub.t remainder, 0;

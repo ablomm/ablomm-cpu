@@ -9,9 +9,9 @@ Identifiers are simply either labels, as described in the [Labels document](labe
 To export an identifier you may use an export staatement as shown:
 
 ```asm
-value = 123;
+    value = 123;
 label:
-export value, label;
+    export value, label;
 ```
 
 ### Inline Exports
@@ -32,7 +32,7 @@ You may import any identifier exported in another file by simply writing an impo
 ```asm
 import value from "exports.asm"; // imports identifier "value"
 
-value2 = value + 2;
+    value2 = value + 2;
 ```
 
 The imported file is written relative to the current file (relative to importer).
@@ -47,7 +47,7 @@ You may also import all exports from another document by using the glob (`*`) im
 ```asm
 import * from "exports.asm"; // imports identifier "value" and "label"
 
-value2 = value + label;
+    value2 = value + label;
 ```
 
 ### Import Aliases
@@ -59,7 +59,7 @@ For example:
 ```asm
 import value as imported_value, label as imported_label from "exports.asm";
 
-value = imported_value + imported_label;
+    value = imported_value + imported_label;
 label:
 ```
 
@@ -73,7 +73,7 @@ For example:
 
 ```asm
 {
-  export value = 123;
+    export value = 123;
 }
 
 value2 = value + 321;
@@ -85,10 +85,10 @@ The block exports will only raise an identifier one scope up. If you want to rai
 
 ``` asm
 {
-  {
-    export value = 123; // block level export
-  }
-  export value; // block level export
+    {
+        export value = 123; // block level export
+    }
+    export value; // block level export
 }
 export value; // file level export
 ```
@@ -130,8 +130,8 @@ import string_address from "strings.asm";
 import print from "lib/print.asm";
 import * from "lib/defines.asm";
 
-  ld r0, string_address;;
-  ld pc.link, print;
+    ld r0, string_address;;
+    ld pc.link, print;
 ```
 
 This would cause the program to print whatever `string_address` is pointing to, but then it will not stop executing and start executing whatever is in `strings.asm`.
@@ -143,8 +143,8 @@ import string_address from "strings.asm";
 import print from "lib/print.asm";
 import * from "lib/defines.asm";
 
-  ld r0, string_address;;
-  ld pc.link, print;
+    ld r0, string_address;;
+    ld pc.link, print;
 end:
-  ld pc, end;
+    ld pc, end;
 ```

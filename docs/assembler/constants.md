@@ -33,7 +33,7 @@ for example, consider the following example:
 ``` asm
 value = r1;
 value2 = *(r1 + 12 * 2);
-  ld value, value2;
+ld value, value2;
 ```
 
 This is equivalent to the following:
@@ -47,18 +47,18 @@ The location a constant is defined does not affect the result; constant's do not
 For example, consider the following:
 
 ``` asm
-  ld r1, 123;
+ld r1, 123;
 value = r1;
-  ld r1, 321;
-  ld r0, value;
+ld r1, 321;
+ld r0, value;
 ```
 
 this is equiavlent to:
 
 ``` asm
-  ld r1 123;
-  ld r1, 321;
-  ld r0, r1;
+ld r1 123;
+ld r1, 321;
+ld r0, r1;
 ```
 
 This means `r0` will contain the value `321` after it is ran **NOT** the value `123`; registers are not evaluated.
@@ -70,7 +70,7 @@ All identifiers are hoisted in their scope; this allows for using labels before 
 For example, this is legal:
 
 ``` asm
-  ld r0, value;
+ld r0, value;
 value = 123;
 ```
 
@@ -83,8 +83,8 @@ An example of shadowing a constant is as shown:
 ``` asm
 value = 123;
 {
-  value = value * 2; // shadowing the constant value defined above
-  ld r0, value;
+    value = value * 2; // shadowing the constant value defined above
+    ld r0, value;
 }
 ld r1, value;
 ```

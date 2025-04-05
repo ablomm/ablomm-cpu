@@ -1,5 +1,5 @@
 /*
-	multiplies two numbers and prints the result
+multiplies two numbers and prints the result
 */
 
 import * from "lib/defines.asm";
@@ -12,7 +12,7 @@ import mul from "lib/num.asm";
 	push r0;
 	ld pc.link, mul;
 
-mul_result = r0;
+	mul_result = r0;
 	push mul_result;
 	ld pc.link, print_num;
 

@@ -301,12 +301,12 @@ It is in theory possible to make it work with 32-bit addresses, but it would cau
 
 ```asm
 // some code ...
-  add pc, 1; // need to jump over the gen literal
+    add pc, 1; // need to jump over the gen literal
 far_away_label_address: far_away_label;
 // some more code ...
 // address 2^16
-  ld r0, far_away_label_address;
-  ld pc, r0;
+    ld r0, far_away_label_address;
+    ld pc, r0;
 // even more code ...
 far_away_label:
 // I want to jump here

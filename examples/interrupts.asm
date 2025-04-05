@@ -1,5 +1,5 @@
 /*
-	sets up the interupt vector table, and initalises the timer to create an interrupt
+sets up the interupt vector table, and initalises the timer to create an interrupt
 */
 
 import * from "lib/defines.asm";

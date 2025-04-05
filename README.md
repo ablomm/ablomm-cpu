@@ -32,21 +32,21 @@ export power_restart_code = 1;
 ```asm
 import * from "lib/defines.asm";
 
-num = r0;
-new_line = r1;
+    num = r0;
+    new_line = r1;
 
-	ld num, '0';
+    ld num, '0';
 loop:
-	ld tty, num;
-	add num, 1;
-	sub.t num, '9';
-	ld.ule pc, loop;
+    ld tty, num;
+    add num, 1;
+    sub.t num, '9';
+    ld.ule pc, loop;
 
-	ld new_line, '\n';
-	ld tty, new_line;
+    ld new_line, '\n';
+    ld tty, new_line;
 
-	ld r0, power_shutdown_code;
-	ld power, r0;
+    ld r0, power_shutdown_code;
+    ld power, r0;
 ```
 
 ![image](https://github.com/user-attachments/assets/d6a8093b-0f3b-4abb-8116-9a1a80520f6d)
@@ -56,54 +56,57 @@ loop:
 ```asm
 import * from "defines.asm";
 
+// inputs: string to print
 export print: {
-		// setup stack frame
-		push fp;
-		ld fp, sp;
+        // setup stack frame
+        push fp;
+        ld fp, sp;
 
-		// saved registers
-		push status;
-		push r2;
+        // saved registers
+        push status;
+        push r2;
 
-	string_ptr = r0;
-	string_word = r1;
-	bytes_left = r2;
+        string_ptr_in = *(fp + 1);
 
-		ld string_ptr, *(fp + 1);
+        string_ptr = r0;
+        string_word = r1;
+        bytes_left = r2;
 
-	print_word:
-		ld string_word, *string_ptr;
-		ld bytes_left, 4; // 4 bytes in a word
+        ld string_ptr, string_ptr_in;
 
-	/* 
-		since memory is only word addressible
-		we need to do some rotates to get each byte
-		individually
-	*/
+    print_word:
+        ld string_word, *string_ptr;
+        ld bytes_left, 4; // 4 bytes in a word
 
-	print_byte:
-		rol string_word, 8;
-		and.t string_word, 0xff;
-		ld.zs pc, return; // i.e. lsb is null '\0'
-		ld tty, string_word;
-		sub.s bytes_left, 1;
-		ld.ne pc, print_byte;
+    /* 
+    since memory is only word addressible
+    we need to do some rotates to get each byte
+    individually
+    */
 
-		// we have printed all the bytes in the word
-		add string_ptr, 1;
-		ld pc, print_word;
+    print_byte:
+        rol string_word, 8;
+        and.t string_word, 0xff;
+        ld.zs pc, return; // i.e. lsb is null '\0'
+        ld tty, string_word;
+        sub.s bytes_left, 1;
+        ld.ne pc, print_byte;
 
-	return:
-		pop r2;
-		pop status;
+        // we have printed all the bytes in the word
+        add string_ptr, 1;
+        ld pc, print_word;
 
-		ld sp, fp;
-		pop fp;
+    return:
+        pop r2;
+        pop status;
 
-		// remove arguments
-		add sp, 1;
+        ld sp, fp;
+        pop fp;
 
-		ld pc, lr;
+        // remove arguments
+        add sp, 1;
+
+        ld pc, lr;
 }
 ```
 
@@ -113,16 +116,16 @@ export print: {
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
-	ld r0, string1;
-	push r0;
-	ld pc.link, print;
+    ld r0, string1;
+    push r0;
+    ld pc.link, print;
 
-	ld r0, string2;
-	push r0;
-	ld pc.link, print;
+    ld r0, string2;
+    push r0;
+    ld pc.link, print;
 
-	ld r0, power_shutdown_code;
-	ld power, r0;
+    ld r0, power_shutdown_code;
+    ld power, r0;
 
 string1: "Hello world!👻\n\0";
 string2: "Hello world, again!😵\n\0";
@@ -163,8 +166,8 @@ export print: {
 ```asm
 import print from "lib/print.asm";
 
-ld r0, string;
-ld pc.link, print;
+    ld r0, string;
+    ld pc.link, print;
 
 string: "hello world!\n\0";
 ```
@@ -177,20 +180,19 @@ The assembler contains support for blocks and lexical scopes to avoid namespace 
 
 ```asm
 label: {
-  identifier = 123;
+    identifier = 123;
 
-  {
-    identifier = identifier * 2; // shadows the parent identifier
-    ld r0, identifier; // r0 = 246
-  }
+    {
+        identifier = identifier * 2; // shadows the parent identifier
+        ld r0, identifier; // r0 = 246
+    }
 
-  ld r1, identifier; // r1 = 123
-  add r1, r2; // r1 = 123 + 246
+    ld r1, identifier; // r1 = 123
+    add r1, r2; // r1 = 123 + 246
 }
 
 ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
-
 ```
 
 ---
@@ -199,15 +201,15 @@ ld r2, label; // r2 = address of label
 
 ```asm
 label: {
-  identifier = 123;
+    identifier = 123;
 
-  {
-    identifier = identifier * 2; // shadows the parent identifier
-    ld r0, identifier; // r0 = 246
-  }
+    {
+        identifier = identifier * 2; // shadows the parent identifier
+        ld r0, identifier; // r0 = 246
+    }
 
-  ld r1, identifier; // r1 = 123
-  add r1, r2; // r1 = 123 + 246
+    ld r1, identifier; // r1 = 123
+    add r1, r2; // r1 = 123 + 246
 }
 
 ld r2, identifier; // error: cannot find identifier!
@@ -233,19 +235,22 @@ The assembler has support for compile time variables and expressions similar to 
 ```asm
 tty = *0x4000; // the tty device
 char_to_print = r0;
-  ld char_to_print, 'H';
-  ld tty, char_to_print; // prints a "H" to the terminal
-  ld char_to_print, '\n';
-  ld tty, char_to_print;
+
+ld char_to_print, 'H';
+ld tty, char_to_print; // prints a "H" to the terminal
+ld char_to_print, '\n';
+ld tty, char_to_print;
 
 tty_address = &tty; // get the value 0x4000
-  ld r0, tty_address; // r0 = 0x4000
 
-  ld fp, 123;
+ld r0, tty_address; // r0 = 0x4000
+
+ld fp, 123;
 
 local_variable = *(fp + 3);
-  ld local_variable, r0; // the address fp+3 (126) how contains the value 0x4000
 
-  ld r0, 5 << 2 + tty_address * 4;
-  ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
+ld local_variable, r0; // the address fp+3 (126) how contains the value 0x4000
+
+ld r0, 5 << 2 + tty_address * 4;
+ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
 ```

@@ -10,20 +10,22 @@ export print: {
 		push status;
 		push r2;
 
-	string_ptr = r0;
-	string_word = r1;
-	bytes_left = r2;
+		string_ptr_in = *(fp + 1);
 
-		ld string_ptr, *(fp + 1);
+		string_ptr = r0;
+		string_word = r1;
+		bytes_left = r2;
+
+		ld string_ptr, string_ptr_in;
 
 	print_word:
 		ld string_word, *string_ptr;
 		ld bytes_left, 4; // 4 bytes in a word
 
 	/* 
-		since memory is only word addressible
-		we need to do some rotates to get each byte
-		individually
+	since memory is only word addressible
+	we need to do some rotates to get each byte
+	individually
 	*/
 
 	print_byte:
@@ -63,16 +65,18 @@ export print_num: {
 		push status;
 		push r2;
 
-	num = *(fp + 1);
-		ld r0, num;
+		num_in = *(fp + 1);
+
+		ld r0, num_in;
 		push r0;
 
 		ld r0, 10;
 		push r0;
 
 		ld pc.link, div;
-	quotent = r0; // will contain all but the last digit of num
-	remainder = r2; // will contain the last digit of num
+		quotent = r0; // will contain all but the last digit of num
+		remainder = r2; // will contain the last digit of num
+
 		ld remainder, r1;
 
 		// recursively print the remaning digits first

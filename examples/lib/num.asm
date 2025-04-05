@@ -1,6 +1,6 @@
 import * from "defines.asm";
 
-// does long divison
+// does long divison (see https://en.wikipedia.org/wiki/Division_algorithm#Integer_division_(unsigned)_with_remainder)
 // inputs: numerator, divisor
 // output: r0 = quotent, r1 = remainder
 export div: {
@@ -13,37 +13,35 @@ export div: {
 		push r2;
 		push r3;
 		push r4;
-		push r5;
 
-	quotent = r0;
-	remainder = r1;
-	numerator = r2;
-	divisor = r3;
-	counter = r4;
+		numerator_in = *(fp + 2);
+		divisor_in = *(fp + 1);
 
-		ld numerator, *(fp + 2);
-		ld divisor, *(fp + 1);
+		quotent = r0;
+		remainder = r1;
+		divisor = r2;
+		i = r3;
 
-		ld counter, 32;
+		ld quotent, numerator_in;
+		ld divisor, divisor_in;
 
-		ld quotent, numerator;
+		ld i, 32;
+
 		ld remainder, 0;
 
-	shift_numerator:
-		shl.s quotent, 1;
+	loop:
 		shl remainder, 1;
+		shl.s quotent, 1;
 		or.cs remainder, 1;
 
-		sub.s r5, remainder, divisor;
-		ld.cs remainder, r5;
-		or.cs quotent, 1;
+		sub.s r4, remainder, divisor;
+		ld.uge remainder, r4;
+		or.uge quotent, 1;
 
-		sub.s counter, 1;
-		ld.zc pc, shift_numerator;
-
+		sub.s i, 1;
+		ld.zc pc, loop;
 
 	return:
-		pop r5;
 		pop r4;
 		pop r3;
 		pop r2;
@@ -58,6 +56,7 @@ export div: {
 		ld pc, lr;
 }
 
+// does long multiplication (see https://en.wikipedia.org/wiki/Multiplication_algorithm#Long_multiplication)
 // inputs: operand1, operand2
 // output: r0 = result low, r1 = result high
 export mul: {
@@ -70,15 +69,18 @@ export mul: {
 		push r2;
 		push r3;
 		push r4;
+	
+		operand1_in = *(fp + 2);
+		operand2_in = *(fp + 1);
 
-	result_low = r0;
-	result_high = r1;
-	operand1 = r2;
-	operand2 = r3;
-	operand2_high = r4;
+		result_low = r0;
+		result_high = r1;
+		operand1 = r2;
+		operand2 = r3;
+		operand2_high = r4;
 
-		ld operand1, *(fp + 2);
-		ld operand2, *(fp + 1);
+		ld operand1, operand1_in;
+		ld operand2, operand2_in;
 
 		ld result_low, 0;
 		ld result_high, 0;

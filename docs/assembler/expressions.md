@@ -15,7 +15,7 @@ You may also include expressions in constant identifier assignments and instruct
 
 ```asm
 value = 4 * 2;
-  ld r1, value >> (2 * 3);
+ld r1, value >> (2 * 3);
 ```
 
 As shown in the previous example, expressions can contain identifiers.
@@ -25,9 +25,9 @@ Identifiers are explained in the [Constants document](constants.md) and [Label d
 Expresions can also contain registers:
 
 ```asm
-  ld r1, *(r2 + 3 * 2);
+ld r1, *(r2 + 3 * 2);
 value = r4 - 3;
-  ld r2, *value;
+ld r2, *value;
 ```
 
 > [!NOTE]
@@ -589,8 +589,8 @@ For example:
 
 ``` asm
 value = 123;
-  value; // 123 will now be included in the machine code at this location
+value; // 123 will now be included in the machine code at this location
 string = "hello world!";
-  string + value; // the string of UTF-8 values of "hello world!123" will appear in the machine code
-  "another string"; // this string will also appear in the machine code immediately after the last string
+string + value; // the string of UTF-8 values of "hello world!123" will appear in the machine code
+"another string"; // this string will also appear in the machine code immediately after the last string
 ```
