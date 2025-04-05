@@ -7,7 +7,7 @@ These expressions do not have any cost in the runtime of the program.
 For example:
 
 ```asm
-1 * 2 * (3 / 4 >>> 2) << 1;
+1 * 2 * (16 / 4 >>> 2) << 1;
 ```
 
 This example will compile to a machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is described in the [Gen Literals section](#gen-literals).
@@ -264,15 +264,11 @@ Operations are evaluated left-to-right if the precedence is the same.
 
 Additionally, you may use parentheses (`()`) to explicitly set the precedence of the operations.
 
-An expression need not contain an operation, so these are also considered expressions:
-
-``` asm
-3;
-"Hello world!";
-value;
-```
+An expression need not contain an operation, so `3`, `"Hello world!"`, and `value` are also considered expressions:
 
 In this example, the expression `3` evaluates to the number `3`.
+
+The expression `"Hello world!"` evaluates to the string `"Hello world!"`, etc.
 
 ## Result Types
 

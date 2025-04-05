@@ -228,7 +228,7 @@ label: {
     add r1, r2; // r1 = 123 + 246
 }
 
-ld r2, identifier; // error: cannot find identifier!
+// ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
 ```
 
@@ -255,11 +255,17 @@ ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
 ```
 
+> [!WARNING]
+> This example will not assemble.
+
 ![image](https://github.com/user-attachments/assets/bab51f30-499b-4016-8289-4002d5419d5a)
 
 ```asm
 import * from "lib/print.asm";
 print = 123;
 ```
+
+> [!WARNING]
+> This example will not assemble.
 
 ![image](https://github.com/user-attachments/assets/26d1c547-e1e1-45e0-a528-f46f0ffc836b)

@@ -83,7 +83,7 @@ Not including the block level export would cause the identifier `value` to not b
 
 The block exports will only raise an identifier one scope up. If you want to raise it higher, you must use more exports:
 
-``` asm
+```asm
 {
     {
         export value = 123; // block level export
@@ -125,12 +125,13 @@ This also means that if you do not prevent the control flow from going off a fil
 
 For example, consider if `hello_world.asm` was the following:
 
-``` asm
+```asm
 import string_address from "strings.asm";
-import print from "lib/print.asm";
 import * from "lib/defines.asm";
+import print from "lib/print.asm";
 
-    ld r0, string_address;;
+    ld r0, string_address;
+    push r0;
     ld pc.link, print;
 ```
 
@@ -138,12 +139,13 @@ This would cause the program to print whatever `string_address` is pointing to, 
 
 To prevent such a case you can either shutdown (specific to hardware/simulator), or you can loop indefinitely:
 
-``` asm
+```asm
 import string_address from "strings.asm";
-import print from "lib/print.asm";
 import * from "lib/defines.asm";
+import print from "lib/print.asm";
 
-    ld r0, string_address;;
+    ld r0, string_address;
+    push r0;
     ld pc.link, print;
 end:
     ld pc, end;

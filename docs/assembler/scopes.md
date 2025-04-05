@@ -48,8 +48,11 @@ For example:
     import print from "lib/print.asm";
   
         ld r0, string;
-        ld pc, print;
+        push r0;
+        ld pc.link, print;
 
+    end:
+        ld pc, end;
 }
 // cannot reference print from this scope!
 

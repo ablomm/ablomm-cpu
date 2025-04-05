@@ -56,7 +56,7 @@ ld r0, value;
 This is equivalent to:
 
 ```asm
-ld r1 123;
+ld r1, 123;
 ld r1, 321;
 ld r0, r1;
 ```
