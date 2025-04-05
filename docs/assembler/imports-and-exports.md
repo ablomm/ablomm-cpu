@@ -2,7 +2,7 @@
 
 The assembler supports an import and export system of identifiers.
 
-Identifiers are simply either labels, as described in the [Labels document](labels.md), or constants as described in the [Constants document](constants.md).
+Identifiers are simply either labels, as described in the [Labels document](labels.md), or the identifier part of an assignments as described in the [Assignments document](assignments.md).
 
 ## File Exports
 
@@ -16,7 +16,7 @@ label:
 
 ### Inline Exports
 
-You may also prepend the constant or label declaration with the keyword `export`, this works the same as an export statement, but is more concise:
+You may also prepend the assignment or label declaration with the keyword `export`, this works the same as an export statement, but is more concise:
 
 ```asm
 export value = 123;

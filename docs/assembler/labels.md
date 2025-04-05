@@ -1,6 +1,7 @@
 # Labels
 
 Labels work just the same as most other assemblers; they are simply identifiers with the value of the address they point to.  
+
 For example:
 
 ```asm
@@ -16,7 +17,7 @@ label:
 
 In this example, `r1` will have the value `123` when it reaches the loop. This is because the program jumps to the label `label`.
 
-Labels can be used in the same way as a constant (both are identifiers), and can therefore be used in the same way as shown in the [Constants document](constants.md).
+Labels can be used in the same way as any other identier, and can therefore be used in the same way as shown in the [Assignments document](assignments.md).
 
 For example, labels can be part of an expression:
 

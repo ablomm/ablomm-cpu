@@ -1,6 +1,7 @@
 # Compile Time Expressions
 
 The assembler contains the ability to evaluate expression at compiile time.
+
 These expressions do not have any cost in the runtime of the program.
 
 For example:
@@ -11,7 +12,7 @@ For example:
 
 This example will compile to a machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is discribed in the [Gen Literals section](#gen-literals).
 
-You may also include expressions in constant identifier assignments and instruction operands:
+You may also include expressions in [assignments](assignments.md) and [instruction](instructions.md) operands:
 
 ```asm
 value = 4 * 2;
@@ -20,7 +21,7 @@ ld r1, value >> (2 * 3);
 
 As shown in the previous example, expressions can contain identifiers.
 
-Identifiers are explained in the [Constants document](constants.md) and [Label document](label.md).
+Identifiers are explained further in the [Assignments document](assignments.md) and [Labels document](labels.md).
 
 Expresions can also contain registers:
 
@@ -35,7 +36,7 @@ ld r2, *value;
 
  
 > [!NOTE]
-> A register in an expression does to evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are evaluated at compile time, and so cannot evaluate any run time values such as registers. This is explained more in the [Constants document](constants.md).
+> A register in an expression does not evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are evaluated at compile time, and so cannot evaluate any run time values such as registers. This is explained more in the [Assignments document](assignments.md).
 
 A list of all the possible operators in an expression are detailed in the table below in the order of precedence:
 
@@ -279,7 +280,7 @@ Every expression evaluates to some type. These types are listed below:
 
 ### Number
 
-Numbers are unsigned 32 bit integers. Chars are also considered a number, as they are the UTF-32 encoding of the character. 
+Numbers are unsigned 32-bit integers. Chars are also considered a number, as they are the UTF-32 encoding of the character. 
 
 Example: `123`, `0x123`, and `'a'`.
 
@@ -305,7 +306,7 @@ Example: `"Hello world!\n"`, `"👻"`, and `"null terminated!\0"`
 
 #### String Escapes
 
-The following table enumerates the possible escape characters:
+The following table enumerates the possible string escape characters:
 
 | Escape | Description
 |---|---|
