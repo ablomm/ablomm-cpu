@@ -1,8 +1,8 @@
 # Compile Time Assignments
 
-The assembler supports compile time assignments, which are just a convinence for storing the result of a compile time expression, as detailed in the [Expressions document](expressions.md).
+The assembler supports compile time assignments, which are just a convenience for storing the result of a compile time expression, as detailed in the [Expressions document](expressions.md).
 
-An assignment has two parts: an identifier, and an expression, seperated by an equals sign.
+An assignment has two parts: an identifier, and an expression, separated by an equals sign.
 
 Any value that may find itself in the operand of an instruction may be in the expression part of an assignment; both are expressions.
 
@@ -28,7 +28,7 @@ value2 = *(r1 + 12 * 2);
 
 Expressions which contain registers are not evaluated, but instead are passed to the operands of an instruction.
 
-for example, consider the following example:
+For example, consider the following example:
 
 ```asm
 value = r1;
@@ -53,7 +53,7 @@ ld r1, 321;
 ld r0, value;
 ```
 
-this is equiavlent to:
+This is equivalent to:
 
 ```asm
 ld r1 123;

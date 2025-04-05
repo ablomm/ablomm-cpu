@@ -6,7 +6,7 @@ A scope is defined to be the span in which an identifier is valid.
 
 ## Blocks
 
-A block is simply a list of statements deliminated by `{` and `}`. This is quite similar to C blocks.
+A block is simply a list of statements delimited by `{` and `}`. This is quite similar to C blocks.
 
 A block can reference identifiers defined in it's containing block.
 
@@ -35,11 +35,11 @@ ld r0, value;
 > This example will not assemble.
 
 > [!NOTE]
-> There is a mechanism called block exports that allows a value to be referenced from the parent scope, as detailed in the [Imports and Exports document](imports-and-exports.md#block-exports)
+> There is a mechanism called block exports that allows a value to be referenced from the parent scope, as detailed in the [Imports and Exports document](imports-and-exports.md#block-exports).
 
 ### Block Scoped Imports
 
-Blocks can contain import statments, in which case the imported identifiers are only valid within that block.
+Blocks can contain import statements, in which case the imported identifiers are only valid within that block.
 
 For example:
 
@@ -51,7 +51,7 @@ For example:
         ld pc, print;
 
 }
-// cannot referance print from this scope!
+// cannot reference print from this scope!
 
 string: "hello_world!\n\0";
 ```

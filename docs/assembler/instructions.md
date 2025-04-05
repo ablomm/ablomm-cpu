@@ -2,7 +2,7 @@
 
 The assembly contains a small number of instructions. The assembler has a different (but similar) set of instructions than the CPU instructions listed in the [ISA document](../cpu/isa.md#instructions). 
 
-Each assembly instruction may map to different CPU instructions, and the different set is merely a convinence as you shall see.
+Each assembly instruction may map to different CPU instructions, and the different set is merely a convenience as you shall see.
 
 Each assembly instruction is enumerated in the following table:
 
@@ -434,13 +434,13 @@ Each assembly instruction is enumerated in the following table:
 
 # Instruction Modifiers
 
-The assembler allows adding modifiers to the instruciton mnemonics. These modifiy the functionality of an instruction. Some modifiers work on all instructions, while others work on only a subset of the instructions.
+The assembler allows adding modifiers to the instruction mnemonics. These modify the functionality of an instruction. Some modifiers work on all instructions, while others work on only a subset of the instructions.
 
 ## ALU Modifiers
 
-These modifiers only work on ALU instructions (those listed ALU.* in the [Instructions section](#assembly-instructions).
+These modifiers only work on ALU instructions (those listed ALU.* in the [Instructions section](#assembly-instructions)).
 
-The ALU modifiers allow for conditionally updating the status register with the NZCV flags, as described in the [ISA document](../cpu/isa.md#status-register)
+The ALU modifiers allow for conditionally updating the status register with the NZCV flags, as described in the [ISA document](../cpu/isa.md#status-register).
 
 The below table enumerates each modifier:
 
@@ -455,7 +455,7 @@ These modifiers work on all instructions.
 
 The condition modifiers allow for conditional execution, which makes the instruction only execute if the condition is met.
 
-These conditions are mapped to CPU conditions as seen in the [ISA document](../cpu/isa.md#conditions)
+These conditions are mapped to CPU conditions as seen in the [ISA document](../cpu/isa.md#conditions).
 
 The below table enumerates each condition:
 
@@ -799,7 +799,7 @@ Carry flag is set; alias for `uge`
 </table>
 
 > [!NOTE]
-> Although some condition mnemonics are for subtraction, it works for any ALU operation. for example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`. To make your code clearer, you may use the aliases if the subtraction mnemonics can cause confusion, for example, `ld.zc pc, 123;`.
+> Although some condition mnemonics are for subtraction, it works for any ALU operation. For example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`. To make your code clearer, you may use the aliases if the subtraction mnemonics can cause confusion, for example, `ld.zc pc, 123;`.
 
 # Operands
 All instruction operands are simply expressions. Expressions are documented in the [Expressions document](expressions.md). Some instructions only allow for a certain number and type of expressions in their operands. The examples in the [Assembly Instructions section](#assembly-instructions) outline all the possible variations for each instruction.

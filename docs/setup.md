@@ -32,7 +32,7 @@ $ ./scripts/run.sh icarus programs/hello_world.asm
 
 ## Assemble
 
-Usually it's fine to just use the `run.sh` script, which will assemble and run the appliaction all in one, but you may want to only assemble a program.
+Usually it's fine to just use the `run.sh` script, which will assemble and run the application all in one, but you may want to only assemble a program.
 
 Included in the repo is a [script to assemble a program](../scripts/assemble.sh).
 
@@ -43,7 +43,7 @@ $ ./scripts/assmeble.sh programs/hello_world.asm
 ```
 
 > [!NOTE]  
-> By defaullt, the assembler will print the machine code to stdout. You can optionally write the output to a file using redirection or using the `-o <OUTPUT>` option. For a full list of options the assembler supports, use the `-h` option.
+> By default, the assembler will print the machine code to stdout. You can optionally write the output to a file using redirection or using the `-o <OUTPUT>` option. For a full list of options the assembler supports, use the `-h` option.
 
 ## Simulate
 

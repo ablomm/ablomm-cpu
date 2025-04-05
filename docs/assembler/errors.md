@@ -12,7 +12,7 @@ In general, if there is an expression value `x` such that `x = f(x)` where `f(x)
 
 ### Examples
 
-#### Future label string concationation
+#### Future label string concatenation
 Consider the following example:
 
 ```asm
@@ -22,7 +22,7 @@ label:
 > [!WARNING]
 > This example will not assemble.
 
-You may be suprised to know that this example causes the error `Unknown value of expression`.
+You may be surprised to know that this example causes the error `Unknown value of expression`.
 
 This is because the value of `label` is dependent on the value of `"" + label`.
 

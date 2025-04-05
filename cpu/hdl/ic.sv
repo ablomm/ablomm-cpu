@@ -1,4 +1,4 @@
-// super basic interupt conroller; basically just an AND gate
+// super basic interrupt controller; basically just an AND gate
 module ic #(
     parameter integer IRQ_LENGTH = 16
 ) (

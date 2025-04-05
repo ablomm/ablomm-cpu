@@ -1,8 +1,8 @@
 import * from "defines.asm";
 
-// does long divison (see https://en.wikipedia.org/wiki/Division_algorithm#Integer_division_(unsigned)_with_remainder)
+// does long division (see https://en.wikipedia.org/wiki/Division_algorithm#Integer_division_(unsigned)_with_remainder)
 // inputs: numerator, divisor
-// output: r0 = quotent, r1 = remainder
+// output: r0 = quotient, r1 = remainder
 export div: {
 		// setup stack frame
 		push fp;
@@ -17,12 +17,12 @@ export div: {
 		numerator_in = *(fp + 2);
 		divisor_in = *(fp + 1);
 
-		quotent = r0;
+		quotient = r0;
 		remainder = r1;
 		divisor = r2;
 		i = r3;
 
-		ld quotent, numerator_in;
+		ld quotient, numerator_in;
 		ld divisor, divisor_in;
 
 		ld i, 32;
@@ -31,12 +31,12 @@ export div: {
 
 	loop:
 		shl remainder, 1;
-		shl.s quotent, 1;
+		shl.s quotient, 1;
 		or.cs remainder, 1;
 
 		sub.s r4, remainder, divisor;
 		ld.uge remainder, r4;
-		or.uge quotent, 1;
+		or.uge quotient, 1;
 
 		sub.s i, 1;
 		ld.zc pc, loop;

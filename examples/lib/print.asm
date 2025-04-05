@@ -23,7 +23,7 @@ export print: {
 		ld bytes_left, 4; // 4 bytes in a word
 
 	/* 
-	since memory is only word addressible
+	since memory is only word addressable
 	we need to do some rotates to get each byte
 	individually
 	*/
@@ -74,15 +74,15 @@ export print_num: {
 		push r0;
 
 		ld pc.link, div;
-		quotent = r0; // will contain all but the last digit of num
+		quotient = r0; // will contain all but the last digit of num
 		remainder = r2; // will contain the last digit of num
 
 		ld remainder, r1;
 
-		// recursively print the remaning digits first
-		sub.t quotent, '\0';
-		push.ne quotent;
-		ld.ne pc.link, print_num; // when quotoent is 0, we are done
+		// recursively print the remaining digits first
+		sub.t quotient, '\0';
+		push.ne quotient;
+		ld.ne pc.link, print_num; // when quotient is 0, we are done
 
 		add remainder, '0'; // get ascii of digit
 		ld tty, remainder;

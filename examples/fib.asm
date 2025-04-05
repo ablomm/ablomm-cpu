@@ -1,5 +1,5 @@
 /*
-prints first 10 fibinatchi numbers, starting at 0
+prints first 10 fibonacci numbers, starting at 0
 yes, I know this is incredibly inefficient
 */
 
@@ -30,7 +30,7 @@ return:
 	ld power, r0;
 
 
-// calculates the n'th fibinatchi number
+// calculates the n'th fibonacci number
 // inputs: n
 // outputs: r0 = fib(n)
 fib: {

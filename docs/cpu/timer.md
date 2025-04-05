@@ -69,7 +69,7 @@ Therefore, the registers are memory-mapped as follows:
 | INTERVAL | 0x4002 |
 | TIMER | 0x4003 |
 
-## Interupt Map
+## Interrupt Map
 
 The simulator will set the timer as the 0th interrupt in the interrupt controller. The interrupt controller is documented in the [Interrupt Controller document](interrupt_controller.md).
 
@@ -78,6 +78,7 @@ The simulator will set the timer as the 0th interrupt in the interrupt controlle
 A complete working example can be found in the [Interrupts example](../../examples/interrupts.asm).
 
 ### Starting the timer to count 0x1000 clock cycles
+
 ```asm
 timer_ctrl = *0x4001;
 timer_timer = *0x4003;
@@ -94,6 +95,7 @@ ld timer_ctrl, r0;
 ```
 
 ### Starting the timer to count 0x1000 clock cycles and continue after timing out
+
 ```asm
 timer_ctrl = *0x4001;
 timer_interval = *0x4002;
@@ -113,12 +115,14 @@ ld timer_ctrl, r0;
 ```
 
 ### Reading current `TIMER` value
+
 ```asm
 timer_timer = *0x4003;
 ld r0, timer_timer;
 ```
 
 ### Acknowledging an interrupt
+
 ```asm
 timer_ack = *0x4000;
 timer_interupt_mask = 0x0001;

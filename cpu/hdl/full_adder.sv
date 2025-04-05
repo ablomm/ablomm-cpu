@@ -8,7 +8,6 @@ module full_adder #(
     output logic overflow
 );
   always_comb begin
-    // I think we actually want the borrow to be sign extended here (up to WIDTH bits)
     {carry_out, out} = (WIDTH + 1)'(a) + (WIDTH + 1)'(b);
     overflow = out[WIDTH-1] ^ a[WIDTH-1] ^ b[WIDTH-1] ^ carry_out;
   end

@@ -40,7 +40,7 @@ pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
         text::keyword("sp").to(Register::Sp),
         text::keyword("lr").to(Register::Lr),
         // just instead of keyword because this is not a valid identifier
-        just("pc.link").to(Register::Pclink), // psuedo register, used to jump with link
+        just("pc.link").to(Register::Pclink), // pseudo register, used to jump with link
         text::keyword("pc").to(Register::Pc),
     ));
 }

@@ -6,7 +6,7 @@ Identifiers are simply either labels, as described in the [Labels document](labe
 
 ## File Exports
 
-To export an identifier you may use an export staatement as shown:
+To export an identifier you may use an export statement as shown:
 
 ```asm
     value = 123;

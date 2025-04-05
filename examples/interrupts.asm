@@ -15,7 +15,7 @@ start:
 	int; // software interrupt!
 	0x0e000000; // invalid instruction -- exception!
 
-	or status, interupt_enable_bit; // enable hardware interupts
+	or status, interupt_enable_bit; // enable hardware interrupts
 
 	// set up timer
 	// set timer interval to 0x1000 clock cycles

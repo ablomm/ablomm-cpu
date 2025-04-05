@@ -33,7 +33,7 @@ module register_file_tb;
     end
   endtask
 
-  task static get_from_a(input reg_e sel_reg_in, output [31:0] value_out);
+  task static get_from_a(input reg_e sel_reg_in, output logic [31:0] value_out);
     begin
       sel_a = sel_reg_in;
       oe_a  = 1;
@@ -45,7 +45,7 @@ module register_file_tb;
     end
   endtask
 
-  task static get_from_b(input reg_e sel_reg_in, output [31:0] value_out);
+  task static get_from_b(input reg_e sel_reg_in, output logic [31:0] value_out);
     begin
       sel_b = sel_reg_in;
       oe_b  = 1;

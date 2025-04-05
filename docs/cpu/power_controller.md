@@ -1,6 +1,6 @@
 # Power Controller
 
-Included in the simulator is a power controller device, which allows terminating the simulator or reseting the CPU.
+Included in the simulator is a power controller device, which allows terminating the simulator or resetting the CPU.
 
 Writing the value `0` to the power controller will terminate the simulator.
 
@@ -28,7 +28,7 @@ ld r0, power_shutdown_code;
 ld power, r0;
 ```
 
-### Reseting the CPU
+### Resetting the CPU
 
 ```asm
 power = *0x4005;

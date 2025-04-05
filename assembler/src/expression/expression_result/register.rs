@@ -26,7 +26,7 @@ impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<Register>> {
                 offset: 0,
             };
 
-            // delegate to register offset implmentation (reg = reg + 0)
+            // delegate to register offset implementation (reg = reg + 0)
             &self.span_to(&Some(reg_offset)) + rhs
         } else {
             Ok(ExpressionResult::RegisterOffset(None))
@@ -60,7 +60,7 @@ impl Sub<&Spanned<&Option<Number>>> for &Spanned<&Option<Register>> {
                 offset: 0,
             };
 
-            // delegate to register offset implmentation (reg = reg + 0)
+            // delegate to register offset implementation (reg = reg + 0)
             &self.span_to(&Some(reg_offset)) - rhs
         } else {
             Ok(ExpressionResult::RegisterOffset(None))

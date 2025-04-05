@@ -24,7 +24,7 @@ module timer #(
     if (control_reg._start) begin
       timer_reg <= timer_reg - 1;
 
-      // need to check timer_reg is 0 incase the timer register started at 0
+      // need to check timer_reg is 0 in case the timer register started at 0
       if (timer_reg === 'b0 || timer_reg - 1 === 'b0) begin
         timeout <= 1;
 

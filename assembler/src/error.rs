@@ -70,7 +70,7 @@ impl SpannedError {
             .with_message(&self.message)
             .with_labels(labels);
 
-        // ariadne for some reason does not reutrn self in this call, so needs to be seperate from
+        // ariadne for some reason does not return self in this call, so needs to be separate from
         // the previous
         report.with_notes(self.notes.clone());
 
@@ -171,8 +171,8 @@ impl SpannedError {
     }
 }
 
-// this isnt used right now because chumsky calls merge() multiple times for the same span which
-// does not work well with the structure of Error, so instead, we are using Chumsky's error::Simple
+// this isn't used right now because chumsky calls merge() multiple times for the same span which
+// does not work well with the structure of Error, so instead, we are using chumsky's error::Simple
 // which will have merged everything, then just convert it into an Error
 impl chumsky::Error<char> for SpannedError {
     type Span = Span;

@@ -1,6 +1,6 @@
 # Ablomm CPU and Assembler
-![ablomm_ghost](https://github.com/user-attachments/assets/490bea8d-e06b-4051-b459-b5ccc5217a4f)
 
+![ablomm_ghost](https://github.com/user-attachments/assets/490bea8d-e06b-4051-b459-b5ccc5217a4f)
 
 This project contains a fully functioning 32-bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
 
@@ -79,7 +79,7 @@ export print: {
         ld bytes_left, 4; // 4 bytes in a word
 
     /* 
-    since memory is only word addressible
+    since memory is only word addressable
     we need to do some rotates to get each byte
     individually
     */
@@ -145,7 +145,7 @@ Please refer to the [docs directory](docs/) for the documentation.
 
 # Assembler
 
-The assembler has quite a bit of featues inspired from high level languages such as C. By far the most advanced part of this project is the assembler, as I am a software guy more than a hardware one.
+The assembler has quite a bit of features inspired from high level languages such as C. By far the most advanced part of this project is the assembler, as I am a software guy more than a hardware one.
 
 ## Key Features
 
@@ -170,6 +170,35 @@ import print from "lib/print.asm";
     ld pc.link, print;
 
 string: "hello world!\n\0";
+```
+
+---
+
+### Compile time expressions
+
+The assembler has support for compile time assignments and expressions similar to c++'s constexpr:
+
+```asm
+tty = *0x4000; // the tty device
+char_to_print = r0;
+
+ld char_to_print, 'H';
+ld tty, char_to_print; // prints a "H" to the terminal
+ld char_to_print, '\n';
+ld tty, char_to_print;
+
+tty_address = &tty; // get the value 0x4000
+
+ld r0, tty_address; // r0 = 0x4000
+
+ld fp, 123;
+
+local_variable = *(fp + 3);
+
+ld local_variable, r0; // the address fp+3 (126) how contains the value 0x4000
+
+ld r0, 5 << 2 + tty_address * 4;
+ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
 ```
 
 ---
@@ -214,7 +243,6 @@ label: {
 
 ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
-
 ```
 
 ![image](https://github.com/user-attachments/assets/bab51f30-499b-4016-8289-4002d5419d5a)
@@ -225,32 +253,3 @@ print = 123;
 ```
 
 ![image](https://github.com/user-attachments/assets/26d1c547-e1e1-45e0-a528-f46f0ffc836b)
-
----
-
-### Compile time expressions
-
-The assembler has support for compile time variables and expressions similar to c++'s constexpr:
-
-```asm
-tty = *0x4000; // the tty device
-char_to_print = r0;
-
-ld char_to_print, 'H';
-ld tty, char_to_print; // prints a "H" to the terminal
-ld char_to_print, '\n';
-ld tty, char_to_print;
-
-tty_address = &tty; // get the value 0x4000
-
-ld r0, tty_address; // r0 = 0x4000
-
-ld fp, 123;
-
-local_variable = *(fp + 3);
-
-ld local_variable, r0; // the address fp+3 (126) how contains the value 0x4000
-
-ld r0, 5 << 2 + tty_address * 4;
-ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
-```

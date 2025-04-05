@@ -103,7 +103,7 @@ impl Spanned<&Expression> {
                 let string = string.expect("String value is unknown");
                 let mut opcodes = Vec::new();
                 // each character is 8 bytes, so we need to pack 4 in each word (as memory is word
-                // addressible, not byte addressible)
+                // addressable, not byte addressable)
                 for chunk in string.as_bytes().chunks(4) {
                     let mut opcode: u32 = 0;
                     for (i, c) in chunk.iter().enumerate() {

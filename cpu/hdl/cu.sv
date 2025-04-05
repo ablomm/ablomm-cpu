@@ -87,7 +87,7 @@ module cu (
     else sync_en <= en;
 
   // state changes
-  // negative edge to simplify startup seqeuence, as we won't have to have an
+  // negative edge to simplify startup sequence, as we won't have to have an
   // extra state to wait for fetch to load the ir on startup since the first
   // move to fetch happens on a negative edge, and ir gets loaded on the next
   // posedge, after which the next negedge will have a loaded ir

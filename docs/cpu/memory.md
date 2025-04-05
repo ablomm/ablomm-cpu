@@ -2,7 +2,7 @@
 
 The memory for the CPU is a bit special in that each address holds 32 bits, rather than the typical 8 bits.
 
-Reads are asynchronous (although this may be changed in the future for better compatability).
+Reads are asynchronous (although this may be changed in the future for better compatibility).
 
 Writes are synchronous.
 

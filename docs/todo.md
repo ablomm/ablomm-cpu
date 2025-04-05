@@ -14,7 +14,7 @@ Currently PUSH and POP only works on one register at a time.
 
 E.g.: `push r1, r2, r3;`
 
-### Floating Point Arithemetic Unit
+### Floating Point Arithmetic Unit
 
 Have a hardware-supported way to perform floating point operations.
 
@@ -28,7 +28,7 @@ Have a progress bar for the progress of the complication.
 
 Currently instructions are handled in a special way, but it may be possible to consider an instruction as simply an expression that results in a u32 number.
 
-E.g.: `value = (add.s r1, r2) * 2;`
+E.g.: `value = (add.s r1, r2) * 2;`.
 
 This would also mean something like `add.s r1, r2;` is just a gen literal.
 

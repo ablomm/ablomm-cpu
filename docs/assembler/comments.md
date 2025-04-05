@@ -1,7 +1,9 @@
 # Comments
+
 The assembler allows comments similar to C style comments.
 
 ## Single-line Comments
+
 A single-line comment can be created by writing `//`. A newline character will end the comment.
 
 For example:
@@ -12,7 +14,8 @@ sub r1, r2;
 ```
 
 ## Multi-line Comments
-A multi-line comment can be created by deliminating the comment with `/*` and `*/`.
+
+A multi-line comment can be created by delimiting the comment with `/*` and `*/`.
 
 For example:
 
@@ -40,6 +43,7 @@ sub r1, r2;
 > This example will not assemble.
 
 ## Limitations
+
 Currently, comments must come after a complete statement, and cannot come between tokens.
 
 For example, the following example will **NOT** assemble:

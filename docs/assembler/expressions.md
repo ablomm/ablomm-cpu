@@ -1,6 +1,6 @@
 # Compile Time Expressions
 
-The assembler contains the ability to evaluate expression at compiile time.
+The assembler contains the ability to evaluate expressions at compile time.
 
 These expressions do not have any cost in the runtime of the program.
 
@@ -10,9 +10,9 @@ For example:
 1 * 2 * (3 / 4 >>> 2) << 1;
 ```
 
-This example will compile to a machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is discribed in the [Gen Literals section](#gen-literals).
+This example will compile to a machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is described in the [Gen Literals section](#gen-literals).
 
-You may also include expressions in [assignments](assignments.md) and [instruction](instructions.md) operands:
+You may also include expressions in [assignments](assignments.md) and [instruction operands](instructions.md#operands):
 
 ```asm
 value = 4 * 2;
@@ -23,7 +23,7 @@ As shown in the previous example, expressions can contain identifiers.
 
 Identifiers are explained further in the [Assignments document](assignments.md) and [Labels document](labels.md).
 
-Expresions can also contain registers:
+Expressions can also contain registers:
 
 ```asm
 ld r1, *(r2 + 3 * 2);
@@ -262,7 +262,7 @@ A list of all the possible operators in an expression are detailed in the table 
 
 Operations are evaluated left-to-right if the precedence is the same.
 
-Additionally, you may use parentheses (`()`) to explicity set the precedence of the operations.
+Additionally, you may use parentheses (`()`) to explicitly set the precedence of the operations.
 
 An expression need not contain an operation, so these are also considered expressions:
 
@@ -302,7 +302,7 @@ The following tables enumerates the possible escape characters:
 
 Strings are a sequence of UTF-8 encodings of characters and are not null terminated (null termination must be done explicitly). Strings allow for escaping special control characters with `\`. 
 
-Example: `"Hello world!\n"`, `"👻"`, and `"null terminated!\0"`
+Example: `"Hello world!\n"`, `"👻"`, and `"null terminated!\0"`.
 
 #### String Escapes
 
@@ -479,7 +479,7 @@ Frame pointer; aliases to `r10`
 <td>status</td>
 <td>
   
-State of the CPU; conditions, interupt mask, and mode. Refer to the [ISA document](../cpu/isa.md#status-register) for more information
+State of the CPU; conditions, interrupt mask, and mode. Refer to the [ISA document](../cpu/isa.md#status-register) for more information
 
 </td>
 <td>
@@ -549,19 +549,19 @@ Program counter; points to next instruction to run. Use this register to jump wi
 
 </table>
 
-Example: `r1`, `pc`, and `lr`
+Example: `r1`, `pc`, and `lr`.
 
 ### Register Offset
 
 Register offsets are simply a register +/- some offset. 
 
-Example: `r1 + 3`, `pc - 2`, and `fp + 1`
+Example: `r1 + 3`, `pc - 2`, and `fp + 1`.
 
 ### Indirect
 
-indirects are simply dereferenced values. 
+Indirects are simply dereferenced values. 
 
-Example: `*r1`, `*(r1 + 3)`, and `*123`
+Example: `*r1`, `*(r1 + 3)`, and `*123`.
 
 ## Type Specific Implementations of Operators
 

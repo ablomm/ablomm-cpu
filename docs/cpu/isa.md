@@ -1,10 +1,10 @@
 # Public Registers
 
-There are 11, 32-bit, general purpose register (`R0` to `R10`)
+There are 11, 32-bit, general purpose register (`R0` to `R10`).
 
 There are 4 special purpose registers with varying widths.
 
-There is 1 psuedo register.
+There is 1 pseudo register.
 
 The table below enumerates all registers and their purpose.
 
@@ -28,7 +28,7 @@ The table below enumerates all registers and their purpose.
 | PC | 0xf | Program counter; points to next instruction to run | 32 |
 
 > [!NOTE]
-> The assembler has more registers that will alias to this set, notably `fp`, which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Upercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
+> The assembler has more registers that will alias to this set, notably `fp`, which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Uppercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
 
 ## Status Register
 
@@ -40,7 +40,7 @@ The layout of the status register is as follows:
 |---|---|---|---|---|---|
 | N | Z | C | V | I | M |
 
-The status register is made of various flags. These flags are sumarized in the table below:
+The status register is made of various flags. These flags are summarized in the table below:
 
 | Flag | Description |
 |---|---|
@@ -76,7 +76,7 @@ The first four of these flags are used for conditional execution. The following 
 | SGE | 0xe | `sub.t x, y` where x and y are signed, and `x >= y`  | `N == V` |
 
 > [!NOTE]
-> The assembler has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Upercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
+> The assembler has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Uppercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
 
 # Instructions
 
@@ -96,10 +96,10 @@ There is only 10 instruction from the CPU's perspective. The ALU instruction is 
 | ALU | 0xf_ | Performs an ALU operation as shown in the [ALU Operations section](#alu-operations) | `A = B <op> C` <br> `if (S) { status.NZCV = <new flags> }` |
 
 > [!NOTE]
-> LD and ST offset is a signed value. so it is possible to do solmething like `ld *(r1 - 123), r2`.
+> LD and ST offset is a signed value. So it is possible to do something like `ld *(r1 - 123), r2`.
 
 > [!NOTE]
-> The assembler has a different set of instructions that will mapped to these instructions. E.g. `ld r1, 123` gets mapped to a LDI instuction. Uppercase distinguishes the instruction as a CPU instruction rather than an assembly instruction. Assembly instructions are documented in the [Instructions document](../assembler/instructions.md#assembly-instructions).
+> The assembler has a different set of instructions that will mapped to these instructions. E.g. `ld r1, 123` gets mapped to a LDI instruction. Uppercase distinguishes the instruction as a CPU instruction rather than an assembly instruction. Assembly instructions are documented in the [Instructions document](../assembler/instructions.md#assembly-instructions).
 
 ## Layout
 
@@ -109,7 +109,7 @@ The ALU operations can be found in the [ALU Operations section](#alu-operations)
 
 The condition codes can be found in the [Conditions section](#conditions).
 
-The registers codes can be found in the [Public Reigsters section](#public-registers).
+The registers codes can be found in the [Public Registers section](#public-registers).
 
 <table>
 
@@ -252,7 +252,7 @@ The CPU Operation `ALU` shown above allows passing in an "ALU Instruction Code."
 
 ## ALU Flags
 
-You may have noticed the ALU CPU instruction contains four bits named `I`, `R`, `Ln`, and `S`. These flags modify the ALU's behaviour. The following table sumarizes these behaviours:
+You may have noticed the ALU CPU instruction contains four bits named `I`, `R`, `Ln`, and `S`. These flags modify the ALU's behaviour. The following table summarizes these behaviours:
 
 | Flag | Description | Purpose |
 |---|---|---|
@@ -272,7 +272,7 @@ The addresses of various locations in memory the CPU may jump to in each case ar
 | Software interrupt | 2 | The instruction `INT` is ran |
 | Exception | 3 | An unknown instruction is ran |
 
-When any event is triggered, the interupt mask is set to 0, meaning no more hardware interrupts will occur until it is unmasked.
+When any event is triggered, the interrupt mask is set to 0, meaning no more hardware interrupts will occur until it is unmasked.
 
 All events will result in entering supervisor mode.
 
@@ -280,11 +280,11 @@ Hardware and software interrupts, as well as exceptions, will push `PC` and `STA
 
 Start will reset all registers to 0.
 
-Check out the [Interrupts example](../../examples/interrupts.asm) for how to set up the interupt vector table.
+Check out the [Interrupts example](../../examples/interrupts.asm) for how to set up the interrupt vector table.
 
 # Memory
 
-The CPU assumes memory is word-addressible. This means each address in memory should contain 32 bits.
+The CPU assumes memory is word-addressable. This means each address in memory should contain 32 bits.
 
 Additionally, the CPU assumes memory has asynchronous reads, but synchronous writes.
 
@@ -315,7 +315,7 @@ far_away_label:
 > [!NOTE]
 > A normal `ld pc, far_away_label;` would not work because the `ld` instruction only supports 16-bit addresses. Trying to do so would result in an assembler error notifying you that the address does not fit.
 
-To load a piece of data from above address 2<sup>16</sup>, you would need to get the address in a register by whatever means. The easiest would be to just simply keep a global variable for the address in the code segement, such as:
+To load a piece of data from above address 2<sup>16</sup>, you would need to get the address in a register by whatever means. The easiest would be to just simply keep a global variable for the address in the code segment, such as:
 
 ```asm
 ld r0, far_away_variable_address;
@@ -325,4 +325,4 @@ far_away_variable_address: 0x12345678;
 ```
 
 > [!NOTE]
-> A normal `ld r0, *0x12345678;` would not work because the `ld` instruction only supports 16-bit addresses. Trying to do so would result in an assembler error notifying you that the address does not fit. 
+> A normal `ld r0, *0x12345678;` would not work because the `ld` instruction only supports 16-bit addresses. Trying to do so would result in an assembler error notifying you that the address does not fit.

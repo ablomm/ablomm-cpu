@@ -132,7 +132,7 @@ module timer_tb;
       load_reg(timer_pkg::CTRL, 'b11);
       test_read_expected(timer_pkg::CTRL, 'b11);
 
-      // need to clock before to be consistent with the the continue case
+      // need to clock before to be consistent with the continue case
       // which will have an interrupt when the timer is reset to interval.
       // This just makes it possible to use the for loop for when the timer
       // starts initially, and when it resets with the interval

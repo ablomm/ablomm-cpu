@@ -28,7 +28,7 @@ mod symbol_table;
 // error includes cache in order to print errors without re-reading files
 pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> {
     // fails if file not found
-    // this is the root file, given in the comandline argument
+    // this is the root file, given in the command-line argument
     let src =
         Intern::new(Src::new(Path::new(src).to_path_buf()).map_err(|error| {
             Error::Bare(format!("Error in provided file \"{}\": {}", src, error))
@@ -79,7 +79,7 @@ pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> 
     generator::compile_ast(&ast).map_err(|error| Error::Spanned(error, sources(cache)))
 }
 
-// takes in a canonanical file path, address, and cache and returns a queue of the order in which to
+// takes in a canonical file path, address, and cache and returns a queue of the order in which to
 // generate the symbol tables / exports in order to satisfy import dependencies (i.e. post order)
 fn generate_file_queue(
     src: &Spanned<Intern<Src>>,
@@ -123,7 +123,7 @@ fn generate_file_queue(
         }
 
         if cache.contains_key(&import_src.val) {
-            // we already did this import, but in another branch (so not a ciruclar dependency), so skip it
+            // we already did this import, but in another branch (so not a circular dependency), so skip it
             continue;
         }
 
@@ -163,8 +163,8 @@ fn parse_path(
                 .enumerate()
                 .map(|(i, c)| (c, Span::new(src.val, i..i + 1))),
         ))
-        // workaround chumsky not working well with Error: convert to Error after parsing
-        // rather than use Error during parsing
+        // workaround because chumsky does not work well with Error:
+        // convert to Error after parsing rather than use Error during parsing
         .map_err(|errors| {
             errors
                 .into_iter()
@@ -276,7 +276,7 @@ fn fill_symbol_table(
             Statement::Import(import_val) => {
                 let import_src = get_import_src(src, import_val).unwrap_or_else(|error| {
                     // should not occur because should already have gotten this import in
-                    // generate_file_quueu()
+                    // generate_file_queue()
                     panic!(
                         "Could not find import '{}' in file '{}': {}",
                         import_val.file.val, src, error
@@ -311,7 +311,7 @@ fn fill_symbol_table(
         }
 
         // technically we could count the lines in the loop above, but this is a bit more readable
-        // even though it requres another pass
+        // even though it requires another pass
         if let Some(mut address_val) = address {
             address_val += statement.as_ref().num_words(&block.symbol_table.borrow())?;
             address = Some(address_val);
@@ -350,7 +350,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
 
                 // now that the labels are known, we need to re-evaluate assignments, which may
                 // depend on the label values
-                // don't worry about exports, as the file_queue is in post_order which guarntees
+                // don't worry about exports, as the file_queue is in post_order which guarantees
                 // all importers have already been parsed, so no one will use the new exports
                 Statement::Assignment(assignment) => {
                     let result = assignment.expression.span_to(

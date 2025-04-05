@@ -17,7 +17,7 @@ label:
 
 In this example, `r1` will have the value `123` when it reaches the loop. This is because the program jumps to the label `label`.
 
-Labels can be used in the same way as any other identier, and can therefore be used in the same way as shown in the [Assignments document](assignments.md).
+Labels can be used in the same way as any other identifier, and can therefore be used in the same way as shown in the [Assignments document](assignments.md).
 
 For example, labels can be part of an expression:
 
