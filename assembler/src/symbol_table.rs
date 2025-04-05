@@ -19,6 +19,9 @@ pub struct STEntry {
 
     // the span of the export statement of the import
     pub export_span: Option<Span>,
+
+    // final means not allowable to import again
+    pub r#final: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -94,12 +97,14 @@ impl SymbolTable {
     pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
         // need to call get and not just contains_key because error will contain the entry
         if let Some(entry) = self.get(&key) {
-            return Err(SpannedError::identifier_already_defined(
-                entry.key_span,
-                entry.import_span,
-                value.key_span,
-                value.import_span,
-            ));
+            if entry.r#final {
+                return Err(SpannedError::identifier_already_defined(
+                    entry.key_span,
+                    entry.import_span,
+                    value.key_span,
+                    value.import_span,
+                ));
+            }
         }
 
         self.insert(key, value);

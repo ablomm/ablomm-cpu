@@ -52,7 +52,7 @@ pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> 
 
     // needed to get types (and as much values as possible without addresses) because the number of
     // words for a statement may depend on the type and value of symbols
-    match fill_symbol_tables(&file_queue) {
+    match fill_symbol_tables(&file_queue, false) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
@@ -65,7 +65,7 @@ pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> 
     }
 
     // final fill after all addresses are calculated, all values should be filled in this pass
-    match fill_symbol_tables(&file_queue) {
+    match fill_symbol_tables(&file_queue, true) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
@@ -180,7 +180,7 @@ fn parse_path(
     Ok(block.span.spanned(file))
 }
 
-fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), SpannedError> {
+fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>, r#final: bool) -> Result<(), SpannedError> {
     let mut file_exports_map = HashMap::new();
     for file in file_queue {
         // can't do map_err because of borrow checker
@@ -189,6 +189,7 @@ fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), SpannedErro
             &file.span_to(&file.block),
             file.start_address,
             &file_exports_map,
+            r#final,
         )?;
 
         file_exports_map.insert(file.src, exports);
@@ -204,10 +205,8 @@ fn fill_symbol_table(
     // without any addresses
     start_address: Option<u32>,
     file_exports_map: &HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
+    r#final: bool, // if this is the final pass
 ) -> Result<HashMap<Intern<String>, STEntry>, SpannedError> {
-    // start from scratch to prevent `symbol already defined` errors (yes technically not as fast as it could be,
-    // but much easier to reason about)
-    block.symbol_table.borrow_mut().table.clear();
     let mut address = start_address;
 
     let mut exports = HashMap::new();
@@ -226,6 +225,7 @@ fn fill_symbol_table(
                         key_span: label.identifier.span,
                         import_span: None,
                         export_span: None,
+                        r#final,
                     },
                 )?;
                 if label.export {
@@ -255,6 +255,7 @@ fn fill_symbol_table(
                         key_span: assignment.identifier.span,
                         import_span: None,
                         export_span: None,
+                        r#final,
                     },
                 )?;
 
@@ -301,6 +302,7 @@ fn fill_symbol_table(
                     &statement.span_to(sub_block),
                     address,
                     file_exports_map,
+                    r#final,
                 )?;
 
                 for (key, val) in sub_exports {
@@ -344,6 +346,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                             key_span: label.identifier.span,
                             import_span: None,
                             export_span: None,
+                            r#final: false,
                         },
                     );
                 }
@@ -368,6 +371,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                             key_span: assignment.identifier.span,
                             import_span: None,
                             export_span: None,
+                            r#final: false,
                         },
                     );
                 }
