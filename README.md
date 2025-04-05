@@ -15,6 +15,10 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
 - [Documentation](#documentation)
 - [Assembler](#assembler)
 	- [Key Features](#key-features)
+		- [File Imports](#file-imports)
+		- [Compile Time Expressions](#compile-time-expressions)
+		- [Blocks and Lexical Scopes](#blocks-and-lexical-scopes)
+		- [Beautiful Error Messages](#beautiful-error-messages)
 
 ## Examples:
 
@@ -149,7 +153,7 @@ The assembler has quite a bit of features inspired from high level languages suc
 
 ## Key Features
 
-### File imports:
+### File Imports
 
 The assembler contains a fully fledged import and export system quite similar to JavaScript. Import aliasing, blob imports, and block scoped imports are all supported.
 
@@ -172,9 +176,11 @@ import print from "lib/print.asm";
 string: "hello world!\n\0";
 ```
 
+File imports are documented further in the [Imports and Exports document](docs/assembler/imports-and-exports.md).
+
 ---
 
-### Compile time expressions
+### Compile Time Expressions
 
 The assembler has support for compile time assignments and expressions similar to c++'s constexpr:
 
@@ -201,9 +207,11 @@ ld r0, 5 << 2 + tty_address * 4;
 ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
 ```
 
+Compile time expressions are documented further in the [Expressions document](docs/assembler/expressions.md).
+
 ---
 
-### Blocks and lexical scopes
+### Blocks and Lexical Scopes
 
 The assembler contains support for blocks and lexical scopes to avoid namespace collisions and logically group blocks of code.
 
@@ -224,9 +232,11 @@ ld r2, identifier; // error: cannot find identifier!
 ld r2, label; // r2 = address of label
 ```
 
+Blocks and lexical scopes are documented further in the [Scopes document](docs/assembler/scopes.md).
+
 ---
 
-### Beautiful error messages
+### Beautiful Error Messages
 
 ```asm
 label: {
