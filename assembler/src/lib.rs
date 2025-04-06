@@ -228,6 +228,7 @@ fn fill_symbol_table(
                         r#final,
                     },
                 )?;
+
                 if label.export {
                     export(
                         &label.identifier,
@@ -238,25 +239,13 @@ fn fill_symbol_table(
             }
 
             Statement::Assignment(assignment) => {
-                // need to move the expression evaluation out of the symbol_table.insert() call
-                // to satisfy the borrow checker
-                let result = assignment.expression.span_to(
-                    assignment
-                        .expression
-                        .as_ref()
-                        .eval(&block.symbol_table.borrow())?
-                        .result,
-                );
-
-                block.symbol_table.borrow_mut().try_insert(
+                block.symbol_table.borrow_mut().try_insert_expr(
                     assignment.identifier.val,
-                    STEntry {
-                        result,
-                        key_span: assignment.identifier.span,
-                        import_span: None,
-                        export_span: None,
-                        r#final,
-                    },
+                    &assignment.expression,
+                    assignment.identifier.span,
+                    None,
+                    None,
+                    r#final,
                 )?;
 
                 if assignment.export {
@@ -288,7 +277,7 @@ fn fill_symbol_table(
                 let exports = file_exports_map.get(&import_src).unwrap_or_else(||
                     // should not occur because the order should ensure all dependencies are parsed
                     panic!(
-                        "Attempted to import '{}' when the importee's symbol table has not been filled",
+                        "Attempted to import '{}' when the exporter's symbol table has not been filled",
                         import_src
                     ));
 
@@ -297,6 +286,7 @@ fn fill_symbol_table(
 
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
+
                 let sub_exports = fill_symbol_table(
                     src,
                     &statement.span_to(sub_block),
@@ -339,7 +329,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                         .identifier
                         .span_to(ExpressionResult::Number(Some(Number(address))));
 
-                    file.block.symbol_table.borrow_mut().insert(
+                    file.block.symbol_table.borrow_mut().try_insert(
                         label.identifier.val,
                         STEntry {
                             result,
@@ -348,7 +338,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                             export_span: None,
                             r#final: false,
                         },
-                    );
+                    )?;
                 }
 
                 // now that the labels are known, we need to re-evaluate assignments, which may
@@ -356,24 +346,14 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                 // don't worry about exports, as the file_queue is in post_order which guarantees
                 // all importers have already been parsed, so no one will use the new exports
                 Statement::Assignment(assignment) => {
-                    let result = assignment.expression.span_to(
-                        assignment
-                            .expression
-                            .as_ref()
-                            .eval(&file.block.symbol_table.borrow())?
-                            .result,
-                    );
-
-                    file.block.symbol_table.borrow_mut().insert(
+                    file.block.symbol_table.borrow_mut().try_insert_expr(
                         assignment.identifier.val,
-                        STEntry {
-                            result,
-                            key_span: assignment.identifier.span,
-                            import_span: None,
-                            export_span: None,
-                            r#final: false,
-                        },
-                    );
+                        &assignment.expression,
+                        assignment.identifier.span,
+                        None,
+                        None,
+                        false,
+                    )?;
                 }
                 _ => (),
             }

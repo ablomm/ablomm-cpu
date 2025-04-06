@@ -47,7 +47,7 @@ fn generate_alu_op_2(
     let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
-            let number = &number.unwrap();
+            let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_2_num(
                 mnemonic,
                 modifiers,
@@ -57,7 +57,7 @@ fn generate_alu_op_2(
             )
         }
         ExpressionResult::Register(register) => {
-            let register = &register.unwrap();
+            let register = &register.expect("Expression resulted in None while generating");
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -79,7 +79,7 @@ fn generate_alu_op_2_reg(
     let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
-            let number = &number.unwrap();
+            let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_2_reg_num(
                 mnemonic,
                 modifiers,
@@ -88,7 +88,7 @@ fn generate_alu_op_2_reg(
             )
         }
         ExpressionResult::Register(register2) => {
-            let register2 = &register2.unwrap();
+            let register2 = &register2.expect("Expression resulted in None while generating");
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -128,7 +128,7 @@ fn generate_alu_op_2_num(
     let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
-            let register = &register.unwrap();
+            let register = &register.expect("Expression resulted in None while generating");
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -158,7 +158,7 @@ fn generate_alu_op_3(
     let operand = operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
-            let register = &register.unwrap();
+            let register = &register.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -180,7 +180,7 @@ fn generate_alu_op_3_reg(
     let operand = operands[1].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
-            let number = &number.unwrap();
+            let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_num(
                 mnemonic,
                 modifiers,
@@ -191,7 +191,7 @@ fn generate_alu_op_3_reg(
             )
         }
         ExpressionResult::Register(register2) => {
-            let register2 = &register2.unwrap();
+            let register2 = &register2.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_reg(
                 mnemonic,
                 modifiers,
@@ -221,7 +221,7 @@ fn generate_alu_op_3_reg_reg(
     let operand = operands[2].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Number(number) => {
-            let number = &number.unwrap();
+            let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_reg_num(
                 mnemonic,
                 modifiers,
@@ -231,7 +231,7 @@ fn generate_alu_op_3_reg_reg(
             )
         }
         ExpressionResult::Register(register3) => {
-            let register3 = &register3.unwrap();
+            let register3 = &register3.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -288,7 +288,7 @@ fn generate_alu_op_3_reg_num(
     let operand = operands[2].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register2) => {
-            let register2 = &register2.unwrap();
+            let register2 = &register2.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
         _ => Err(SpannedError::incorrect_value(

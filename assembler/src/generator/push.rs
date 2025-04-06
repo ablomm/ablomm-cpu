@@ -21,7 +21,7 @@ pub fn generate_push(
     let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
     match &operand {
         ExpressionResult::Register(register) => {
-            let register = &register.unwrap();
+            let register = &register.expect("Expression resulted in None while generating");
             generate_push_reg(&operation.full_mnemonic.modifiers, register)
         }
         _ => Err(SpannedError::incorrect_value(

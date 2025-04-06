@@ -2,7 +2,11 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Span, SpannedError};
+use crate::{
+    ast::{Expression, Spanned},
+    expression::expression_result::ExpressionResult,
+    Span, SpannedError,
+};
 
 type Key = Intern<String>;
 type Value = STEntry;
@@ -90,12 +94,11 @@ impl SymbolTable {
         )
     }
 
-    pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+    fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
     pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
-        // need to call get and not just contains_key because error will contain the entry
         if let Some(entry) = self.get(&key) {
             if entry.r#final {
                 return Err(SpannedError::identifier_already_defined(
@@ -109,5 +112,28 @@ impl SymbolTable {
 
         self.insert(key, value);
         Ok(())
+    }
+
+    pub fn try_insert_expr(
+        &mut self,
+        key: Key,
+        expression: &Spanned<Expression>,
+        key_span: Span,
+        import_span: Option<Span>,
+        export_span: Option<Span>,
+        r#final: bool,
+    ) -> Result<(), SpannedError> {
+        let result = expression.span_to(expression.as_ref().eval(self)?.result);
+
+        self.try_insert(
+            key,
+            STEntry {
+                result,
+                key_span,
+                import_span,
+                export_span,
+                r#final,
+            },
+        )
     }
 }

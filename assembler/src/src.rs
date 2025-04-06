@@ -19,8 +19,12 @@ impl Src {
     }
 
     pub fn get_relative(&self, relative_path: &Path) -> io::Result<Src> {
-        // should be safe to unwrap parent() here because it is canonical
-        Src::new(self.parent().unwrap().join(relative_path))
+        // parent() should* always return something because src is a file (we read it as a file)
+        Src::new(
+            self.parent()
+                .unwrap_or_else(|| panic!("Could not get parent directory of '{}'", self))
+                .join(relative_path),
+        )
     }
 }
 
