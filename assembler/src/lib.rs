@@ -52,7 +52,7 @@ pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> 
 
     // needed to get types (and as much values as possible without addresses) because the number of
     // words for a statement may depend on the type and value of symbols
-    match fill_symbol_tables(&file_queue, false) {
+    match fill_symbol_tables(&file_queue) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
@@ -65,7 +65,7 @@ pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> 
     }
 
     // final fill after all addresses are calculated, all values should be filled in this pass
-    match fill_symbol_tables(&file_queue, true) {
+    match fill_symbol_tables(&file_queue) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
@@ -180,7 +180,7 @@ fn parse_path(
     Ok(block.span.spanned(file))
 }
 
-fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>, r#final: bool) -> Result<(), SpannedError> {
+fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), SpannedError> {
     let mut file_exports_map = HashMap::new();
     for file in file_queue {
         // can't do map_err because of borrow checker
@@ -189,7 +189,6 @@ fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>, r#final: bool) -> Result<
             &file.span_to(&file.block),
             file.start_address,
             &file_exports_map,
-            r#final,
         )?;
 
         file_exports_map.insert(file.src, exports);
@@ -205,8 +204,9 @@ fn fill_symbol_table(
     // without any addresses
     start_address: Option<u32>,
     file_exports_map: &HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
-    r#final: bool, // if this is the final pass
 ) -> Result<HashMap<Intern<String>, STEntry>, SpannedError> {
+    block.symbol_table.borrow_mut().set_updatable();
+
     let mut address = start_address;
 
     let mut exports = HashMap::new();
@@ -220,13 +220,7 @@ fn fill_symbol_table(
 
                 block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
-                    STEntry {
-                        result,
-                        key_span: label.identifier.span,
-                        import_span: None,
-                        export_span: None,
-                        r#final,
-                    },
+                    STEntry::new(result, label.identifier.span, None, None),
                 )?;
 
                 if label.export {
@@ -245,7 +239,6 @@ fn fill_symbol_table(
                     assignment.identifier.span,
                     None,
                     None,
-                    r#final,
                 )?;
 
                 if assignment.export {
@@ -292,7 +285,6 @@ fn fill_symbol_table(
                     &statement.span_to(sub_block),
                     address,
                     file_exports_map,
-                    r#final,
                 )?;
 
                 for (key, val) in sub_exports {
@@ -319,6 +311,8 @@ fn fill_symbol_table(
 fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
     let mut address = 0;
     for file in file_queue.iter_mut().rev() {
+        file.block.symbol_table.borrow_mut().set_updatable();
+
         file.val.start_address = Some(address);
         for statment in &file.block.statements {
             match &statment.val {
@@ -331,13 +325,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
 
                     file.block.symbol_table.borrow_mut().try_insert(
                         label.identifier.val,
-                        STEntry {
-                            result,
-                            key_span: label.identifier.span,
-                            import_span: None,
-                            export_span: None,
-                            r#final: false,
-                        },
+                        STEntry::new(result, label.identifier.span, None, None),
                     )?;
                 }
 
@@ -352,7 +340,6 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                         assignment.identifier.span,
                         None,
                         None,
-                        false,
                     )?;
                 }
                 _ => (),
@@ -422,11 +409,12 @@ fn import(
                     Some(import.specifier.span)
                 };
 
-                let st_entry = STEntry {
-                    key_span: import_key.span,
+                let st_entry = STEntry::new(
+                    import_val.result.clone(),
+                    import_key.span,
                     import_span,
-                    ..import_val.clone()
-                };
+                    import_val.export_span,
+                );
 
                 symbol_table
                     .try_insert(import_key.val, st_entry)
@@ -442,10 +430,12 @@ fn import(
         // unselective import (i.e. import * from <file>
         ImportSpecifier::Blob => {
             for (import_key, import_val) in exports {
-                let st_entry = STEntry {
-                    import_span: Some(import.specifier.span),
-                    ..import_val.clone()
-                };
+                let st_entry = STEntry::new(
+                    import_val.result.clone(),
+                    import_val.key_span,
+                    Some(import.specifier.span),
+                    import_val.export_span,
+                );
 
                 symbol_table
                     .try_insert(*import_key, st_entry)
@@ -526,7 +516,7 @@ impl Spanned<&Expression> {
                     error.with_note(
                         "This is ultimately caused because the expression is dependent on a future address (label), but the value of the expression would effect that address (label)",
                     ).with_note(
-                        "For more info, see https://github.com/ablomm/ablomm-cpu/blob/main/docs/assembler/errors.md#unknown-value-of-expression"
+                        "For more info, see https://github.com/ablomm/ablomm-cpu/blob/main/docs/assembler/errors.md#unknown-value-of-expression",
                     )
                 })?;
 

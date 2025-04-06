@@ -24,8 +24,33 @@ pub struct STEntry {
     // the span of the export statement of the import
     pub export_span: Option<Span>,
 
-    // final means not allowable to import again
-    pub r#final: bool,
+    // if it's allowable to import again
+    updatable: bool,
+}
+
+impl STEntry {
+    pub fn new(
+        result: Spanned<ExpressionResult>,
+        key_span: Span,
+        import_span: Option<Span>,
+        export_span: Option<Span>,
+    ) -> Self {
+        Self {
+            result,
+            key_span,
+            import_span,
+            export_span,
+            updatable: false,
+        }
+    }
+
+    pub fn set_updatable(&mut self) {
+        self.updatable = true;
+    }
+
+    pub fn is_updatable(&self) -> bool {
+        self.updatable
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -100,7 +125,7 @@ impl SymbolTable {
 
     pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
         if let Some(entry) = self.get(&key) {
-            if entry.r#final {
+            if !entry.is_updatable() {
                 return Err(SpannedError::identifier_already_defined(
                     entry.key_span,
                     entry.import_span,
@@ -121,19 +146,20 @@ impl SymbolTable {
         key_span: Span,
         import_span: Option<Span>,
         export_span: Option<Span>,
-        r#final: bool,
     ) -> Result<(), SpannedError> {
         let result = expression.span_to(expression.as_ref().eval(self)?.result);
 
         self.try_insert(
             key,
-            STEntry {
-                result,
-                key_span,
-                import_span,
-                export_span,
-                r#final,
-            },
+            STEntry::new(result, key_span, import_span, export_span),
         )
+    }
+
+    // flags every entry to be able to insert again. Useful for progressive passes containing more
+    // and more info while keeping each pass only able to insert a symbol once
+    pub fn set_updatable(&mut self) {
+        for entry in self.table.values_mut() {
+            entry.set_updatable();
+        }
     }
 }
