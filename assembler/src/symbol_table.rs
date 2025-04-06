@@ -2,11 +2,7 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{
-    ast::{Expression, Spanned},
-    expression::expression_result::ExpressionResult,
-    Span, SpannedError,
-};
+use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Span, SpannedError};
 
 type Key = Intern<String>;
 type Value = STEntry;
@@ -25,31 +21,33 @@ pub struct STEntry {
     pub export_span: Option<Span>,
 
     // if it's allowable to import again
-    updatable: bool,
+    pub updatable: bool,
 }
 
 impl STEntry {
-    pub fn new(
-        result: Spanned<ExpressionResult>,
-        key_span: Span,
-        import_span: Option<Span>,
-        export_span: Option<Span>,
-    ) -> Self {
+    pub fn new(result: Spanned<ExpressionResult>, key_span: Span) -> Self {
         Self {
             result,
             key_span,
-            import_span,
-            export_span,
+            import_span: None,
+            export_span: None,
             updatable: false,
         }
     }
 
-    pub fn set_updatable(&mut self) {
-        self.updatable = true;
+    pub fn with_import_span(mut self, import_span: Span) -> Self {
+        self.import_span = Some(import_span);
+        self
     }
 
-    pub fn is_updatable(&self) -> bool {
-        self.updatable
+    pub fn with_export_span(mut self, export_span: Span) -> Self {
+        self.export_span = Some(export_span);
+        self
+    }
+
+    pub fn updatable(mut self) -> Self {
+        self.updatable = true;
+        self
     }
 }
 
@@ -124,42 +122,74 @@ impl SymbolTable {
     }
 
     pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
-        if let Some(entry) = self.get(&key) {
-            if !entry.is_updatable() {
-                return Err(SpannedError::identifier_already_defined(
-                    entry.key_span,
-                    entry.import_span,
-                    value.key_span,
-                    value.import_span,
-                ));
-            }
-        }
-
-        self.insert(key, value);
-        Ok(())
+        self.try_insert_expr(
+            key,
+            value.result,
+            value.key_span,
+            value.import_span,
+            value.export_span,
+            value.updatable,
+        )
     }
 
-    pub fn try_insert_expr(
+    // try_insert calls this rather than the other way arround because this way ensures that
+    // if the insert is skipped, then the expression will not be evaluated
+    pub fn try_insert_expr<T: STInto<Spanned<ExpressionResult>>>(
         &mut self,
         key: Key,
-        expression: &Spanned<Expression>,
+        expression: T,
         key_span: Span,
         import_span: Option<Span>,
         export_span: Option<Span>,
+        updatable: bool,
     ) -> Result<(), SpannedError> {
-        let result = expression.span_to(expression.as_ref().eval(self)?.result);
+        if let Some(entry) = self.table.get_mut(&key) {
+            if !entry.updatable {
+                return Err(SpannedError::identifier_already_defined(
+                    entry.key_span,
+                    entry.import_span,
+                    key_span,
+                    import_span,
+                ));
+            } else if entry.result.is_known_val() {
+                // no need to insert; value is already known
+                entry.updatable = updatable;
+                return Ok(());
+            }
+        }
 
-        self.try_insert(
+        let result = expression.st_into(self)?;
+
+        self.insert(
             key,
-            STEntry::new(result, key_span, import_span, export_span),
-        )
+            STEntry {
+                result,
+                key_span,
+                import_span,
+                export_span,
+                updatable,
+            },
+        );
+
+        Ok(())
     }
 
     // flags every entry to be able to insert again. Useful for progressive passes containing more
     // and more info while keeping each pass only able to insert a symbol once
-    pub fn set_updatable(&mut self) {
+    pub fn set_entries_updatable(&mut self) {
         for entry in self.table.values_mut() {
-            entry.set_updatable();
+            entry.updatable = true;
         }
+    }
+}
+
+// trait similar to TryInto but can use the symbol_table
+pub trait STInto<T> {
+    fn st_into(self, symbol_table: &SymbolTable) -> Result<T, SpannedError>;
+}
+
+impl<T> STInto<T> for T {
+    fn st_into(self, _symbol_table: &SymbolTable) -> Result<T, SpannedError> {
+        Ok(self)
     }
 }

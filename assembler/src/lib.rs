@@ -205,7 +205,7 @@ fn fill_symbol_table(
     start_address: Option<u32>,
     file_exports_map: &HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
 ) -> Result<HashMap<Intern<String>, STEntry>, SpannedError> {
-    block.symbol_table.borrow_mut().set_updatable();
+    block.symbol_table.borrow_mut().set_entries_updatable();
 
     let mut address = start_address;
 
@@ -220,7 +220,7 @@ fn fill_symbol_table(
 
                 block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
-                    STEntry::new(result, label.identifier.span, None, None),
+                    STEntry::new(result, label.identifier.span),
                 )?;
 
                 if label.export {
@@ -235,10 +235,11 @@ fn fill_symbol_table(
             Statement::Assignment(assignment) => {
                 block.symbol_table.borrow_mut().try_insert_expr(
                     assignment.identifier.val,
-                    &assignment.expression,
+                    &assignment.expression.as_ref(),
                     assignment.identifier.span,
                     None,
                     None,
+                    false,
                 )?;
 
                 if assignment.export {
@@ -311,7 +312,7 @@ fn fill_symbol_table(
 fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
     let mut address = 0;
     for file in file_queue.iter_mut().rev() {
-        file.block.symbol_table.borrow_mut().set_updatable();
+        file.block.symbol_table.borrow_mut().set_entries_updatable();
 
         file.val.start_address = Some(address);
         for statment in &file.block.statements {
@@ -325,7 +326,7 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
 
                     file.block.symbol_table.borrow_mut().try_insert(
                         label.identifier.val,
-                        STEntry::new(result, label.identifier.span, None, None),
+                        STEntry::new(result, label.identifier.span),
                     )?;
                 }
 
@@ -336,10 +337,11 @@ fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedEr
                 Statement::Assignment(assignment) => {
                     file.block.symbol_table.borrow_mut().try_insert_expr(
                         assignment.identifier.val,
-                        &assignment.expression,
+                        &assignment.expression.as_ref(),
                         assignment.identifier.span,
                         None,
                         None,
+                        false,
                     )?;
                 }
                 _ => (),
@@ -409,12 +411,11 @@ fn import(
                     Some(import.specifier.span)
                 };
 
-                let st_entry = STEntry::new(
-                    import_val.result.clone(),
-                    import_key.span,
+                let st_entry = STEntry {
+                    key_span: import_key.span,
                     import_span,
-                    import_val.export_span,
-                );
+                    ..import_val.clone()
+                };
 
                 symbol_table
                     .try_insert(import_key.val, st_entry)
@@ -430,12 +431,10 @@ fn import(
         // unselective import (i.e. import * from <file>
         ImportSpecifier::Blob => {
             for (import_key, import_val) in exports {
-                let st_entry = STEntry::new(
-                    import_val.result.clone(),
-                    import_val.key_span,
-                    Some(import.specifier.span),
-                    import_val.export_span,
-                );
+                let st_entry = STEntry {
+                    import_span: Some(import.specifier.span),
+                    ..import_val.clone()
+                };
 
                 symbol_table
                     .try_insert(*import_key, st_entry)

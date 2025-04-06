@@ -58,6 +58,19 @@ impl Deref for Indirect {
     }
 }
 
+impl ExpressionResult {
+    pub fn is_known_val(&self) -> bool {
+        match self {
+            ExpressionResult::Number(None) => false,
+            ExpressionResult::String(None) => false,
+            ExpressionResult::Register(None) => false,
+            ExpressionResult::RegisterOffset(None) => false,
+            ExpressionResult::Indirect(indirect) => indirect.is_known_val(),
+            _ => true,
+        }
+    }
+}
+
 impl Display for ExpressionResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let string = match self {

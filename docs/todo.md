@@ -33,9 +33,9 @@ This would allow things like `add pc, label - $pc;` which is a jump using offset
 Currently `get_recursive()` returns a cloned value, but it might be possible to return some ref object.  
 I tried this for a while, but couldn't figure out how to make it work with the borrow checker, but I think it might be possible.
 
-- [ ] Efficient symbol table inserts:  
+- [x] Efficient symbol table inserts:  
 Currently, the assembler will do 3 passes to fill the symbol tables, but for the second and third pass, it re-fills a bunch of symbols when it doesn't need to.
-Also consider adding a sensitivity list for each symbol to recursively evaluate expressions for the symbol table.
+Also consider adding a sensitivity list for each symbol to recursively evaluate expressions for the symbol table. (update: didn't do the sensitivity list).
 
 - [ ] Circular imports:  
 Currently, circular imports is not supported.

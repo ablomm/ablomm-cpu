@@ -6,7 +6,7 @@ use internment::Intern;
 
 use crate::{
     ast::{Expression, Register, Spanned},
-    symbol_table::SymbolTable,
+    symbol_table::{STInto, SymbolTable},
     Span, SpannedError, ATTENTION_COLOR,
 };
 
@@ -71,6 +71,16 @@ impl Spanned<&Expression> {
             result,
             waiting_map,
         })
+    }
+}
+
+impl STInto<Spanned<ExpressionResult>> for &Spanned<&Expression> {
+    fn st_into(
+        self,
+        symbol_table: &SymbolTable,
+    ) -> Result<Spanned<ExpressionResult>, SpannedError> {
+        self.eval(symbol_table)
+            .map(|result| self.span_to(result.result))
     }
 }
 
