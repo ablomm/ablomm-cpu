@@ -1,17 +1,17 @@
 use std::{collections::HashMap, fs, io, path::Path, rc::Rc};
 
 use ariadne::{sources, Cache, Fmt};
-use ast::{Ast, Block, Expression, File, Import, ImportSpecifier, Operation, Spanned, Statement};
+use ast::{Ast, Block, Expression, File, Import, ImportSpecifier, Operation, Statement};
 use chumsky::prelude::*;
 
-use error::*;
+use error::{Error, SpannedError, ATTENTION_COLOR};
 use expression::{
     expression_result::{ExpressionResult, Number},
     EvalReturn,
 };
 use indexmap::IndexMap;
 use internment::Intern;
-use span::*;
+use span::{Span, Spanned};
 use src::Src;
 use symbol_table::{STEntry, SymbolTable};
 
@@ -26,7 +26,7 @@ mod symbol_table;
 
 // return a string which is the machine code
 // error includes cache in order to print errors without re-reading files
-pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> {
+pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
     // fails if file not found
     // this is the root file, given in the command-line argument
     let src =
@@ -57,14 +57,13 @@ pub fn assemble(src: &String) -> Result<String, Error<impl Cache<Intern<Src>>>> 
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
 
-    // get file addresses (also technically does labels and assignments (but not imports / exports), but this is overwritten in the final
-    // fill_symbol_tables pass)
+    // get file addresses (also technically does labels and assignments (but not imports / exports)
     match calculate_addresses(&mut file_queue) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
 
-    // final fill after all addresses are calculated, all values should be filled in this pass
+    // final fill after all addresses are calculated to get imported addresses, all values should be filled in this pass
     match fill_symbol_tables(&file_queue) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
@@ -155,7 +154,7 @@ fn parse_path(
     let len = assembly_code.chars().count();
     let eoi = Span::new(src.val, len..len);
 
-    let block = parser::block_parser()
+    let block = parser::file_block_parser()
         .parse(chumsky::Stream::from_iter(
             eoi,
             assembly_code
@@ -196,7 +195,7 @@ fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), SpannedErro
     Ok(())
 }
 
-// generates symbol table for block and sub_block, returns exported symbols
+// generates symbol table for block and sub_blocks, returns exported symbols
 fn fill_symbol_table(
     src: &Intern<Src>,
     block: &Spanned<&Block>,
@@ -306,9 +305,9 @@ fn fill_symbol_table(
     Ok(exports)
 }
 
-// needed because some future imports symbols depend on the size of the importer's length (yeah, I
-// know, it's confusing)
-// assume file_queue in in post_order
+// needed because some future imports symbols depend on the size of the importer's length
+// (yeah, I know; it's confusing)
+// assume file_queue is in post_order
 fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
     let mut address = 0;
     for file in file_queue.iter_mut().rev() {
@@ -388,7 +387,7 @@ fn import(
     exports: &HashMap<Intern<String>, STEntry>,
 ) -> Result<(), SpannedError> {
     match &import.specifier.val {
-        // selective import (i.e. import <ident> [as <ident>][, ...] from <file>
+        // selective import (i.e. import <ident> [as <ident>[, ...]] from <file>
         ImportSpecifier::Named(named_imports) => {
             for named_import in named_imports {
                 let import_val = exports.get(&named_import.identifier).ok_or(

@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{ast::Spanned, expression::expression_result::ExpressionResult, Span, SpannedError};
+use crate::{expression::expression_result::ExpressionResult, span::Spanned, Span, SpannedError};
 
 type Key = Intern<String>;
 type Value = STEntry;
@@ -188,8 +188,8 @@ pub trait STInto<T> {
     fn st_into(self, symbol_table: &SymbolTable) -> Result<T, SpannedError>;
 }
 
-impl<T> STInto<T> for T {
+impl<T, U: Into<T>> STInto<T> for U {
     fn st_into(self, _symbol_table: &SymbolTable) -> Result<T, SpannedError> {
-        Ok(self)
+        Ok(self.into())
     }
 }

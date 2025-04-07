@@ -15,16 +15,16 @@ pub fn generate_unary_alu_op(
 
     if operation.operands.len() == 1 {
         generate_unary_alu_op_1(
-            &mnemonic,
-            &operation.full_mnemonic.modifiers,
-            &operation.operands,
+            &mnemonic.as_ref(),
+            &operation.full_mnemonic.modifiers.as_ref(),
+            &operation.operands.as_ref(),
             symbol_table,
         )
     } else if operation.operands.len() == 2 {
         generate_unary_alu_op_2(
-            &mnemonic,
-            &operation.full_mnemonic.modifiers,
-            &operation.operands,
+            &mnemonic.as_ref(),
+            &operation.full_mnemonic.modifiers.as_ref(),
+            &operation.operands.as_ref(),
             symbol_table,
         )
     } else {
@@ -38,9 +38,9 @@ pub fn generate_unary_alu_op(
 }
 
 fn generate_unary_alu_op_1(
-    mnemonic: &Spanned<CpuMnemonic>,
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    operands: &Spanned<Vec<Spanned<Expression>>>,
+    mnemonic: &Spanned<&CpuMnemonic>,
+    modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
+    operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
     let operand = operands[0].as_ref().eval(symbol_table)?.result;
@@ -59,9 +59,9 @@ fn generate_unary_alu_op_1(
 }
 
 fn generate_unary_alu_op_2(
-    mnemonic: &Spanned<CpuMnemonic>,
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
-    operands: &Spanned<Vec<Spanned<Expression>>>,
+    mnemonic: &Spanned<&CpuMnemonic>,
+    modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
+    operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
     let operand = operands[0].as_ref().eval(symbol_table)?.result;

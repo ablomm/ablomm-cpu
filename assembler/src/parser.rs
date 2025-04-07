@@ -1,3 +1,4 @@
+use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
 use crate::{ast::*, Span};
 use chumsky::prelude::*;
@@ -13,7 +14,7 @@ mod keywords;
 
 pub type ParseError = Simple<char, Span>;
 
-pub fn block_parser() -> impl Parser<char, Spanned<Block>, Error = ParseError> {
+pub fn file_block_parser() -> impl Parser<char, Spanned<Block>, Error = ParseError> {
     statement_parser()
         .map_with_span(Spanned::new)
         .padded()
@@ -92,18 +93,26 @@ fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
 
 fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
     let label = just("export")
-        .padded()
         .or_not()
-        .then(text::ident().map(Intern::new).map_with_span(Spanned::new))
+        .then(
+            text::ident()
+                .map(Intern::new)
+                .map_with_span(Spanned::new)
+                .padded(),
+        )
         .map(|(export, identifier)| Label {
             export: export.is_some(),
             identifier,
         });
 
     let assignment = just("export")
-        .padded()
         .or_not()
-        .then(text::ident().map(Intern::new).map_with_span(Spanned::new))
+        .then(
+            text::ident()
+                .map(Intern::new)
+                .map_with_span(Spanned::new)
+                .padded(),
+        )
         .then_ignore(just('=').padded())
         .then(expression::expression_parser().map_with_span(Spanned::new))
         .map(|((export, identifier), expression)| Assignment {
@@ -136,8 +145,9 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
             });
 
         choice((
-            block.padded().map(Statement::Block),
+            block.map(Statement::Block),
             operation_parser()
+                .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Operation),
             label.padded().then_ignore(just(':')).map(Statement::Label),
@@ -157,7 +167,7 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
                 .padded()
                 .then_ignore(just(';'))
                 .map(Statement::Import),
-            comment_parser().padded().map(Statement::Comment),
+            comment_parser().map(Statement::Comment),
         ))
     })
 }
@@ -166,32 +176,31 @@ fn import_parser() -> impl Parser<char, Import, Error = ParseError> {
     let named_import = text::ident()
         .map(Intern::new)
         .map_with_span(Spanned::new)
-        .padded()
         .then(
             just("as")
-                .ignore_then(
-                    text::ident()
-                        .map(Intern::new)
-                        .map_with_span(Spanned::new)
-                        .padded(),
-                )
+                .padded()
+                .ignore_then(text::ident().map(Intern::new).map_with_span(Spanned::new))
                 .or_not(),
         )
         .map(|(identifier, alias)| NamedImport { identifier, alias });
 
     just("import")
-        .ignore_then(choice((
-            just("*")
-                .to(ImportSpecifier::Blob)
-                .map_with_span(Spanned::new)
-                .padded(),
-            named_import
-                .map_with_span(Spanned::new)
-                .separated_by(just(','))
-                .map(ImportSpecifier::Named)
-                .map_with_span(Spanned::new)
-                .padded(),
-        )))
-        .then(just("from").ignore_then(string_parser().map_with_span(Spanned::new).padded()))
+        .ignore_then(
+            choice((
+                just("*").to(ImportSpecifier::Blob),
+                named_import
+                    .map_with_span(Spanned::new)
+                    .padded()
+                    .separated_by(just(','))
+                    .map(ImportSpecifier::Named),
+            ))
+            .map_with_span(Spanned::new)
+            .padded(),
+        )
+        .then(
+            just("from")
+                .padded()
+                .ignore_then(string_parser().map_with_span(Spanned::new)),
+        )
         .map(|(specifier, file)| Import { file, specifier })
 }

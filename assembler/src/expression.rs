@@ -5,7 +5,8 @@ use expression_result::{Ashr, AsmDeref, AsmRef, ExpressionResult, Number, String
 use internment::Intern;
 
 use crate::{
-    ast::{Expression, Register, Spanned},
+    ast::{Expression, Register},
+    span::Spanned,
     symbol_table::{STInto, SymbolTable},
     Span, SpannedError, ATTENTION_COLOR,
 };

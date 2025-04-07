@@ -1,7 +1,7 @@
 use internment::Intern;
-use std::ops::Range;
+use std::ops::{Deref, Range};
 
-use crate::{ast::Spanned, src::Src};
+use crate::src::Src;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {
@@ -82,5 +82,41 @@ impl ariadne::Span for Span {
 
     fn end(&self) -> usize {
         self.range.1
+    }
+}
+
+// just a struct to hold a span and a value for error messages
+#[derive(Debug, Clone, Copy)]
+pub struct Spanned<T> {
+    pub val: T,
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    pub fn new(val: T, span: Span) -> Self {
+        Self { val, span }
+    }
+
+    // converts &Spanned<T> to Spanned<&T>
+    pub fn as_ref(&self) -> Spanned<&T> {
+        Spanned::new(&self.val, self.span)
+    }
+
+    pub fn span_to<V>(&self, to: V) -> Spanned<V> {
+        Spanned::new(to, self.span)
+    }
+}
+
+impl<T: Copy> Spanned<&T> {
+    pub fn copied(&self) -> Spanned<T> {
+        Spanned::new(*self.val, self.span)
+    }
+}
+
+// just for simplicity (i.e. removes ".val" everywhere)
+impl<T> Deref for Spanned<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.val
     }
 }

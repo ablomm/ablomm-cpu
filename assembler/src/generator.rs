@@ -1,6 +1,11 @@
-use crate::ast::*;
-use crate::error::*;
+use crate::ast::{
+    AluModifier, AluOpFlags, AsmMnemonic, Block, Condition, CpuMnemonic, Expression, Modifier,
+    Operation, Register,
+};
+use crate::ast::{Ast, Statement};
+use crate::error::{SpannedError, ATTENTION_COLOR};
 use crate::expression::expression_result::ExpressionResult;
+use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
 use ariadne::Fmt;
 use std::fmt::Display;
@@ -125,12 +130,12 @@ impl Spanned<&Expression> {
 
 fn seperate_modifiers(
     modifiers: &Vec<Spanned<Modifier>>,
-) -> (Vec<Spanned<Condition>>, Vec<Spanned<AluModifier>>) {
+) -> (Vec<Spanned<&Condition>>, Vec<Spanned<&AluModifier>>) {
     let mut conditions = Vec::new();
     let mut alu_modifiers = Vec::new();
 
     for modifier in modifiers {
-        match modifier.val {
+        match &modifier.val {
             Modifier::Condition(condition) => conditions.push(modifier.span_to(condition)),
             Modifier::AluModifier(alu_modifier) => {
                 alu_modifiers.push(modifier.span_to(alu_modifier))
@@ -142,9 +147,9 @@ fn seperate_modifiers(
 }
 
 fn generate_modifiers_non_alu(
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
+    modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
 ) -> Result<u32, SpannedError> {
-    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
+    let (conditions, alu_modifiers) = seperate_modifiers(modifiers.val);
 
     if conditions.len() > 1 {
         return Err(SpannedError::new(conditions[1].span, "Incorrect modifiers")
@@ -169,9 +174,9 @@ fn generate_modifiers_non_alu(
 }
 
 fn generate_modifiers_alu(
-    modifiers: &Spanned<Vec<Spanned<Modifier>>>,
+    modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
 ) -> Result<u32, SpannedError> {
-    let (conditions, alu_modifiers) = seperate_modifiers(&modifiers.val);
+    let (conditions, alu_modifiers) = seperate_modifiers(modifiers.val);
 
     if conditions.len() > 1 {
         return Err(SpannedError::new(conditions[1].span, "Incorrect modifiers")
@@ -260,7 +265,7 @@ impl Generatable for AluModifier {
     }
 }
 
-impl Generatable for Vec<Spanned<Modifier>> {
+impl Generatable for Vec<Spanned<&Modifier>> {
     fn generate(&self) -> u32 {
         let mut opcode = 0;
         for modifier in self {
@@ -271,7 +276,7 @@ impl Generatable for Vec<Spanned<Modifier>> {
     }
 }
 
-impl Generatable for Vec<Spanned<Condition>> {
+impl Generatable for Vec<Spanned<&Condition>> {
     fn generate(&self) -> u32 {
         let mut opcode = 0;
         for condition in self {
@@ -282,7 +287,7 @@ impl Generatable for Vec<Spanned<Condition>> {
     }
 }
 
-impl Generatable for Vec<Spanned<AluModifier>> {
+impl Generatable for Vec<Spanned<&AluModifier>> {
     fn generate(&self) -> u32 {
         let mut opcode = 0;
         for alu_modifier in self {

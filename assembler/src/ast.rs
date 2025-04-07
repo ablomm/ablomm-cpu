@@ -1,37 +1,7 @@
 use internment::Intern;
 
-use crate::{src::Src, symbol_table::SymbolTable, Span};
-use std::{cell::RefCell, ops::Deref, rc::Rc};
-
-// just a struct to hold a span for error messages
-#[derive(Debug, Clone, Copy)]
-pub struct Spanned<T> {
-    pub val: T,
-    pub span: Span,
-}
-
-impl<T> Spanned<T> {
-    pub fn new(val: T, span: Span) -> Self {
-        Self { val, span }
-    }
-
-    // converts &Spanned<T> to Spanned<&T>
-    pub fn as_ref(&self) -> Spanned<&T> {
-        Spanned::new(&self.val, self.span)
-    }
-
-    pub fn span_to<V>(&self, to: V) -> Spanned<V> {
-        Spanned::new(to, self.span)
-    }
-}
-
-// just for simplicity (i.e. removes ".val" everywhere)
-impl<T> Deref for Spanned<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.val
-    }
-}
+use crate::{span::Spanned, src::Src, symbol_table::SymbolTable};
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
 pub struct Ast {

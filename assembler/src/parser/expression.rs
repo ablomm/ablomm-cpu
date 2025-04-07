@@ -7,7 +7,7 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
             string_parser().map(Expression::String),
             number_parser().map(Expression::Number),
             text::ident().map(Intern::new).map(Expression::Ident),
-            expression.delimited_by(just('('), just(')')),
+            expression.padded().delimited_by(just('('), just(')')),
         ))
         .map_with_span(Spanned::new)
         .boxed();
@@ -23,7 +23,7 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
         .padded()
         .map_with_span(Spanned::new)
         .repeated()
-        .then(atom.padded())
+        .then(atom)
         .foldr(|op, rhs| {
             let span = op.span.union(&rhs.span); // can't inline because value is moved before span
                                                  // can be created
