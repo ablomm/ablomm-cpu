@@ -7,6 +7,8 @@ use crate::{expression::expression_result::ExpressionResult, span::Spanned, Span
 type Key = Intern<String>;
 type Value = STEntry;
 
+pub mod setup;
+
 #[derive(Debug, Clone)]
 pub struct STEntry {
     pub result: Spanned<ExpressionResult>,
