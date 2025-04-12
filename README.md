@@ -22,7 +22,7 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
 
 ## Examples:
 
-### Define a few variables:
+### Define a few constants:
 
 ```asm
 export tty = *0x4006;
@@ -208,6 +208,8 @@ ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the e
 ```
 
 Compile time expressions are documented further in the [Expressions document](docs/assembler/expressions.md).
+
+Compile time assignments are documented further in the [Assignments document](docs/assembler/assignments.md).
 
 ---
 
