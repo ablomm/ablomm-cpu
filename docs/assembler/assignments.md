@@ -76,7 +76,7 @@ value = 123;
 
 ## Shadowing
 
-Identifiers cannot be shadowed the usual way since they are hoisted. Instead, you need to use a block scope, as detailed in the [Scopes document](scopes.md).
+Block scopes (as detailed in the [Scopes document](scopes.md)) allow for shadowing identifiers.
 
 An example of shadowing an identifier is as shown:
 
