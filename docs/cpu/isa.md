@@ -306,6 +306,7 @@ far_away_label_address: far_away_label;
 // some more code ...
 // address 2^16
     ld r0, far_away_label_address;
+    ld r0, *r0; // load r0 with far_away_label
     ld pc, r0;
 // even more code ...
 far_away_label:
@@ -315,11 +316,12 @@ far_away_label:
 > [!NOTE]
 > A normal `ld pc, far_away_label;` would not work because the `ld` instruction only supports 16-bit addresses. Trying to do so would result in an assembler error notifying you that the address does not fit.
 
-To load a piece of data from above address 2<sup>16</sup>, you would need to get the address in a register by whatever means. The easiest would be to just simply keep a global variable for the address in the code segment, such as:
+To load a piece of data from above address 2<sup>16</sup>, you would need to get the address in a register by whatever means, and then dereference it. The easiest way would be to simply keep a global variable for the address in the code segment, such as:
 
 ```asm
 ld r0, far_away_variable_address;
-ld r0, *r0;
+ld r0, *r0; // get 0x1234568 in r0
+ld r0, *r0; // get whatever is at 0x1234568
 
 far_away_variable_address: 0x12345678;
 ```
