@@ -65,3 +65,7 @@ $ ./scripts/simulate.sh icarus +src=hello_world
 
 > [!NOTE]  
 > The scripts will simply delegate all inputs after the first to the simulator. Therefore, all Verilator or Icarus Verilog options can also be passed through this script.
+
+## Binaries
+
+Binaries can found in the [releases page](https://github.com/ablomm/ablomm-cpu/releases). These binaries will not work with the scripts.
