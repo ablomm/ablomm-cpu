@@ -38,6 +38,7 @@ end:
 isr:
 	push lr;
 	push r0;
+	push r1;
 
 	ld r0, hwint_string;
 	push r0;
@@ -48,6 +49,7 @@ isr:
 	and.t r0, timer_interupt_mask;
 	ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
 
+	pop r1;
 	pop r0;
 	pop lr;
 
@@ -58,11 +60,13 @@ isr:
 sw_isr:
 	push lr;
 	push r0;
+	push r1;
 	
 	ld r0, swint_string;
 	push r0;
 	ld pc.link, print;
 
+	pop r1;
 	pop r0;
 	pop lr;
 
@@ -73,11 +77,13 @@ sw_isr:
 exception_handler:
 	push lr;
 	push r0;
+	push r1;
 	
 	ld r0, except_string;
 	push r0;
 	ld pc.link, print;
 
+	pop r1;
 	pop r0;
 	pop lr;
 
