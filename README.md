@@ -227,7 +227,7 @@ label: {
     }
 
     ld r1, identifier; // r1 = 123
-    add r1, r2; // r1 = 123 + 246
+    add r0, r1; // r0 = 246 + 123
 }
 
 // ld r2, identifier; // error: cannot find identifier!
@@ -250,7 +250,7 @@ label: {
     }
 
     ld r1, identifier; // r1 = 123
-    add r1, r2; // r1 = 123 + 246
+    add r0, r1; // r0 = 246 + 123
 }
 
 ld r2, identifier; // error: cannot find identifier!
