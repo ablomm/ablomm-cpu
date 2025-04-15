@@ -57,7 +57,7 @@ is_prime: {
 		ld count, 2;
 
 	loop:
-		// while (count * count < num) i.e. (count < sqrt(num))
+		// while (count * count <= num) i.e. (count <= sqrt(num))
 		push count;
 		push count;
 		ld pc.link, mul;
@@ -65,8 +65,8 @@ is_prime: {
 
 		sub.t count_squared, num;
 		// if greater or equal, then we tested all values, so it's prime
-		ld.uge result, 1;
-		ld.uge pc, return;
+		ld.ugt result, 1;
+		ld.ugt pc, return;
 
 		// divide by the count
 		push num;
