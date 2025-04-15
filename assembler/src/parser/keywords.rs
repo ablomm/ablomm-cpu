@@ -63,8 +63,7 @@ where
     ));
 }
 
-pub fn condition_parser<'src, I>(
-) -> impl Parser<'src, I, Condition, extra::Err<Rich<'src, char, Span>>>
+pub fn condition_parser<'src, I>() -> impl Parser<'src, I, Condition, Extra<'src>>
 where
     I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
 {
