@@ -79,7 +79,7 @@ For example:
 value2 = value + 321;
 ```
 
-Not including the block level export would cause the identifier `value` to not be found in the expression `value + 321`, as it does not exist in scope in which the expression is written.
+Not including the block level export would cause the identifier `value` to not be found in the expression `value + 321`, as it would not exist in the scope in which the expression is written.
 
 The block exports will only raise an identifier one scope up. If you want to raise it higher, you must use more exports:
 
