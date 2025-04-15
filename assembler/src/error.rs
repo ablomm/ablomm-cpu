@@ -2,6 +2,7 @@ use std::{fmt::Display, io::Write};
 
 use crate::{src::Src, Span};
 use ariadne::{Cache, Color, Fmt};
+use chumsky::error::{RichPattern, RichReason};
 use internment::Intern;
 
 pub const ATTENTION_COLOR: Color = Color::Fixed(12); // blue
@@ -124,7 +125,7 @@ impl SpannedError {
     ) -> Self {
         let expected = if expected.is_empty() {
             // "nothing" has no highlights, so it's clear it is not a value called "nothing"
-            "nothing".to_string()
+            "nothing".fg(ATTENTION_COLOR).to_string()
         } else {
             expected
                 .into_iter()
@@ -134,7 +135,7 @@ impl SpannedError {
         };
 
         // "nothing" has no highlights, so it's clear it is not a value called "nothing"
-        let found = found.map_or("nothing".to_string(), |found| {
+        let found = found.map_or("nothing".fg(ATTENTION_COLOR).to_string(), |found| {
             found.fg(ATTENTION_COLOR).to_string()
         });
 
@@ -171,56 +172,32 @@ impl SpannedError {
     }
 }
 
-// this isn't used right now because chumsky calls merge() multiple times for the same span which
-// does not work well with the structure of Error, so instead, we are using chumsky's error::Simple
-// which will have merged everything, then just convert it into an Error
-impl chumsky::Error<char> for SpannedError {
-    type Span = Span;
-    type Label = String;
-
-    fn expected_input_found<Iter: IntoIterator<Item = Option<char>>>(
-        span: Span,
-        expected: Iter,
-        found: Option<char>,
-    ) -> Self {
-        Self::incorrect_value(
-            span,
-            "token",
-            expected
-                .into_iter()
-                .flatten()
-                .map(|c| format!("'{}'", c.escape_default()))
-                .collect::<Vec<_>>(),
-            found.map(|c| format!("'{}'", c.escape_default())),
-        )
-    }
-
-    fn with_label(self, label: Self::Label) -> Self {
-        self.with_note(label)
-    }
-
-    // a bit broken since chumsky will call this function even on the same span
-    fn merge(mut self, other: Self) -> Self {
-        for (span, label) in other.labels {
-            self = self.with_label_span(span, label);
+// workaround for chumsky calling merge() multiple times on the same span: simply convert
+// error::Simple to Error after everything is merged by error::Simple
+impl From<chumsky::error::Rich<'_, char, Span>> for SpannedError {
+    fn from(value: chumsky::error::Rich<'_, char, Span>) -> Self {
+        match value.reason() {
+            RichReason::ExpectedFound { expected, found } => Self::incorrect_value(
+                *value.span(),
+                "token",
+                expected.iter().map(|c| format_rich_pattern(c)).collect(),
+                found.map(|c| format!("'{}'", c.escape_default())),
+            ),
+            chumsky::error::RichReason::Custom(message) => {
+                Self::new(*value.span(), message).with_label(message)
+            }
         }
-        self
     }
 }
 
-// workaround for chumsky calling merge() multiple times on the same span: simply convert
-// error::Simple to Error after everything is merged by error::Simple
-impl From<chumsky::error::Simple<char, Span>> for SpannedError {
-    fn from(value: chumsky::error::Simple<char, Span>) -> Self {
-        Self::incorrect_value(
-            value.span(),
-            "token",
-            value
-                .expected()
-                .flatten()
-                .map(|c| format!("'{}'", c.escape_default()))
-                .collect(),
-            value.found().map(|c| format!("'{}'", c.escape_default())),
-        )
+// because chumsky's fmt for RichPattern is broken right now
+fn format_rich_pattern<T: Display>(rich_pattern: &RichPattern<'_, T>) -> String {
+    match rich_pattern {
+        RichPattern::Token(token) => format!("'{}'", token.to_string().escape_default()),
+        RichPattern::Label(label) => label.to_string(),
+        RichPattern::Identifier(identifier) => identifier.to_string(),
+        RichPattern::Any => "anything".to_string(),
+        RichPattern::SomethingElse => "something else".to_string(),
+        RichPattern::EndOfInput => "end of input".to_string(),
     }
 }

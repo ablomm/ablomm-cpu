@@ -1,6 +1,11 @@
+use crate::ast::{AluModifier, AsmMnemonic, Condition, CpuMnemonic, Register};
+
 use super::*;
 
-pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = ParseError> {
+pub fn mnemonic_parser<'src, I>() -> impl Parser<'src, I, AsmMnemonic, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     return choice((
         text::keyword("nop").to(AsmMnemonic::Nop),
         text::keyword("ld").to(AsmMnemonic::Ld),
@@ -22,7 +27,10 @@ pub fn mnemonic_parser() -> impl Parser<char, AsmMnemonic, Error = ParseError> {
     ));
 }
 
-pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
+pub fn register_parser<'src, I>() -> impl Parser<'src, I, Register, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     return choice((
         text::keyword("r0").to(Register::R0),
         text::keyword("r1").to(Register::R1),
@@ -45,14 +53,21 @@ pub fn register_parser() -> impl Parser<char, Register, Error = ParseError> {
     ));
 }
 
-pub fn alu_modifier_parser() -> impl Parser<char, AluModifier, Error = ParseError> {
+pub fn alu_modifier_parser<'src, I>() -> impl Parser<'src, I, AluModifier, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     return choice((
         text::keyword("s").to(AluModifier::S),
         text::keyword("t").to(AluModifier::T),
     ));
 }
 
-pub fn condition_parser() -> impl Parser<char, Condition, Error = ParseError> {
+pub fn condition_parser<'src, I>(
+) -> impl Parser<'src, I, Condition, extra::Err<Rich<'src, char, Span>>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     return choice((
         text::keyword("eq").to(Condition::Eq),
         text::keyword("ne").to(Condition::Ne),

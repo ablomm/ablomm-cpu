@@ -46,7 +46,7 @@ impl Span {
     }
 }
 
-impl chumsky::Span for Span {
+impl chumsky::span::Span for Span {
     type Context = Intern<Src>;
     type Offset = usize;
 
@@ -97,6 +97,14 @@ impl<T> Spanned<T> {
         Self { val, span }
     }
 
+    /*
+    pub fn new_extra<'a, I: Input<'a>>(val: T, extra: impl ParserExtra<'a, I>) -> Self {
+        Self {
+            val,
+            span: extra.span(),
+        }
+    }
+    */
     // converts &Spanned<T> to Spanned<&T>
     pub fn as_ref(&self) -> Spanned<&T> {
         Spanned::new(&self.val, self.span)

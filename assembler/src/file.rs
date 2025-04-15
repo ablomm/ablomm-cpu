@@ -85,19 +85,11 @@ fn parse_file(
     cache.insert(src.val, assembly_code);
     let assembly_code = cache.get(&src.val).unwrap(); // unwrap safe because we just inserted
 
-    let len = assembly_code.chars().count();
-    let eoi = Span::new(src.val, len..len);
-
     let block = parser::file_block_parser()
-        .parse(chumsky::Stream::from_iter(
-            eoi,
-            assembly_code
-                .chars()
-                .enumerate()
-                .map(|(i, c)| (c, Span::new(src.val, i..i + 1))),
-        ))
+        .parse(assembly_code.with_context(src.val))
         // workaround because chumsky does not work well with Error:
         // convert to Error after parsing rather than use Error during parsing
+        .into_result()
         .map_err(|errors| {
             errors
                 .into_iter()

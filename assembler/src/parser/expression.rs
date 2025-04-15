@@ -1,15 +1,22 @@
+use crate::ast::Expression;
+
 use super::*;
 
-pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> {
+pub fn expression_parser<'src, I>() -> impl Parser<'src, I, Expression, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     let expr = recursive(|expression| {
         let atom = choice((
             keywords::register_parser().map(Expression::Register),
             string_parser().map(Expression::String),
             number_parser().map(Expression::Number),
-            text::ident().map(Intern::new).map(Expression::Ident),
+            text::ident()
+                .map(|s: &str| Intern::new(s.to_string()))
+                .map(Expression::Ident),
             expression.padded().delimited_by(just('('), just(')')),
         ))
-        .map_with_span(Spanned::new)
+        .map_with(|val, e| Spanned::new(val, e.span()))
         .boxed();
 
         let unary = choice((
@@ -21,10 +28,9 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
             just('~').to(Expression::Not as fn(_) -> _),
         ))
         .padded()
-        .map_with_span(Spanned::new)
+        .map_with(|val, e| Spanned::new(val, e.span()))
         .repeated()
-        .then(atom)
-        .foldr(|op, rhs| {
+        .foldr(atom, |op, rhs| {
             let span = op.span.union(&rhs.span); // can't inline because value is moved before span
                                                  // can be created
             Spanned::new(op(Box::new(rhs)), span)
@@ -33,91 +39,97 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
 
         let product = unary
             .clone()
-            .then(
+            .foldl(
                 choice((
                     just('*').to(Expression::Mul as fn(_, _) -> _),
                     just('/').to(Expression::Div as fn(_, _) -> _),
                     just('%').to(Expression::Remainder as fn(_, _) -> _),
                 ))
                 .padded()
-                .map_with_span(Spanned::new)
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .then(unary.clone())
                 .repeated(),
-            )
-            .foldl(|lhs, (op, rhs)| {
-                let span = lhs.span.union(&rhs.span);
+                |lhs, (op, rhs)| {
+                    let span = lhs.span.union(&rhs.span);
 
-                Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
-            })
+                    Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
+                },
+            )
             .boxed();
 
         let sum = product
             .clone()
-            .then(
+            .foldl(
                 choice((
                     just('+').to(Expression::Add as fn(_, _) -> _),
                     just('-').to(Expression::Sub as fn(_, _) -> _),
                 ))
                 .padded()
-                .map_with_span(Spanned::new)
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .then(product.clone())
                 .repeated(),
-            )
-            .foldl(|lhs, (op, rhs)| {
-                let span = lhs.span.union(&rhs.span);
+                |lhs, (op, rhs)| {
+                    let span = lhs.span.union(&rhs.span);
 
-                Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
-            })
+                    Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
+                },
+            )
             .boxed();
 
         let shift = sum
             .clone()
-            .then(
+            .foldl(
                 choice((
                     just("<<").to(Expression::Shl as fn(_, _) -> _),
                     just(">>>").to(Expression::Ashr as fn(_, _) -> _),
                     just(">>").to(Expression::Shr as fn(_, _) -> _),
                 ))
                 .padded()
-                .map_with_span(Spanned::new)
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .then(sum.clone())
                 .repeated(),
-            )
-            .foldl(|lhs, (op, rhs)| {
-                let span = lhs.span.union(&rhs.span);
+                |lhs, (op, rhs)| {
+                    let span = lhs.span.union(&rhs.span);
 
-                Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
-            })
+                    Spanned::new(op(Box::new(lhs), Box::new(rhs)), span)
+                },
+            )
             .boxed();
 
         let and = shift
             .clone()
-            .then(just('&').padded().then(shift.clone()).repeated())
-            .foldl(|lhs, (_op, rhs)| {
-                let span = lhs.span.union(&rhs.span);
+            .foldl(
+                just('&').padded().then(shift.clone()).repeated(),
+                |lhs, (_op, rhs)| {
+                    let span = lhs.span.union(&rhs.span);
 
-                Spanned::new(Expression::And(Box::new(lhs), Box::new(rhs)), span)
-            })
+                    Spanned::new(Expression::And(Box::new(lhs), Box::new(rhs)), span)
+                },
+            )
             .boxed();
 
         let xor = and
             .clone()
-            .then(just('^').padded().then(and.clone()).repeated())
-            .foldl(|lhs, (_op, rhs)| {
-                let span = lhs.span.union(&rhs.span);
+            .foldl(
+                just('^').padded().then(and.clone()).repeated(),
+                |lhs, (_op, rhs)| {
+                    let span = lhs.span.union(&rhs.span);
 
-                Spanned::new(Expression::Xor(Box::new(lhs), Box::new(rhs)), span)
-            })
+                    Spanned::new(Expression::Xor(Box::new(lhs), Box::new(rhs)), span)
+                },
+            )
             .boxed();
 
         let or = xor
             .clone()
-            .then(just('|').padded().then(xor.clone()).repeated())
-            .foldl(|lhs, (_op, rhs)| {
-                let span = lhs.span.union(&rhs.span);
+            .foldl(
+                just('|').padded().then(xor.clone()).repeated(),
+                |lhs, (_op, rhs)| {
+                    let span = lhs.span.union(&rhs.span);
 
-                Spanned::new(Expression::Or(Box::new(lhs), Box::new(rhs)), span)
-            })
+                    Spanned::new(Expression::Or(Box::new(lhs), Box::new(rhs)), span)
+                },
+            )
             .boxed();
 
         or.map(|expression| expression.val)
@@ -126,23 +138,34 @@ pub fn expression_parser() -> impl Parser<char, Expression, Error = ParseError> 
     expr
 }
 
-pub fn number_parser() -> impl Parser<char, u32, Error = ParseError> {
-    let bin_num = just("0b").ignore_then(text::digits(2).try_map(|s: String, span| {
-        u32::from_str_radix(&s, 2).map_err(|e| ParseError::custom(span, format!("{}", e)))
-    }));
+pub fn number_parser<'src, I>() -> impl Parser<'src, I, u32, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
+    let bin_num = just("0b").ignore_then(text::digits(2).collect::<String>().try_map(
+        |s: String, span| {
+            u32::from_str_radix(&s, 2).map_err(|e| ParseError::custom(span, format!("{}", e)))
+        },
+    ));
 
-    let oct_num = just("0o").ignore_then(text::digits(8).try_map(|s: String, span| {
-        u32::from_str_radix(&s, 8).map_err(|e| ParseError::custom(span, format!("{}", e)))
-    }));
+    let oct_num = just("0o").ignore_then(text::digits(8).collect::<String>().try_map(
+        |s: String, span| {
+            u32::from_str_radix(&s, 8).map_err(|e| ParseError::custom(span, format!("{}", e)))
+        },
+    ));
 
-    let hex_num = just("0x").ignore_then(text::digits(16).try_map(|s: String, span| {
-        u32::from_str_radix(&s, 16).map_err(|e| ParseError::custom(span, format!("{}", e)))
-    }));
+    let hex_num = just("0x").ignore_then(text::digits(16).collect::<String>().try_map(
+        |s: String, span| {
+            u32::from_str_radix(&s, 16).map_err(|e| ParseError::custom(span, format!("{}", e)))
+        },
+    ));
 
     #[allow(clippy::from_str_radix_10)]
-    let dec_num = text::digits(10).try_map(|s: String, span| {
-        u32::from_str_radix(&s, 10).map_err(|e| ParseError::custom(span, format!("{}", e)))
-    });
+    let dec_num = text::digits(10)
+        .collect::<String>()
+        .try_map(|s: String, span| {
+            u32::from_str_radix(&s, 10).map_err(|e| ParseError::custom(span, format!("{}", e)))
+        });
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
     // we're able to do that because empty chars ('') are not supported

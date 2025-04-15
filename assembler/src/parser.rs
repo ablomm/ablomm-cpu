@@ -1,25 +1,34 @@
+use crate::ast::{
+    Assignment, Block, FullMnemonic, Import, ImportSpecifier, Label, Modifier, NamedImport,
+    Operation, Statement,
+};
 use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
-use crate::{ast::*, Span};
+use crate::Span;
+use chumsky::input::StrInput;
 use chumsky::prelude::*;
 use internment::Intern;
 use std::cell::RefCell;
 use std::char;
 use std::collections::HashMap;
 use std::rc::Rc;
-use text::TextParser;
 
 mod expression;
 mod keywords;
 
-pub type ParseError = Simple<char, Span>;
+pub type ParseError<'src> = Rich<'src, char, Span>;
 
-pub fn file_block_parser() -> impl Parser<char, Spanned<Block>, Error = ParseError> {
+pub type Extra<'src> = extra::Err<ParseError<'src>>;
+
+pub fn file_block_parser<'src, I>() -> impl Parser<'src, I, Spanned<Block>, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     statement_parser()
-        .map_with_span(Spanned::new)
+        .map_with(|val, e| Spanned::new(val, e.span()))
         .padded()
         .repeated()
-        .then_ignore(end())
+        .collect::<Vec<_>>()
         .map(|statements| Block {
             statements,
             symbol_table: Rc::new(RefCell::new(SymbolTable {
@@ -27,19 +36,38 @@ pub fn file_block_parser() -> impl Parser<char, Spanned<Block>, Error = ParseErr
                 parent: None,
             })),
         })
-        .map_with_span(Spanned::new)
+        .map_with(|val, e| Spanned::new(val, e.span()))
 }
 
-fn comment_parser() -> impl Parser<char, String, Error = ParseError> {
-    let line_comment = just("//").ignore_then(take_until(just("\n")));
-    let multiline_comment = just("/*").ignore_then(take_until(just("*/")));
+fn comment_parser<'src, I>() -> impl Parser<'src, I, String, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
+    let line_comment = just("//")
+        .ignore_then(
+            any()
+                .and_is(just("\n").not())
+                .repeated()
+                .collect::<String>(),
+        )
+        .then_ignore(just("\n"));
 
-    line_comment
-        .or(multiline_comment)
-        .map(|(_, comment)| comment.into())
+    let multiline_comment = just("/*")
+        .ignore_then(
+            any()
+                .and_is(just("*/").not())
+                .repeated()
+                .collect::<String>(),
+        )
+        .then_ignore(just("*/"));
+
+    line_comment.or(multiline_comment)
 }
 
-fn string_parser() -> impl Parser<char, String, Error = ParseError> {
+fn string_parser<'src, I>() -> impl Parser<'src, I, String, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     let escape_string = just('\\').ignore_then(choice((
         just('\\').to('\\'),
         just('\"').to('"'),
@@ -49,26 +77,31 @@ fn string_parser() -> impl Parser<char, String, Error = ParseError> {
         just('r').to('\r'),
     )));
 
-    filter(|c| *c != '\\' && *c != '"')
+    any()
+        .filter(|c| *c != '\\' && *c != '"')
         .or(escape_string)
         .repeated()
         .collect::<String>()
         .delimited_by(just('"'), just('"'))
 }
 
-fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
+fn operation_parser<'src, I>() -> impl Parser<'src, I, Operation, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     let modifier = just('.').ignore_then(choice((
         keywords::alu_modifier_parser().map(Modifier::AluModifier),
         keywords::condition_parser().map(Modifier::Condition),
     )));
 
     let full_mnemonic = keywords::mnemonic_parser()
-        .map_with_span(Spanned::new)
+        .map_with(|val, e| Spanned::new(val, e.span()))
         .then(
             modifier
-                .map_with_span(Spanned::new)
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .repeated()
-                .map_with_span(Spanned::new),
+                .collect::<Vec<_>>()
+                .map_with(|val, e| Spanned::new(val, e.span())),
         )
         .map(|(mnemonic, modifiers)| FullMnemonic {
             mnemonic,
@@ -76,14 +109,15 @@ fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
         });
 
     full_mnemonic
-        .map_with_span(Spanned::new)
+        .map_with(|val, e| Spanned::new(val, e.span()))
         .padded()
         .then(
             expression::expression_parser()
-                .map_with_span(Spanned::new)
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .padded()
                 .separated_by(just(','))
-                .map_with_span(Spanned::new),
+                .collect::<Vec<_>>()
+                .map_with(|val, e| Spanned::new(val, e.span())),
         )
         .map(|(full_mnemonic, operands)| Operation {
             full_mnemonic,
@@ -91,13 +125,16 @@ fn operation_parser() -> impl Parser<char, Operation, Error = ParseError> {
         })
 }
 
-fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
+fn statement_parser<'src, I>() -> impl Parser<'src, I, Statement, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     let label = just("export")
         .or_not()
         .then(
             text::ident()
-                .map(Intern::new)
-                .map_with_span(Spanned::new)
+                .map(|s: &str| Intern::new(s.to_string()))
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .padded(),
         )
         .map(|(export, identifier)| Label {
@@ -109,12 +146,12 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
         .or_not()
         .then(
             text::ident()
-                .map(Intern::new)
-                .map_with_span(Spanned::new)
+                .map(|s: &str| Intern::new(s.to_string()))
+                .map_with(|val, e| Spanned::new(val, e.span()))
                 .padded(),
         )
         .then_ignore(just('=').padded())
-        .then(expression::expression_parser().map_with_span(Spanned::new))
+        .then(expression::expression_parser().map_with(|val, e| Spanned::new(val, e.span())))
         .map(|((export, identifier), expression)| Assignment {
             export: export.is_some(),
             identifier,
@@ -123,17 +160,19 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
 
     let export = just("export").ignore_then(
         text::ident()
-            .map(Intern::new)
-            .map_with_span(Spanned::new)
+            .map(|s: &str| Intern::new(s.to_string()))
+            .map_with(|val, e| Spanned::new(val, e.span()))
             .padded()
-            .separated_by(just(',')),
+            .separated_by(just(','))
+            .collect::<Vec<_>>(),
     );
 
     recursive(|statement| {
         let block = statement
-            .map_with_span(Spanned::new)
+            .map_with(|val, e| Spanned::new(val, e.span()))
             .padded()
             .repeated()
+            .collect::<Vec<_>>()
             .padded() // if there is no statements in the block
             .delimited_by(just('{'), just('}'))
             .map(|statements| Block {
@@ -169,17 +208,25 @@ fn statement_parser() -> impl Parser<char, Statement, Error = ParseError> {
                 .map(Statement::Import),
             comment_parser().map(Statement::Comment),
         ))
+        .boxed()
     })
 }
 
-fn import_parser() -> impl Parser<char, Import, Error = ParseError> {
+fn import_parser<'src, I>() -> impl Parser<'src, I, Import, Extra<'src>>
+where
+    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+{
     let named_import = text::ident()
-        .map(Intern::new)
-        .map_with_span(Spanned::new)
+        .map(|s: &str| Intern::new(s.to_string()))
+        .map_with(|val, e| Spanned::new(val, e.span()))
         .then(
             just("as")
                 .padded()
-                .ignore_then(text::ident().map(Intern::new).map_with_span(Spanned::new))
+                .ignore_then(
+                    text::ident()
+                        .map(|s: &str| Intern::new(s.to_string()))
+                        .map_with(|val, e| Spanned::new(val, e.span())),
+                )
                 .or_not(),
         )
         .map(|(identifier, alias)| NamedImport { identifier, alias });
@@ -189,18 +236,19 @@ fn import_parser() -> impl Parser<char, Import, Error = ParseError> {
             choice((
                 just("*").to(ImportSpecifier::Blob),
                 named_import
-                    .map_with_span(Spanned::new)
+                    .map_with(|val, e| Spanned::new(val, e.span()))
                     .padded()
                     .separated_by(just(','))
+                    .collect::<Vec<_>>()
                     .map(ImportSpecifier::Named),
             ))
-            .map_with_span(Spanned::new)
+            .map_with(|val, e| Spanned::new(val, e.span()))
             .padded(),
         )
         .then(
             just("from")
                 .padded()
-                .ignore_then(string_parser().map_with_span(Spanned::new)),
+                .ignore_then(string_parser().map_with(|val, e| Spanned::new(val, e.span()))),
         )
         .map(|(specifier, file)| Import { file, specifier })
 }

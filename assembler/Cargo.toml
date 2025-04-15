@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 ariadne = "0.5.1"
-chumsky = "0.9.3"
+chumsky = "0.10.1"
 clap = { version = "4.5.32", features = ["derive"] }
 indexmap = "2.8.0"
 internment = "0.8.6"
