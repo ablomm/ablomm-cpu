@@ -173,14 +173,14 @@ impl SpannedError {
 }
 
 // workaround for chumsky calling merge() multiple times on the same span: simply convert
-// error::Simple to Error after everything is merged by error::Simple
+// error::Rich to SpannedError after everything is merged by error::Rich
 impl From<chumsky::error::Rich<'_, char, Span>> for SpannedError {
     fn from(value: chumsky::error::Rich<'_, char, Span>) -> Self {
         match value.reason() {
             RichReason::ExpectedFound { expected, found } => Self::incorrect_value(
                 *value.span(),
                 "token",
-                expected.iter().map(|c| format_rich_pattern(c)).collect(),
+                expected.iter().map(format_rich_pattern).collect(),
                 found.map(|c| format!("'{}'", c.escape_default())),
             ),
             chumsky::error::RichReason::Custom(message) => {
@@ -190,7 +190,6 @@ impl From<chumsky::error::Rich<'_, char, Span>> for SpannedError {
     }
 }
 
-// because chumsky's fmt for RichPattern is broken right now
 fn format_rich_pattern<T: Display>(rich_pattern: &RichPattern<'_, T>) -> String {
     match rich_pattern {
         RichPattern::Token(token) => format!("'{}'", token.to_string().escape_default()),

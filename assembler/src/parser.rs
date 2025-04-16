@@ -16,13 +16,17 @@ use std::rc::Rc;
 mod expression;
 mod keywords;
 
-pub type ParseError<'src> = Rich<'src, char, Span>;
+type ParseError<'src> = Rich<'src, char, Span>;
 
-pub type Extra<'src> = extra::Err<ParseError<'src>>;
+type Extra<'src> = extra::Err<ParseError<'src>>;
 
-pub fn file_block_parser<'src, I>() -> impl Parser<'src, I, Spanned<Block>, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+// a trait alias for StrInput to make parsers more concise
+pub trait Input<'src>: StrInput<'src, Token = char, Span = Span, Slice = &'src str> {}
+
+impl<'src, T> Input<'src> for T where T: StrInput<'src, Token = char, Span = Span, Slice = &'src str>
+{}
+
+pub fn file_block_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Spanned<Block>, Extra<'src>>
 {
     statement_parser()
         .map_with(|val, e| Spanned::new(val, e.span()))
@@ -39,35 +43,23 @@ where
         .map_with(|val, e| Spanned::new(val, e.span()))
 }
 
-fn comment_parser<'src, I>() -> impl Parser<'src, I, String, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
-    let line_comment = just("//")
-        .ignore_then(
-            any()
-                .and_is(just("\n").not())
-                .repeated()
-                .collect::<String>(),
-        )
-        .then_ignore(just("\n"));
+fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
+    let line_comment = any()
+        .and_is(just("\n").not())
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just("//"), just("\n"));
 
-    let multiline_comment = just("/*")
-        .ignore_then(
-            any()
-                .and_is(just("*/").not())
-                .repeated()
-                .collect::<String>(),
-        )
-        .then_ignore(just("*/"));
+    let multiline_comment = any()
+        .and_is(just("*/").not())
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just("/*"), just("*/"));
 
     line_comment.or(multiline_comment)
 }
 
-fn string_parser<'src, I>() -> impl Parser<'src, I, String, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
     let escape_string = just('\\').ignore_then(choice((
         just('\\').to('\\'),
         just('\"').to('"'),
@@ -85,10 +77,7 @@ where
         .delimited_by(just('"'), just('"'))
 }
 
-fn operation_parser<'src, I>() -> impl Parser<'src, I, Operation, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, Extra<'src>> {
     let modifier = just('.').ignore_then(choice((
         keywords::alu_modifier_parser().map(Modifier::AluModifier),
         keywords::condition_parser().map(Modifier::Condition),
@@ -125,11 +114,8 @@ where
         })
 }
 
-fn statement_parser<'src, I>() -> impl Parser<'src, I, Statement, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
-    let label = just("export")
+fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, Extra<'src>> {
+    let label = text::keyword("export")
         .or_not()
         .then(
             text::ident()
@@ -142,7 +128,7 @@ where
             identifier,
         });
 
-    let assignment = just("export")
+    let assignment = text::keyword("export")
         .or_not()
         .then(
             text::ident()
@@ -158,7 +144,7 @@ where
             expression,
         });
 
-    let export = just("export").ignore_then(
+    let export = text::keyword("export").ignore_then(
         text::ident()
             .map(|s: &str| Intern::new(s.to_string()))
             .map_with(|val, e| Spanned::new(val, e.span()))
@@ -212,15 +198,12 @@ where
     })
 }
 
-fn import_parser<'src, I>() -> impl Parser<'src, I, Import, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'src>> {
     let named_import = text::ident()
         .map(|s: &str| Intern::new(s.to_string()))
         .map_with(|val, e| Spanned::new(val, e.span()))
         .then(
-            just("as")
+            text::keyword("as")
                 .padded()
                 .ignore_then(
                     text::ident()
@@ -231,7 +214,7 @@ where
         )
         .map(|(identifier, alias)| NamedImport { identifier, alias });
 
-    just("import")
+    text::keyword("import")
         .ignore_then(
             choice((
                 just("*").to(ImportSpecifier::Blob),
@@ -246,7 +229,7 @@ where
             .padded(),
         )
         .then(
-            just("from")
+            text::keyword("from")
                 .padded()
                 .ignore_then(string_parser().map_with(|val, e| Spanned::new(val, e.span()))),
         )

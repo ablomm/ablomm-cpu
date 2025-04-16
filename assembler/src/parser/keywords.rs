@@ -2,10 +2,7 @@ use crate::ast::{AluModifier, AsmMnemonic, Condition, CpuMnemonic, Register};
 
 use super::*;
 
-pub fn mnemonic_parser<'src, I>() -> impl Parser<'src, I, AsmMnemonic, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+pub fn mnemonic_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AsmMnemonic, Extra<'src>> {
     return choice((
         text::keyword("nop").to(AsmMnemonic::Nop),
         text::keyword("ld").to(AsmMnemonic::Ld),
@@ -27,10 +24,7 @@ where
     ));
 }
 
-pub fn register_parser<'src, I>() -> impl Parser<'src, I, Register, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+pub fn register_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Register, Extra<'src>> {
     return choice((
         text::keyword("r0").to(Register::R0),
         text::keyword("r1").to(Register::R1),
@@ -53,9 +47,7 @@ where
     ));
 }
 
-pub fn alu_modifier_parser<'src, I>() -> impl Parser<'src, I, AluModifier, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
+pub fn alu_modifier_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AluModifier, Extra<'src>>
 {
     return choice((
         text::keyword("s").to(AluModifier::S),
@@ -63,10 +55,7 @@ where
     ));
 }
 
-pub fn condition_parser<'src, I>() -> impl Parser<'src, I, Condition, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+pub fn condition_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Condition, Extra<'src>> {
     return choice((
         text::keyword("eq").to(Condition::Eq),
         text::keyword("ne").to(Condition::Ne),

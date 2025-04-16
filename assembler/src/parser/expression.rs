@@ -2,10 +2,7 @@ use crate::ast::Expression;
 
 use super::*;
 
-pub fn expression_parser<'src, I>() -> impl Parser<'src, I, Expression, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
+pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Expression, Extra<'src>> {
     let expr = recursive(|expression| {
         let atom = choice((
             keywords::register_parser().map(Expression::Register),
@@ -27,8 +24,8 @@ where
             // just('-').to(Expression::Neg as fn(_) -> _),
             just('~').to(Expression::Not as fn(_) -> _),
         ))
-        .padded()
         .map_with(|val, e| Spanned::new(val, e.span()))
+        .padded()
         .repeated()
         .foldr(atom, |op, rhs| {
             let span = op.span.union(&rhs.span); // can't inline because value is moved before span
@@ -46,7 +43,6 @@ where
                     just('%').to(Expression::Remainder as fn(_, _) -> _),
                 ))
                 .padded()
-                .map_with(|val, e| Spanned::new(val, e.span()))
                 .then(unary.clone())
                 .repeated(),
                 |lhs, (op, rhs)| {
@@ -65,7 +61,6 @@ where
                     just('-').to(Expression::Sub as fn(_, _) -> _),
                 ))
                 .padded()
-                .map_with(|val, e| Spanned::new(val, e.span()))
                 .then(product.clone())
                 .repeated(),
                 |lhs, (op, rhs)| {
@@ -85,7 +80,6 @@ where
                     just(">>").to(Expression::Shr as fn(_, _) -> _),
                 ))
                 .padded()
-                .map_with(|val, e| Spanned::new(val, e.span()))
                 .then(sum.clone())
                 .repeated(),
                 |lhs, (op, rhs)| {
@@ -138,34 +132,24 @@ where
     expr
 }
 
-pub fn number_parser<'src, I>() -> impl Parser<'src, I, u32, Extra<'src>>
-where
-    I: StrInput<'src, Token = char, Span = Span, Slice = &'src str>,
-{
-    let bin_num = just("0b").ignore_then(text::digits(2).collect::<String>().try_map(
-        |s: String, span| {
-            u32::from_str_radix(&s, 2).map_err(|e| ParseError::custom(span, format!("{}", e)))
-        },
-    ));
+pub fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<'src>> {
+    let bin_num = just("0b").ignore_then(text::digits(2).collect::<String>().try_map(|s, span| {
+        u32::from_str_radix(&s, 2).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    }));
 
-    let oct_num = just("0o").ignore_then(text::digits(8).collect::<String>().try_map(
-        |s: String, span| {
-            u32::from_str_radix(&s, 8).map_err(|e| ParseError::custom(span, format!("{}", e)))
-        },
-    ));
+    let oct_num = just("0o").ignore_then(text::digits(8).collect::<String>().try_map(|s, span| {
+        u32::from_str_radix(&s, 8).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    }));
 
-    let hex_num = just("0x").ignore_then(text::digits(16).collect::<String>().try_map(
-        |s: String, span| {
+    let hex_num =
+        just("0x").ignore_then(text::digits(16).collect::<String>().try_map(|s, span| {
             u32::from_str_radix(&s, 16).map_err(|e| ParseError::custom(span, format!("{}", e)))
-        },
-    ));
+        }));
 
     #[allow(clippy::from_str_radix_10)]
-    let dec_num = text::digits(10)
-        .collect::<String>()
-        .try_map(|s: String, span| {
-            u32::from_str_radix(&s, 10).map_err(|e| ParseError::custom(span, format!("{}", e)))
-        });
+    let dec_num = text::digits(10).collect::<String>().try_map(|s, span| {
+        u32::from_str_radix(&s, 10).map_err(|e| ParseError::custom(span, format!("{}", e)))
+    });
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'
     // we're able to do that because empty chars ('') are not supported
