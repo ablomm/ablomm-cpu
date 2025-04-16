@@ -8,7 +8,7 @@ A single-line comment can be created by writing `//`. A newline character will e
 
 For example:
 
-```asm
+```c
 add r1, r2; // this is an inline comment!
 sub r1, r2;
 ```
@@ -19,7 +19,7 @@ A multi-line comment can be created by delimiting the comment with `/*` and `*/`
 
 For example:
 
-```asm
+```c
 /*
 this program does the following:
 r1 = r1 + r2;
@@ -31,7 +31,7 @@ sub r1, r2;
 
 Multi-line comments cannot nest, so this will **NOT** assemble:
 
-```asm
+```c
 /*
 this is a comment /* nested comment */
 */
@@ -48,7 +48,7 @@ Currently, comments must come after a complete statement, and cannot come betwee
 
 For example, the following example will **NOT** assemble:
 
-```asm
+```c
 add /* comment */ r1, r2;
 add //comment
 r1, r2;

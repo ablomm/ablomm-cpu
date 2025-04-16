@@ -8,20 +8,20 @@ Any value that may find itself in the operand of an instruction may be in the ex
 
 An example of such an assignment is as follows:
 
-```asm
+```c
 value = 123 * 2;
 ```
 
 You may also use identifiers in the expression part of another assignment:
 
-```asm
+```c
 value = 123 * 2;
 value2 = value * (12 >> 2) / 3;
 ```
 
 Assignments can also act much like defines, where it aliases expressions involving registers. For example:
 
-```asm
+```c
 value = r1;
 value2 = *(r1 + 12 * 2);
 ```
@@ -30,7 +30,7 @@ Expressions which contain registers are not evaluated, but instead are passed to
 
 For example, consider the following example:
 
-```asm
+```c
 value = r1;
 value2 = *(r1 + 12 * 2);
 ld value, value2;
@@ -38,7 +38,7 @@ ld value, value2;
 
 This is equivalent to the following:
 
-```asm
+```c
 ld r1, *(r1 + 24);
 ```
 
@@ -46,7 +46,7 @@ The location an assignment is defined does not affect the result; expressions do
 
 For example, consider the following:
 
-```asm
+```c
 ld r1, 123;
 value = r1;
 ld r1, 321;
@@ -55,7 +55,7 @@ ld r0, value;
 
 This is equivalent to:
 
-```asm
+```c
 ld r1, 123;
 ld r1, 321;
 ld r0, r1;
@@ -69,7 +69,7 @@ All identifiers are hoisted in their scope; this allows for using labels before 
 
 For example, this is legal:
 
-```asm
+```c
 ld r0, value;
 value = 123;
 ```
@@ -80,7 +80,7 @@ Block scopes (as detailed in the [Scopes document](scopes.md)) allow for shadowi
 
 An example of shadowing an identifier is as shown:
 
-```asm
+```c
 value = 123;
 {
     value = value * 2; // shadowing the identifier defined above
@@ -91,7 +91,7 @@ ld r1, value;
 
 This is equivalent to the following:
 
-```asm
+```c
 ld r0, 246;
 ld r1, 123;
 ```

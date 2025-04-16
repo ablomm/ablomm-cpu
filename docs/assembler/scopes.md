@@ -12,7 +12,7 @@ A block can reference identifiers defined in it's containing block.
 
 For example, this results in `r0` containing the value `123`:
 
-``` asm
+```c
 value = 123;
 {
     ld r0, value;
@@ -24,7 +24,7 @@ An identifier defined in a child block cannot be referenced from the parent bloc
 
 For example, this **DOES NOT ASSEMBLE**:
 
-```asm
+```c
 {
     value = 123;
 }
@@ -43,7 +43,7 @@ Blocks can contain import statements, in which case the imported identifiers are
 
 For example:
 
-```asm
+```c
 {
     import print from "lib/print.asm";
   

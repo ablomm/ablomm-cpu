@@ -14,7 +14,7 @@ The simulator will map the TTY to address `0x4006`, as documented in the [Simula
 
 ### Printing the letter `A`
 
-```asm
+```c
 tty = *0x4006;
 ld r0, 'A';
 ld tty, r0;

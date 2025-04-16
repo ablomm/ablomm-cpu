@@ -4,7 +4,7 @@ Labels work just the same as most other assemblers; they are simply identifiers 
 
 For example:
 
-```asm
+```c
     ld pc, label;
     ld r1, 321;
 loop:
@@ -21,7 +21,7 @@ Labels can be used in the same way as any other identifier, and can therefore be
 
 For example, labels can be part of an expression:
 
-```asm
+```c
     ld pc, label + 1;
     ld r1, 321;
 loop:
@@ -38,7 +38,7 @@ In both of these examples the value of `label` is the number `3`, and the value 
 
 Therefore, we can write an equivalent program to the first example without labels:
 
-```asm
+```c
 ld pc, 3;
 ld r1, 321;
 ld pc, 2;

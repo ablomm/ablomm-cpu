@@ -79,7 +79,7 @@ A complete working example can be found in the [Interrupts example](../../exampl
 
 ### Starting the timer to count 0x1000 clock cycles
 
-```asm
+```c
 timer_ctrl = *0x4001;
 timer_timer = *0x4003;
 timer_ctrl_start = 0b01;
@@ -96,7 +96,7 @@ ld timer_ctrl, r0;
 
 ### Starting the timer to count 0x1000 clock cycles and continue after timing out
 
-```asm
+```c
 timer_ctrl = *0x4001;
 timer_interval = *0x4002;
 timer_timer = *0x4003;
@@ -116,14 +116,14 @@ ld timer_ctrl, r0;
 
 ### Reading current `TIMER` value
 
-```asm
+```c
 timer_timer = *0x4003;
 ld r0, timer_timer;
 ```
 
 ### Acknowledging an interrupt
 
-```asm
+```c
 timer_ack = *0x4000;
 timer_interupt_mask = 0x0001;
 ic = *0x4004;

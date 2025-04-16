@@ -18,7 +18,7 @@ The simulator will map the interrupt controller to address `0x4004`, as document
 
 ### Reading the interrupt controller
 
-```asm
+```c
 ic = *0x4004;
 ld r0, ic;
 ```

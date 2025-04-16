@@ -8,7 +8,7 @@ Identifiers are simply either labels, as described in the [Labels document](labe
 
 To export an identifier you may use an export statement as shown:
 
-```asm
+```c
     value = 123;
 label:
     export value, label;
@@ -18,7 +18,7 @@ label:
 
 You may also prepend the assignment or label declaration with the keyword `export`, this works the same as an export statement, but is more concise:
 
-```asm
+```c
 export value = 123;
 export label:
 ```
@@ -29,7 +29,7 @@ Let the exports examples in the [File Exports section](#file-exports) be a file 
 
 You may import any identifier exported in another file by simply writing an import declaration with each identifier you wish to import:
 
-```asm
+```c
 import value from "exports.asm"; // imports identifier "value"
 
     value2 = value + 2;
@@ -44,7 +44,7 @@ The imported file is written relative to the current file (relative to importer)
 
 You may also import all exports from another document by using the glob (`*`) import:
 
-```asm
+```c
 import * from "exports.asm"; // imports identifier "value" and "label"
 
     value2 = value + label;
@@ -56,7 +56,7 @@ You may also import an identifier from another file and alias it to a different 
 
 For example:
 
-```asm
+```c
 import value as imported_value, label as imported_label from "exports.asm";
 
     value = imported_value + imported_label;
@@ -71,7 +71,7 @@ Exporting an identifier from within a block allows the enclosing block to refere
 
 For example:
 
-```asm
+```c
 {
     export value = 123;
 }
@@ -83,7 +83,7 @@ Not including the block level export would cause the identifier `value` to not b
 
 The block exports will only raise an identifier one scope up. If you want to raise it higher, you must use more exports:
 
-```asm
+```c
 {
     {
         export value = 123; // block level export
@@ -125,7 +125,7 @@ This also means that if you do not prevent the control flow from going off a fil
 
 For example, consider if `hello_world.asm` was the following:
 
-```asm
+```c
 import string_address from "strings.asm";
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
@@ -139,7 +139,7 @@ This would cause the program to print whatever `string_address` is pointing to, 
 
 To prevent such a case you can either shutdown (specific to hardware/simulator), or you can loop indefinitely:
 
-```asm
+```c
 import string_address from "strings.asm";
 import * from "lib/defines.asm";
 import print from "lib/print.asm";

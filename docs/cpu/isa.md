@@ -299,7 +299,7 @@ This is because the instructions are fixed-width, and there is only space for 16
 
 It is in theory possible to make it work with 32-bit addresses, but it would cause so much trouble to be not worth it. For example, you would have to do something similar to:
 
-```asm
+```c
 // some code ...
     add pc, 1; // need to jump over the gen literal
 far_away_label_address: far_away_label;
@@ -318,7 +318,7 @@ far_away_label:
 
 To load a piece of data from above address 2<sup>16</sup>, you would need to get the address in a register by whatever means, and then dereference it. The easiest way would be to simply keep a global variable for the address in the code segment, such as:
 
-```asm
+```c
 ld r0, far_away_variable_address;
 ld r0, *r0; // get 0x1234568 in r0
 ld r0, *r0; // get whatever is at 0x1234568

@@ -21,7 +21,7 @@ The simulator will map the power controller to address `0x4005`, as documented i
 
 ### Terminating the simulator
 
-```asm
+```c
 power = *0x4005;
 power_shutdown_code = 0;
 ld r0, power_shutdown_code;
@@ -30,7 +30,7 @@ ld power, r0;
 
 ### Resetting the CPU
 
-```asm
+```c
 power = *0x4005;
 power_restart_code = 1;
 ld r0, power_restart_code;

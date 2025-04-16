@@ -24,7 +24,7 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
 
 ### Define a few constants:
 
-```asm
+```c
 export tty = *0x4006; // the address of the terminal memory mapped io device
 export power = *0x4005; // the address of the power memory mapped io device
 export power_shutdown_code = 0; // write this to power to shutdown
@@ -33,7 +33,7 @@ export power_restart_code = 1; // write this to power to restart
 
 ### Count from 0 to 9 and print it to the terminal:
 
-```asm
+```c
 /*
 prints 0 to 9 to the tty
 */
@@ -62,7 +62,7 @@ loop:
 
 ### Print a null terminated string to the terminal:
 
-```asm
+```c
 import * from "defines.asm";
 
 // inputs: string to print
@@ -123,7 +123,7 @@ export print: {
 
 ### Print hello world using the print function defined above:
 
-```asm
+```c
 /*
 prints a few strings
 */
@@ -173,7 +173,7 @@ The assembler contains a fully fledged import and export system quite similar to
 
 `lib/print.asm`:
 
-```asm
+```c
 export print: {
   ...
 }
@@ -181,7 +181,7 @@ export print: {
 
 `hello_world.asm`:
 
-```asm
+```c
 import print from "lib/print.asm";
 
     ld r0, string;
@@ -198,7 +198,7 @@ File imports are documented further in the [Imports and Exports document](docs/a
 
 The assembler has support for compile time assignments and expressions similar to c++'s constexpr:
 
-```asm
+```c
 tty = *0x4000; // the tty device
 char_to_print = r0;
 
@@ -231,7 +231,7 @@ Compile time assignments are documented further in the [Assignments document](do
 
 The assembler contains support for blocks and lexical scopes to avoid namespace collisions and logically group blocks of code.
 
-```asm
+```c
 label: {
     identifier = 123;
 
@@ -254,7 +254,7 @@ Blocks and lexical scopes are documented further in the [Scopes document](docs/a
 
 ### Beautiful Error Messages
 
-```asm
+```c
 label: {
     identifier = 123;
 
@@ -276,7 +276,7 @@ ld r2, label; // r2 = address of label
 
 ![image](https://github.com/user-attachments/assets/bab51f30-499b-4016-8289-4002d5419d5a)
 
-```asm
+```c
 import * from "lib/print.asm";
 print = 123;
 ```

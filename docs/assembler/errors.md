@@ -15,7 +15,7 @@ In general, if there is an expression value `x` such that `x = f(x)` where `f(x)
 #### Future label string concatenation
 Consider the following example:
 
-```asm
+```c
 "" + label;
 label:
 ```

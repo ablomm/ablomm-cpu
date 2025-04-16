@@ -6,7 +6,7 @@ These expressions do not have any cost in the runtime of the program.
 
 For example:
 
-```asm
+```c
 1 * 2 * (16 / 4 >>> 2) << 1;
 ```
 
@@ -14,7 +14,7 @@ This example will compile to a machine code which contains the literal value of 
 
 You may also include expressions in [assignments](assignments.md) and [instruction operands](instructions.md#operands):
 
-```asm
+```c
 value = 4 * 2;
 ld r1, value >> (2 * 3);
 ```
@@ -25,7 +25,7 @@ Identifiers are explained further in the [Assignments document](assignments.md) 
 
 Expressions can also contain registers:
 
-```asm
+```c
 ld r1, *(r2 + 3 * 2);
 value = r4 - 3;
 ld r2, *value;
@@ -584,7 +584,7 @@ To generate an expression into the machine code, simply write out the expression
 
 For example:
 
-``` asm
+```c
 value = 123;
 value; // 123 will now be included in the machine code at this location
 string = "hello world!";
