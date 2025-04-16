@@ -18,10 +18,14 @@ fn main() -> ExitCode {
 
     match ablomm_asm::assemble(&args.input) {
         Ok(machine_code) => {
-            match args.output {
-                Some(output_file) => {
-                    fs::write(output_file, machine_code).expect("Error writing file");
-                }
+            match &args.output {
+                Some(output_file) => match fs::write(output_file, machine_code) {
+                    Ok(_) => (),
+                    Err(error) => {
+                        eprintln!("Error while writing to file \"{}\": {}", output_file, error);
+                        return ExitCode::FAILURE;
+                    }
+                },
                 None => {
                     print!("{}", machine_code);
                 }
