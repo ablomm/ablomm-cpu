@@ -35,19 +35,22 @@ end:
 	// loop while we wait for a hardware interrupt
 	ld pc, end;
 
+// interrupt service routine
 isr:
+	// must save every register
 	push lr;
 	push r0;
 	push r1;
 
+	// print the hwint_string
 	ld r0, hwint_string;
 	push r0;
 	ld pc.link, print;
 
 	// check the interupt and acknowledge it
-	ld r0, ic;
-	and.t r0, timer_interupt_mask;
-	ld.zc timer_ack, r0; // r0 doesn't really matter, just need to do a write
+	ld r0, ic; // get value from interrupt controller
+	and.t r0, timer_interupt_mask; // check if the value is from the timer
+	ld.zc timer_ack, r0; // acknowledge timer interrupt if interrupt was from timer. r0 doesn't really matter, just need to do a write
 
 	pop r1;
 	pop r0;
@@ -58,27 +61,24 @@ isr:
 	pop pc;
 
 sw_isr:
-	push lr;
-	push r0;
-	push r1;
-	
+	// no need to save all registers
+
+	// print the swint_string
 	ld r0, swint_string;
 	push r0;
 	ld pc.link, print;
-
-	pop r1;
-	pop r0;
-	pop lr;
 
 	// the cpu pushed status and pc for us, we just need to pop them!
 	pop status;
 	pop pc;
 
 exception_handler:
+	// must save every register
 	push lr;
 	push r0;
 	push r1;
 	
+	// print the except_string
 	ld r0, except_string;
 	push r0;
 	ld pc.link, print;

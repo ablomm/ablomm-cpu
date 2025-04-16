@@ -14,41 +14,46 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
 - [Building and Running](#building-and-running)
 - [Documentation](#documentation)
 - [Assembler](#assembler)
-	- [Key Features](#key-features)
-		- [File Imports](#file-imports)
-		- [Compile Time Expressions](#compile-time-expressions)
-		- [Blocks and Lexical Scopes](#blocks-and-lexical-scopes)
-		- [Beautiful Error Messages](#beautiful-error-messages)
+    - [Key Features](#key-features)
+        - [File Imports](#file-imports)
+        - [Compile Time Expressions](#compile-time-expressions)
+        - [Blocks and Lexical Scopes](#blocks-and-lexical-scopes)
+        - [Beautiful Error Messages](#beautiful-error-messages)
 
 ## Examples:
 
 ### Define a few constants:
 
 ```asm
-export tty = *0x4006;
-export power = *0x4005;
-export power_shutdown_code = 0;
-export power_restart_code = 1;
+export tty = *0x4006; // the address of the terminal memory mapped io device
+export power = *0x4005; // the address of the power memory mapped io device
+export power_shutdown_code = 0; // write this to power to shutdown
+export power_restart_code = 1; // write this to power to restart
 ```
 
 ### Count from 0 to 9 and print it to the terminal:
 
 ```asm
+/*
+prints 0 to 9 to the tty
+*/
+
 import * from "lib/defines.asm";
 
-    num = r0;
-    new_line = r1;
+    num = r0; // alias num to r0
+    new_line = r1; // alias new_line to r1
 
-    ld num, '0';
+    ld num, '0'; // load number with the ascii of 0
 loop:
-    ld tty, num;
-    add num, 1;
-    sub.t num, '9';
-    ld.ule pc, loop;
+    ld tty, num; // print the ascii num to the terminal
+    add num, 1; // get next ascii character
+    sub.t num, '9'; // test if the number is ascii 9
+    ld.ule pc, loop; // if previous test is less than or equal (unsigned), then loop
 
-    ld new_line, '\n';
-    ld tty, new_line;
+    ld new_line, '\n'; // load a newline character
+    ld tty, new_line; // print the newline character
 
+    // shutdown the cpu
     ld r0, power_shutdown_code;
     ld power, r0;
 ```
@@ -70,16 +75,17 @@ export print: {
         push status;
         push r2;
 
-        string_ptr_in = *(fp + 1);
+        string_ptr_in = *(fp + 1); // alias for the string on the input stack
 
-        string_ptr = r0;
-        string_word = r1;
-        bytes_left = r2;
+        string_ptr = r0; // the pointer to the string, in a register (rather than on the stack)
+        string_word = r1; // holds a word of string characters to print (4 characters per word)
+        bytes_left = r2; // how many bytes in the word is left to print
 
-        ld string_ptr, string_ptr_in;
+        ld string_ptr, string_ptr_in; // get the input and put it in a register
 
+    // print every character in the string_word
     print_word:
-        ld string_word, *string_ptr;
+        ld string_word, *string_ptr; // get the word string_ptr is pointing at
         ld bytes_left, 4; // 4 bytes in a word
 
     /* 
@@ -88,17 +94,18 @@ export print: {
     individually
     */
 
+    // print a single byte from the string_word
     print_byte:
-        rol string_word, 8;
-        and.t string_word, 0xff;
-        ld.zs pc, return; // i.e. lsb is null '\0'
-        ld tty, string_word;
-        sub.s bytes_left, 1;
-        ld.ne pc, print_byte;
+        rol string_word, 8; // get the most significant byte on the lower 8 bits (to print it in the correct order)
+        and.t string_word, 0xff; // test the byte to print
+        ld.zs pc, return; // i.e. lsb is null '\0' then return (we are done)
+        ld tty, string_word; // print the least significant byte
+        sub.s bytes_left, 1; // subtract bytes_left and set the status flags
+        ld.ne pc, print_byte; // if bytes_left didn't equal 1 before the subtraction, then print the next byte
 
         // we have printed all the bytes in the word
-        add string_ptr, 1;
-        ld pc, print_word;
+        add string_ptr, 1; // get the next word in the string
+        ld pc, print_word; // branch to print the word
 
     return:
         pop r2;
@@ -117,17 +124,24 @@ export print: {
 ### Print hello world using the print function defined above:
 
 ```asm
+/*
+prints a few strings
+*/
+
 import * from "lib/defines.asm";
 import print from "lib/print.asm";
 
-    ld r0, string1;
-    push r0;
-    ld pc.link, print;
+    // call print(string1)
+    ld r0, string1; // load r0 with the pointer of string1
+    push r0; // put it on the stack, as print will expect the input on the stack
+    ld pc.link, print; // branch to print but also set the link register (lr) to allow print to return to the correcct address
 
+    // do it again, but print string2! (i.e. print(string2)
     ld r0, string2;
     push r0;
     ld pc.link, print;
 
+    // shutdown cpu
     ld r0, power_shutdown_code;
     ld power, r0;
 
