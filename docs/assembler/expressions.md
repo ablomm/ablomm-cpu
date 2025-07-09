@@ -1,6 +1,6 @@
-# Compile Time Expressions
+# Assembly-time Expressions
 
-The assembler contains the ability to evaluate expressions at compile time.
+The assembler contains the ability to evaluate expressions at assembly time.
 
 These expressions do not have any cost in the runtime of the program.
 
@@ -10,7 +10,7 @@ For example:
 1 * 2 * (16 / 4 >>> 2) << 1;
 ```
 
-This example will compile to a machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is described in the [Gen Literals section](#gen-literals).
+This example will assemble to machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is described in the [Gen Literals section](#gen-literals).
 
 You may also include expressions in [assignments](assignments.md) and [instruction operands](instructions.md#operands):
 
@@ -36,7 +36,7 @@ ld r2, *value;
 
  
 > [!NOTE]
-> A register in an expression does not evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are evaluated at compile time, and so cannot evaluate any run time values such as registers. This is explained more in the [Assignments document](assignments.md).
+> A register in an expression does not evaluate the value of the register. A register in an expression acts more like a define in C. All expressions are evaluated at assembly time, and so cannot evaluate any run-time values such as registers. This is explained more in the [Assignments document](assignments.md).
 
 A list of all the possible operators in an expression are detailed in the table below in the order of precedence:
 

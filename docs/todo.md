@@ -26,7 +26,7 @@ This would also mean something like `add.s r1, r2;` is just a gen literal.
 Although, this would make variable length instructions much harder to implement.
 
 - [ ] Statically determined `pc`:  
-It is possible to determine the value of `pc` statically at compile time. Perhaps have an identifier such as `$pc` that evaluates to the value of the current address at compile time.  
+It is possible to determine the value of `pc` statically at assembly time. Perhaps have an identifier such as `$pc` that evaluates to the value of the current address at assembly time.  
 This would allow things like `add pc, label - $pc;` which is a jump using offsets instead of absolute addresses.
 
 - [ ] Symbol table `get_recursive()` returns borrowed value instead of a cloned one  

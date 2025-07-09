@@ -16,7 +16,7 @@ I have not synthesized it or ran it on an FPGA (because I don't have one right n
 - [Assembler](#assembler)
     - [Key Features](#key-features)
         - [File Imports](#file-imports)
-        - [Compile Time Expressions](#compile-time-expressions)
+        - [Assembly-time Expressions](#assembly-time-expressions)
         - [Blocks and Lexical Scopes](#blocks-and-lexical-scopes)
         - [Beautiful Error Messages](#beautiful-error-messages)
 
@@ -194,9 +194,9 @@ File imports are documented further in the [Imports and Exports document](docs/a
 
 ---
 
-### Compile Time Expressions
+### Assembly-time Expressions
 
-The assembler has support for compile time assignments and expressions similar to c++'s constexpr:
+The assembler has support for assembly-time assignments and expressions similar to c++'s constexpr:
 
 ```c
 tty = *0x4000; // the tty device
@@ -221,9 +221,9 @@ ld r0, 5 << 2 + tty_address * 4;
 ld *(r1 + 3 * 2), r0; // the address r1 + 3 * 2 now contains the result of the expression 5 << 2 + tty_address * 4
 ```
 
-Compile time expressions are documented further in the [Expressions document](docs/assembler/expressions.md).
+Assembly-time expressions are documented further in the [Expressions document](docs/assembler/expressions.md).
 
-Compile time assignments are documented further in the [Assignments document](docs/assembler/assignments.md).
+Assembly-time assignments are documented further in the [Assignments document](docs/assembler/assignments.md).
 
 ---
 

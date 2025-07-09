@@ -1,6 +1,6 @@
-# Compile Time Assignments
+# Assembly-time Assignments
 
-The assembler supports compile time assignments, which are just a convenience for storing the result of a compile time expression, as detailed in the [Expressions document](expressions.md).
+The assembler supports assembly-time assignments, which are just a convenience for storing the result of an assembly-time expression, as detailed in the [Expressions document](expressions.md).
 
 An assignment has two parts: an identifier, and an expression, separated by an equals sign.
 
