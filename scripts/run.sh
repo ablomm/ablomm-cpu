@@ -9,7 +9,7 @@ case "$1" in
 		extra_options+=( "+verilator+quiet" )
 		;;
 			
-	"icarus")
+	"iverilog")
 		;;
 esac
 

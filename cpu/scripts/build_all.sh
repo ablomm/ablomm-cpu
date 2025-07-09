@@ -3,5 +3,5 @@ cd "$(dirname "$BASH_SOURCE")"
 
 verilator/simulation.sh
 verilator/test.sh
-icarus/simulation.sh
-icarus/test.sh
+iverilog/simulation.sh
+iverilog/test.sh

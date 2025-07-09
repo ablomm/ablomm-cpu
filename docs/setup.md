@@ -24,10 +24,10 @@ To run the included hello_world program, simply run from the project directory:
 $ ./scripts/run.sh verilator programs/hello_world.asm
 ```
 
-or, using Icarus:
+or, using Icarus Verilog:
 
 ```bash
-$ ./scripts/run.sh icarus programs/hello_world.asm
+$ ./scripts/run.sh iverilog programs/hello_world.asm
 ```
 
 ## Assemble
@@ -57,10 +57,10 @@ To simulate a program `hello_world` (which contains the machine code), simply ru
 $ ./scripts/simulate.sh verilator +src=hello_world
 ```
 
-or, using Icarus:
+or, using Icarus Verilog:
 
 ```bash
-$ ./scripts/simulate.sh icarus +src=hello_world
+$ ./scripts/simulate.sh iverilog +src=hello_world
 ```
 
 > [!NOTE]  
