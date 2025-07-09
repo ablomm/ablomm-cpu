@@ -2,7 +2,7 @@
 
 The assembler contains the ability to evaluate expressions at assembly time.
 
-These expressions do not have any cost in the runtime of the program.
+These expressions do not have any cost on the run time of the program.
 
 For example:
 
