@@ -1,6 +1,6 @@
 # Labels
 
-Labels work just the same as most other assemblers; they are simply identifiers with the value of the address they point to.  
+Labels work just the same as in most other assembly languages: they are simply identifiers with the value of the address they point to.  
 
 For example:
 

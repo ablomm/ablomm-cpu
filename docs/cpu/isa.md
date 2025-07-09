@@ -28,7 +28,7 @@ The table below enumerates all registers and their purpose.
 | PC | 0xf | Program counter; points to next instruction to run | 32 |
 
 > [!NOTE]
-> The assembler has more registers that will alias to this set, notably `fp`, which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Uppercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
+> The assembly has more registers that will alias to this set, notably `fp`, which aliases to `r10`. The extra aliased registers are documented in the [Expressions document](../assembler/expressions.md#register). Uppercase distinguishes a register as seen by the CPU and registers as seen by the assembler.
 
 ## Status Register
 
@@ -76,7 +76,7 @@ The first four of these flags are used for conditional execution. The following 
 | SGE | 0xe | `sub.t x, y` where x and y are signed, and `x >= y`  | `N == V` |
 
 > [!NOTE]
-> The assembler has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Uppercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
+> The assembly has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Uppercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
 
 # Instructions
 
@@ -99,7 +99,7 @@ There is only 10 instruction from the CPU's perspective. The ALU instruction is 
 > LD and ST offset is a signed value. So it is possible to do something like `ld *(r1 - 123), r2`.
 
 > [!NOTE]
-> The assembler has a different set of instructions that will mapped to these instructions. E.g. `ld r1, 123` gets mapped to a LDI instruction. Uppercase distinguishes the instruction as a CPU instruction rather than an assembly instruction. Assembly instructions are documented in the [Instructions document](../assembler/instructions.md#assembly-instructions).
+> The assembly uses a different set of instructions that will map to these instructions. E.g. `ld r1, 123` gets mapped to a LDI instruction. Uppercase distinguishes the instruction as a CPU instruction rather than an assembly instruction. Assembly instructions are documented in the [Instructions document](../assembler/instructions.md#assembly-instructions).
 
 ## Layout
 
