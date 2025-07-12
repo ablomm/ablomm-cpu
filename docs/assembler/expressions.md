@@ -515,7 +515,7 @@ Link register; is set to previous `pc` value if `pc.link` is written to
 <td>pc.link</td>
 <td>
   
-Program counter with link; A pseudo register used to load `pc` and load `lr` with the previous `pc` value (much like some ISA's jump with link). Use this register to jump and set `lr`
+Program counter with link; A pseudo register used to load `pc` and load `lr` with the previous `pc` value (much like some ISAs' jump with link). Use this register to jump and set `lr`
 
 </td>
 <td>

@@ -24,7 +24,7 @@ The table below enumerates all registers and their purpose.
 | STATUS | 0xb | State of the CPU; conditions, interupt mask, and mode | 6 |
 | SP | 0xc | Stack pointer; points to last item in stack, and grows down | 32 |
 | LR | 0xd | Link register; is set to previous `PC` value if `PCLINK` is written to | 32 |
-| PCLINK | 0xe | Program counter; A pseudo register used to load `PC` and load `LR` with the previous `PC` value (much like some ISA's jump with link) | 32 |
+| PCLINK | 0xe | Program counter; A pseudo register used to load `PC` and load `LR` with the previous `PC` value (much like some ISAs' jump with link) | 32 |
 | PC | 0xf | Program counter; points to next instruction to run | 32 |
 
 > [!NOTE]
@@ -295,7 +295,7 @@ Additionally, the CPU assumes memory has asynchronous reads, but synchronous wri
 
 Although technically the CPU is 32-bit, it is most practical to keep code in the first 2<sup>16</sup> addresses. 
 
-This is because the instructions are fixed-width, and there is only space for 16 bits for an address or immediate, and so jumps to far away addresses would be a bit cumbersome, although still possible. You could still do relative jumps to addresses within 2<sup>8</sup> addresses of `PC` by adding or subtracting to `PC`.
+This is because the instructions are fixed-width, and there is only space for 16 bits of an address or immediate, and so jumps to far away addresses would be a bit cumbersome, although still possible. You could still do relative jumps to addresses within 2<sup>8</sup> addresses of `PC` by adding or subtracting to `PC`.
 
 It is in theory possible to make it work with 32-bit addresses, but it would cause so much trouble to be not worth it. For example, you would have to do something similar to:
 

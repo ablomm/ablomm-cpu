@@ -169,7 +169,7 @@ The assembler has quite a bit of features inspired from high level languages suc
 
 ### File Imports
 
-The assembler contains a fully fledged import and export system quite similar to JavaScript. Import aliasing, blob imports, and block scoped imports are all supported.
+The assembler contains a fully fledged import and export system quite similar to JavaScript. Import aliasing, blob imports, and block-scoped imports are all supported.
 
 `lib/print.asm`:
 

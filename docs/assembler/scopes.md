@@ -37,7 +37,7 @@ ld r0, value;
 > [!NOTE]
 > There is a mechanism called block exports that allows a value to be referenced from the parent scope, as detailed in the [Imports and Exports document](imports-and-exports.md#block-exports).
 
-### Block Scoped Imports
+### Block-scoped Imports
 
 Blocks can contain import statements, in which case the imported identifiers are only valid within that block.
 
