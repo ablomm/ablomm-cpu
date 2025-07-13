@@ -2,9 +2,11 @@
 
 To build the application, you must have installed the following:
 - [Rust](https://www.rust-lang.org/)
-- Either [Verilator](https://www.veripool.org/verilator/) and/or [Icarus Verilog](https://steveicarus.github.io/iverilog/) (I recommend Verilator, as it is much faster)
-- Bash (to use the scripts, otherwise you will need to run the commands / write scripts manually for your shell)
-  - For Windows, you can get Bash through [Mingw](https://www.mingw-w64.org/)
+- [Verilator](https://www.veripool.org/verilator/) and/or [Icarus Verilog](https://steveicarus.github.io/iverilog/) (I recommend Verilator, as it is much faster)
+- [Bash](https://www.gnu.org/software/bash/) (to use the provided scripts, otherwise you will need to run the commands / write scripts manually for your shell)
+  - For Windows, you can get Bash through [Mingw](https://www.mingw-w64.org/) or [WSL](https://learn.microsoft.com/en-us/windows/wsl/)
+> [!WARNING]
+> For Windows, I highly recommend to use [WSL](https://learn.microsoft.com/en-us/windows/wsl/), as this project was built and verified for Linux first. You may have problems trying to run it on bare Windows.
  
 Included in the repo is a [script to build everything](../scripts/build_all.sh).
 
@@ -18,7 +20,7 @@ $ ./scripts/build_all.sh
 
 Included in the repo is a [script to assemble and run a program](../scripts/run.sh).
 
-To run the included hello_world program, simply run from the project directory:
+To run the included `hello_world` program, simply run from the project directory:
 
 ```bash
 $ ./scripts/run.sh verilator programs/hello_world.asm
@@ -36,7 +38,7 @@ Usually it's fine to just use the `run.sh` script, which will assemble and run t
 
 Included in the repo is a [script to assemble a program](../scripts/assemble.sh).
 
-To assemble the included hello_world program, simply run from the project directory:
+To assemble the included `hello_world` program, simply run from the project directory:
 
 ```bash
 $ ./scripts/assmeble.sh programs/hello_world.asm
@@ -51,7 +53,7 @@ The simulator allows you to run a program by passing in the machine code for tha
 
 Included in the repo is a [script to run the simulator](../scripts/simulate.sh).
 
-To simulate a program `hello_world` (which contains the machine code), simply run from the project directory:
+To simulate a program `hello_world` (which contains the machine code of `hello_world.asm`), simply run from the project directory:
 
 ```bash
 $ ./scripts/simulate.sh verilator +src=hello_world
@@ -68,4 +70,4 @@ $ ./scripts/simulate.sh iverilog +src=hello_world
 
 ## Binaries
 
-Binaries can found in the [releases page](https://github.com/ablomm/ablomm-cpu/releases). These binaries will not work with the scripts.
+x86_64 Linux binaries can found in the [releases page](https://github.com/ablomm/ablomm-cpu/releases). These binaries will not work with the scripts.
