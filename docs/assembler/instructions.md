@@ -799,7 +799,12 @@ Carry flag is set; alias for `uge`
 </table>
 
 > [!NOTE]
-> Although some condition mnemonics are for subtraction, it works for any ALU operation. For example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`. To make your code clearer, you may use the aliases if the subtraction mnemonics can cause confusion, for example, `ld.zc pc, 123;`.
+> Although some condition mnemonics are for subtraction, it still works for any ALU operation. For example, `and.t r1, 1;` and `ld.ne pc, 123;` will only jump if the least significant bit of `r1` is set to `1`. To make your code clearer, you may use the aliases if the subtraction mnemonics can cause confusion, for example, `ld.zc pc, 123;`.
 
 # Operands
-All instruction operands are simply expressions. Expressions are documented in the [Expressions document](expressions.md). Some instructions only allow for a certain number and type of expressions in their operands. The examples in the [Assembly Instructions section](#assembly-instructions) outline all the possible variations for each instruction.
+
+Instruction operands are simply expressions. Expressions are documented in the [Expressions document](expressions.md). 
+
+Each instruction only allows for certain numbers of operands. For example, `add` only works with 2 or 3 operands. Additionally, all instructions will only work with specific types in each operand. Expression result types are detailed in the [Expressions document](expressions.md#result-types).
+
+The examples in the [Assembly Instructions section](#assembly-instructions) outline all the possible variations for each instruction.

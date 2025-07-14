@@ -10,7 +10,7 @@ For example:
 1 * 2 * (16 / 4 >>> 2) << 1;
 ```
 
-This example will assemble to machine code which contains the literal value of the expression. This is an example of a Gen Literal, which is described in the [Gen Literals section](#gen-literals).
+This example will assemble to machine code which contains the literal value of the expression. This is an example of a gen literal, which is described in the [Gen Literals section](#gen-literals).
 
 You may also include expressions in [assignments](assignments.md) and [instruction operands](instructions.md#operands):
 
@@ -590,4 +590,18 @@ value; // 123 will now be included in the machine code at this location
 string = "hello world!";
 string + value; // the string of UTF-8 values of "hello world!123" will appear in the machine code
 "another string"; // this string will also appear in the machine code immediately after the last string
+```
+
+This program will assemble to the following machine code:
+
+```
+0000007b // the value 123 in hexadecimal
+68656c6c // "hell" in utf-8
+6f20776f // "o wo" in utf-8
+726c6421 // "rld!" in utf-8
+31323300 // "123" in utf-8 (last byte unused)
+616e6f74 // "anot" in utf-8
+68657220 // "her " in utf-8
+73747269 // "stri" in utf-8
+6e670000 // "ng" in utf-8 (last two bytes unused)
 ```
