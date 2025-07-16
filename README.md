@@ -2,11 +2,13 @@
 
 ![ablomm_ghost](https://github.com/user-attachments/assets/490bea8d-e06b-4051-b459-b5ccc5217a4f)
 
-This project contains a fully functioning 32-bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
+This project contains a fully-functioning 32-bit CPU written in SystemVerilog and an assembler for said CPU written in Rust.
 
 The CPU can be simulated with Verilator or Icarus Verilog.
 
 I have not synthesized it or ran it on an FPGA (because I don't have one right now), but it should all be synthesizable.
+
+The syntax of the assembly language is heavily inspired by C and JavaScript.
 
 ## Contents
 
@@ -60,7 +62,7 @@ loop:
 
 ![image](https://github.com/user-attachments/assets/d6a8093b-0f3b-4abb-8116-9a1a80520f6d)
 
-### Print a null terminated string to the terminal:
+### Print a null-terminated string to the terminal:
 
 ```c
 import * from "defines.asm";
@@ -121,7 +123,7 @@ export print: {
 }
 ```
 
-### Print hello world using the print function defined above:
+### Print "Hello world!👻" using the print function defined above:
 
 ```c
 /*
@@ -163,13 +165,13 @@ Please refer to the [docs directory](docs/) for the documentation.
 
 # Assembler
 
-The assembler has quite a bit of features inspired from high level languages such as C. By far the most advanced part of this project is the assembler, as I am a software guy more than a hardware one.
+The assembler has quite a bit of features inspired from high-level languages such as C and JavaScript. By far the most advanced part of this project is the assembler, as I am a software guy more than a hardware one.
 
 ## Key Features
 
 ### File Imports
 
-The assembler contains a fully fledged import and export system quite similar to JavaScript. Import aliasing, blob imports, and block-scoped imports are all supported.
+The assembler contains a fully-fledged import and export system quite similar to JavaScript. Import aliasing, blob imports, and block-scoped imports are all supported.
 
 `lib/print.asm`:
 
@@ -253,6 +255,8 @@ Blocks and lexical scopes are documented further in the [Scopes document](docs/a
 ---
 
 ### Beautiful Error Messages
+
+The assembler will output easy-to-understand error messages if there is a problem with the provided assembly program.
 
 ```c
 label: {
