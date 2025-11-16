@@ -5,10 +5,10 @@ use expression_result::{Ashr, AsmDeref, AsmRef, ExpressionResult, Number, String
 use internment::Intern;
 
 use crate::{
+    ATTENTION_COLOR, Span, SpannedError,
     ast::{Expression, Register},
     span::Spanned,
-    symbol_table::{STInto, SymbolTable},
-    Span, SpannedError, ATTENTION_COLOR,
+    symbol_table::SymbolTable,
 };
 
 pub mod expression_result;
@@ -38,18 +38,16 @@ impl Spanned<&Expression> {
             Expression::String(string) => ExpressionResult::String(Some(String(string.clone()))),
             Expression::Number(a) => ExpressionResult::Number(Some(Number(*a))),
             Expression::Ident(a) => {
-                let identifier = symbol_table.try_get(&self.span_to(a))?;
-                match identifier.result.val {
-                    ExpressionResult::Number(None)
-                    | ExpressionResult::String(None)
-                    | ExpressionResult::Register(None)
-                    | ExpressionResult::RegisterOffset(None) => {
-                        waiting_map.insert(*a, identifier.key_span);
-                    }
-
-                    _ => (),
+                let identifier = symbol_table.try_get_with_result(&self.span_to(a))?;
+                let identifier = identifier.borrow();
+                let result = identifier
+                    .result
+                    .clone()
+                    .expect("Symbol doesn't contain result");
+                if !result.val.is_known_val() {
+                    waiting_map.insert(*a, identifier.key_span);
                 }
-                identifier.result.val
+                result.val
             }
             Expression::Ref(a) => op!(a.asm_ref(), symbol_table, waiting_map, a)?,
             Expression::Deref(a) => op!(a.asm_deref(), symbol_table, waiting_map, a)?,
@@ -72,16 +70,6 @@ impl Spanned<&Expression> {
             result,
             waiting_map,
         })
-    }
-}
-
-impl STInto<Spanned<ExpressionResult>> for &Spanned<&Expression> {
-    fn st_into(
-        self,
-        symbol_table: &SymbolTable,
-    ) -> Result<Spanned<ExpressionResult>, SpannedError> {
-        self.eval(symbol_table)
-            .map(|result| self.span_to(result.result))
     }
 }
 

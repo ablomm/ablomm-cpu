@@ -1,10 +1,9 @@
 use std::{collections::HashMap, path::Path};
 
-use ariadne::{sources, Cache};
+use ariadne::{Cache, sources};
 use ast::Ast;
 
-use error::{Error, SpannedError, ATTENTION_COLOR};
-use indexmap::IndexMap;
+use error::{ATTENTION_COLOR, Error, SpannedError};
 use internment::Intern;
 use span::{Span, Spanned};
 use src::Src;
@@ -41,26 +40,14 @@ pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
 
     // file queue is order in which to generate symbol tables
     // can't do map_err because of borrow checker
-    let mut file_queue = match file::generate_file_queue(&src, &mut cache, &mut IndexMap::new()) {
+    let mut file_queue = match file::generate_file_queue(&src, &mut cache) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err(Error::Spanned(error, sources(cache))),
     };
 
     // needed to get types (and as much values as possible without addresses) because the number of
     // words for a statement may depend on the type and value of symbols
-    match st_setup::fill_symbol_tables(&file_queue) {
-        Ok(_) => (),
-        Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
-    }
-
-    // get file addresses (also technically does labels and assignments (but not imports / exports)
-    match st_setup::calculate_addresses(&mut file_queue) {
-        Ok(_) => (),
-        Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
-    }
-
-    // final fill after all addresses are calculated to get imported addresses, all values should be filled in this pass
-    match st_setup::fill_symbol_tables(&file_queue) {
+    match st_setup::init_symbol_tables(&mut file_queue) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }

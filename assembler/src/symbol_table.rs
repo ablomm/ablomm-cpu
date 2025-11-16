@@ -2,16 +2,20 @@ use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
 use internment::Intern;
 
-use crate::{expression::expression_result::ExpressionResult, span::Spanned, Span, SpannedError};
+use crate::{
+    Span, SpannedError, ast::Expression, expression::expression_result::ExpressionResult,
+    span::Spanned,
+};
 
-type Key = Intern<String>;
-type Value = STEntry;
+pub type Key = Intern<String>;
+pub type Value = Rc<RefCell<STEntry>>;
 
 pub mod setup;
 
 #[derive(Debug, Clone)]
 pub struct STEntry {
-    pub result: Spanned<ExpressionResult>,
+    pub expression: Option<Spanned<Expression>>,
+    pub result: Option<Spanned<ExpressionResult>>,
 
     // the span of the original definition identifier
     pub key_span: Span,
@@ -21,20 +25,27 @@ pub struct STEntry {
 
     // the span of the export statement of the import
     pub export_span: Option<Span>,
-
-    // if it's allowable to import again
-    pub updatable: bool,
 }
 
 impl STEntry {
-    pub fn new(result: Spanned<ExpressionResult>, key_span: Span) -> Self {
+    pub fn new(key_span: Span) -> Self {
         Self {
-            result,
+            expression: None,
+            result: None,
             key_span,
             import_span: None,
             export_span: None,
-            updatable: false,
         }
+    }
+
+    pub fn with_expression(mut self, expression: Spanned<Expression>) -> Self {
+        self.expression = Some(expression);
+        self
+    }
+
+    pub fn with_result(mut self, result: Spanned<ExpressionResult>) -> Self {
+        self.result = Some(result);
+        self
     }
 
     pub fn with_import_span(mut self, import_span: Span) -> Self {
@@ -44,11 +55,6 @@ impl STEntry {
 
     pub fn with_export_span(mut self, export_span: Span) -> Self {
         self.export_span = Some(export_span);
-        self
-    }
-
-    pub fn updatable(mut self) -> Self {
-        self.updatable = true;
         self
     }
 }
@@ -101,7 +107,7 @@ impl SymbolTable {
         Key: std::borrow::Borrow<Q>,
     {
         if let Some(value) = self.get(key) {
-            return Some(value.clone());
+            return Some(Rc::clone(value));
         }
 
         if let Some(parent) = &self.parent {
@@ -119,79 +125,40 @@ impl SymbolTable {
         )
     }
 
+    // gets Value with the result field set (evaluates expresssion)
+    pub fn try_get_with_result(&self, ident: &Spanned<&Key>) -> Result<Value, SpannedError> {
+        let binding = self.try_get(ident)?;
+        let mut entry = binding.borrow_mut();
+
+        if entry.result.is_none() {
+            let expression = entry
+                .expression
+                .as_ref()
+                .expect("Symbol has neither expression nor result");
+            let expression_result = expression.as_ref().eval(&self);
+            (*entry).result = Some(expression.span_to(expression_result?.result));
+        }
+
+        Ok(binding.clone())
+    }
+
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
-    pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
-        self.try_insert_expr(
-            key,
-            value.result,
-            value.key_span,
-            value.import_span,
-            value.export_span,
-            value.updatable,
-        )
-    }
-
-    // try_insert calls this rather than the other way arround because this way ensures that
-    // if the insert is skipped, then the expression will not be evaluated
-    pub fn try_insert_expr<T: STInto<Spanned<ExpressionResult>>>(
-        &mut self,
-        key: Key,
-        expression: T,
-        key_span: Span,
-        import_span: Option<Span>,
-        export_span: Option<Span>,
-        updatable: bool,
-    ) -> Result<(), SpannedError> {
-        if let Some(entry) = self.table.get_mut(&key) {
-            if !entry.updatable {
-                return Err(SpannedError::identifier_already_defined(
-                    entry.key_span,
-                    entry.import_span,
-                    key_span,
-                    import_span,
-                ));
-            } else if entry.result.is_known_val() {
-                // no need to insert; value is already known
-                entry.updatable = updatable;
-                return Ok(());
-            }
+    fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
+        if let Some(entry) = self.table.get(&key) {
+            let entry = entry.borrow();
+            let value = value.borrow();
+            return Err(SpannedError::identifier_already_defined(
+                entry.key_span,
+                entry.import_span,
+                value.key_span,
+                value.import_span,
+            ));
         }
-
-        let result = expression.st_into(self)?;
-
-        self.insert(
-            key,
-            STEntry {
-                result,
-                key_span,
-                import_span,
-                export_span,
-                updatable,
-            },
-        );
+        self.insert(key, value);
 
         Ok(())
-    }
-
-    // flags every entry to be able to insert again. Useful for progressive passes containing more
-    // and more info while keeping each pass only able to insert a symbol once
-    pub fn set_entries_updatable(&mut self) {
-        for entry in self.table.values_mut() {
-            entry.updatable = true;
-        }
-    }
-}
-
-// trait similar to TryInto but can use the symbol_table
-pub trait STInto<T> {
-    fn st_into(self, symbol_table: &SymbolTable) -> Result<T, SpannedError>;
-}
-
-impl<T, U: Into<T>> STInto<T> for U {
-    fn st_into(self, _symbol_table: &SymbolTable) -> Result<T, SpannedError> {
-        Ok(self.into())
     }
 }

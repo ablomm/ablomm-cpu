@@ -1,62 +1,65 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use ariadne::Fmt;
 use internment::Intern;
 
 use crate::{
     ast::{Block, Expression, File, Import, ImportSpecifier, Operation, Statement},
-    error::{SpannedError, ATTENTION_COLOR},
+    error::{ATTENTION_COLOR, SpannedError},
     expression::{
-        expression_result::{ExpressionResult, Number},
         EvalReturn,
+        expression_result::{ExpressionResult, Number},
     },
     span::Spanned,
     src::{self, Src},
+    symbol_table,
 };
 
 use super::{STEntry, SymbolTable};
 
-pub fn fill_symbol_tables(file_queue: &Vec<Spanned<File>>) -> Result<(), SpannedError> {
+type ExportMap = HashMap<Intern<String>, symbol_table::Value>;
+
+pub fn init_symbol_tables(file_queue: &mut Vec<Spanned<File>>) -> Result<(), SpannedError> {
     let mut file_exports_map = HashMap::new();
-    for file in file_queue {
+    for file in file_queue.into_iter() {
         // can't do map_err because of borrow checker
-        let exports = fill_symbol_table(
-            &file.src,
-            &file.span_to(&file.block),
-            file.start_address,
-            &file_exports_map,
-        )?;
+        let exports =
+            resolve_symbol_types(&file.src, &file.span_to(&file.block), &file_exports_map)?;
 
         file_exports_map.insert(file.src, exports);
     }
+    for file in file_queue.into_iter() {
+        add_imports(&file.src, &file.span_to(&file.block), &file_exports_map)?;
+    }
+
+    let mut address_accumulator = 0;
+    for file in file_queue.iter_mut().rev() {
+        address_accumulator = calculate_addresses(address_accumulator, &file.span_to(&file.block))?;
+    }
+
     Ok(())
 }
 
 // generates symbol table for block and sub_blocks, returns exported symbols
-fn fill_symbol_table(
+fn resolve_symbol_types(
     src: &Intern<Src>,
     block: &Spanned<&Block>,
     // if start_address is None, it will simply fill the symbol_table to the best of it's ability
     // without any addresses
-    start_address: Option<u32>,
-    file_exports_map: &HashMap<Intern<Src>, HashMap<Intern<String>, STEntry>>,
-) -> Result<HashMap<Intern<String>, STEntry>, SpannedError> {
-    block.symbol_table.borrow_mut().set_entries_updatable();
-
-    let mut address = start_address;
-
+    file_exports_map: &HashMap<Intern<Src>, ExportMap>,
+) -> Result<ExportMap, SpannedError> {
     let mut exports = HashMap::new();
 
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
-                let result = label
-                    .identifier
-                    .span_to(ExpressionResult::Number(address.map(Number)));
+                let result = label.identifier.span_to(ExpressionResult::Number(None));
 
                 block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
-                    STEntry::new(result, label.identifier.span),
+                    Rc::new(RefCell::new(
+                        STEntry::new(label.identifier.span).with_result(result),
+                    )),
                 )?;
 
                 if label.export {
@@ -69,13 +72,12 @@ fn fill_symbol_table(
             }
 
             Statement::Assignment(assignment) => {
-                block.symbol_table.borrow_mut().try_insert_expr(
+                block.symbol_table.borrow_mut().try_insert(
                     assignment.identifier.val,
-                    &assignment.expression.as_ref(),
-                    assignment.identifier.span,
-                    None,
-                    None,
-                    false,
+                    Rc::new(RefCell::new(
+                        STEntry::new(assignment.identifier.span)
+                            .with_expression(assignment.expression.clone()),
+                    )),
                 )?;
 
                 if assignment.export {
@@ -93,6 +95,30 @@ fn fill_symbol_table(
                 }
             }
 
+            Statement::Block(sub_block) => {
+                sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
+
+                let sub_exports =
+                    resolve_symbol_types(src, &statement.span_to(sub_block), file_exports_map)?;
+
+                for (key, val) in sub_exports {
+                    block.symbol_table.borrow_mut().try_insert(key, val)?;
+                }
+            }
+            _ => (),
+        }
+    }
+
+    Ok(exports)
+}
+
+fn add_imports(
+    src: &Intern<Src>,
+    block: &Spanned<&Block>,
+    file_exports_map: &HashMap<Intern<Src>, ExportMap>,
+) -> Result<(), SpannedError> {
+    for statement in &block.statements {
+        match &statement.val {
             Statement::Import(import_val) => {
                 let import_src = src::get_import_src(src, import_val).unwrap_or_else(|error| {
                     // should not occur because should already have gotten this import in
@@ -115,93 +141,61 @@ fn fill_symbol_table(
             }
 
             Statement::Block(sub_block) => {
-                sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
-
-                let sub_exports = fill_symbol_table(
-                    src,
-                    &statement.span_to(sub_block),
-                    address,
-                    file_exports_map,
-                )?;
-
-                for (key, val) in sub_exports {
-                    block.symbol_table.borrow_mut().try_insert(key, val)?;
-                }
+                add_imports(src, &statement.span_to(sub_block), file_exports_map)?;
             }
             _ => (),
-        }
-
-        // technically we could count the lines in the loop above, but this is a bit more readable
-        // even though it requires another pass
-        if let Some(mut address_val) = address {
-            address_val += statement.as_ref().num_words(&block.symbol_table.borrow())?;
-            address = Some(address_val);
-        }
-    }
-
-    Ok(exports)
-}
-
-// needed because some future imports symbols depend on the size of the importer's length
-// (yeah, I know; it's confusing)
-// assume file_queue is in post_order
-pub fn calculate_addresses(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
-    let mut address = 0;
-    for file in file_queue.iter_mut().rev() {
-        file.block.symbol_table.borrow_mut().set_entries_updatable();
-
-        file.val.start_address = Some(address);
-        for statment in &file.block.statements {
-            match &statment.val {
-                // we now are able to calculate labels, which gives more values that can be used in
-                // num_words()
-                Statement::Label(label) => {
-                    let result = label
-                        .identifier
-                        .span_to(ExpressionResult::Number(Some(Number(address))));
-
-                    file.block.symbol_table.borrow_mut().try_insert(
-                        label.identifier.val,
-                        STEntry::new(result, label.identifier.span),
-                    )?;
-                }
-
-                // now that the labels are known, we need to re-evaluate assignments, which may
-                // depend on the label values
-                // don't worry about exports, as the file_queue is in post_order which guarantees
-                // all importers have already been parsed, so no one will use the new exports
-                Statement::Assignment(assignment) => {
-                    file.block.symbol_table.borrow_mut().try_insert_expr(
-                        assignment.identifier.val,
-                        &assignment.expression.as_ref(),
-                        assignment.identifier.span,
-                        None,
-                        None,
-                        false,
-                    )?;
-                }
-                _ => (),
-            }
-
-            address += statment
-                .as_ref()
-                .num_words(&file.block.symbol_table.borrow())?;
         }
     }
 
     Ok(())
 }
 
+// needed because some future imports symbols depend on the size of the importer's length
+// (yeah, I know; it's confusing)
+pub fn calculate_addresses(
+    start_address: u32,
+    block: &Spanned<&Block>,
+) -> Result<u32, SpannedError> {
+    let mut address = start_address;
+    for statement in &block.statements {
+        match &statement.val {
+            Statement::Label(label) => {
+                let result = label
+                    .identifier
+                    .span_to(ExpressionResult::Number(Some(Number(address))));
+
+                let symbol = block
+                    .symbol_table
+                    .borrow_mut()
+                    .try_get(&label.identifier.as_ref())
+                    .expect("Label type didn't exist in symbol table when inserting final value");
+
+                symbol.borrow_mut().result = Some(result);
+            }
+
+            Statement::Block(sub_block) => {
+                calculate_addresses(address, &statement.span_to(sub_block))?;
+            }
+            _ => (),
+        }
+
+        address += statement.as_ref().num_words(&block.symbol_table.borrow())?;
+    }
+
+    Ok(address)
+}
+
 fn export(
     identifier: &Spanned<Intern<String>>,
     symbol_table: &SymbolTable,
-    exports: &mut HashMap<Intern<String>, STEntry>,
+    exports: &mut ExportMap,
 ) -> Result<(), SpannedError> {
     if let Some(entry) = exports.get(&identifier.val) {
         return Err(
             SpannedError::new(identifier.span, "Identifier already exported")
                 .with_label_span(
                     entry
+                        .borrow()
                         .export_span
                         .expect("Exported identifier doesn't have export_span"),
                     "Exported first here",
@@ -211,8 +205,8 @@ fn export(
         );
     }
 
-    let mut export_val = symbol_table.try_get(&identifier.as_ref())?;
-    export_val.export_span = Some(identifier.span);
+    let export_val = symbol_table.try_get(&identifier.as_ref())?;
+    export_val.borrow_mut().export_span = Some(identifier.span);
     exports.insert(identifier.val, export_val);
 
     Ok(())
@@ -221,7 +215,7 @@ fn export(
 fn import(
     import: &Import,
     symbol_table: &mut SymbolTable,
-    exports: &HashMap<Intern<String>, STEntry>,
+    exports: &ExportMap,
 ) -> Result<(), SpannedError> {
     match &import.specifier.val {
         // selective import (i.e. import <ident> [as <ident>[, ...]] from <file>
@@ -235,26 +229,15 @@ fn import(
                         )),
                 )?;
 
-                let original_definition = import_val.key_span.spanned(named_import.identifier.val);
+                let original_definition = import_val
+                    .borrow()
+                    .key_span
+                    .spanned(named_import.identifier.val)
+                    .clone();
                 let import_key = named_import.alias.as_ref().unwrap_or(&original_definition);
 
-                // if the import is aliased, then treat it as a new definition, since the names
-                // are different (i.e., it is defined at the alias identifier instead of the
-                // definition inside the import)
-                let import_span = if named_import.alias.is_some() {
-                    None
-                } else {
-                    Some(import.specifier.span)
-                };
-
-                let st_entry = STEntry {
-                    key_span: import_key.span,
-                    import_span,
-                    ..import_val.clone()
-                };
-
                 symbol_table
-                    .try_insert(import_key.val, st_entry)
+                    .try_insert(import_key.val, Rc::clone(import_val))
                     .map_err(|error| {
                         error.with_help(format!(
                             "Try aliasing the import by adding {}",
@@ -267,13 +250,8 @@ fn import(
         // unselective import (i.e. import * from <file>
         ImportSpecifier::Blob => {
             for (import_key, import_val) in exports {
-                let st_entry = STEntry {
-                    import_span: Some(import.specifier.span),
-                    ..import_val.clone()
-                };
-
                 symbol_table
-                    .try_insert(*import_key, st_entry)
+                    .try_insert(*import_key, Rc::clone(import_val))
                     .map_err(|error| {
                         error.with_help(format!(
                             "Try using named import aliases: {}{}",
@@ -303,7 +281,7 @@ impl Spanned<&Statement> {
     pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
         match self.val {
             Statement::GenLiteral(literal) => self.span_to(literal).num_words(symbol_table),
-            Statement::Block(block) => block.num_words(symbol_table),
+            Statement::Block(block) => block.num_words(&block.symbol_table.borrow()),
             Statement::Operation(operation) => operation.num_words(),
             _ => Ok(0),
         }
