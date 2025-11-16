@@ -58,7 +58,8 @@ fn resolve_symbol_types(
                 block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
                     Rc::new(RefCell::new(
-                        STEntry::new(label.identifier.span).with_result(result),
+                        STEntry::new(Rc::clone(&block.symbol_table), label.identifier.span)
+                            .with_result(result),
                     )),
                 )?;
 
@@ -75,7 +76,7 @@ fn resolve_symbol_types(
                 block.symbol_table.borrow_mut().try_insert(
                     assignment.identifier.val,
                     Rc::new(RefCell::new(
-                        STEntry::new(assignment.identifier.span)
+                        STEntry::new(Rc::clone(&block.symbol_table), assignment.identifier.span)
                             .with_expression(assignment.expression.clone()),
                     )),
                 )?;

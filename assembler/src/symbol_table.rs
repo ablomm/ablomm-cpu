@@ -17,6 +17,11 @@ pub struct STEntry {
     pub expression: Option<Spanned<Expression>>,
     pub result: Option<Spanned<ExpressionResult>>,
 
+    // the symbol_table of where the identifier was defined, needed to evaluate imported
+    // identifiers
+    pub symbol_table: Rc<RefCell<SymbolTable>>,
+
+    //TODO: Not have these shared (in the Rc)
     // the span of the original definition identifier
     pub key_span: Span,
 
@@ -28,10 +33,11 @@ pub struct STEntry {
 }
 
 impl STEntry {
-    pub fn new(key_span: Span) -> Self {
+    pub fn new(symbol_table: Rc<RefCell<SymbolTable>>, key_span: Span) -> Self {
         Self {
             expression: None,
             result: None,
+            symbol_table,
             key_span,
             import_span: None,
             export_span: None,
@@ -126,6 +132,7 @@ impl SymbolTable {
     }
 
     // gets Value with the result field set (evaluates expresssion)
+    // TODO: detect cycles
     pub fn try_get_with_result(&self, ident: &Spanned<&Key>) -> Result<Value, SpannedError> {
         let binding = self.try_get(ident)?;
         let mut entry = binding.borrow_mut();
@@ -135,7 +142,7 @@ impl SymbolTable {
                 .expression
                 .as_ref()
                 .expect("Symbol has neither expression nor result");
-            let expression_result = expression.as_ref().eval(&self);
+            let expression_result = expression.as_ref().eval(&entry.symbol_table.borrow());
             (*entry).result = Some(expression.span_to(expression_result?.result));
         }
 

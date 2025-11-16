@@ -25,11 +25,10 @@ pub fn generate_file_queue(
         let import_src = match src::get_import_src(src, import) {
             Ok(import_src) => import.file.span_to(import_src),
             Err(error) => {
-                return Err(vec![SpannedError::new(
-                    import.file.span,
-                    "Error finding file",
-                )
-                .with_label(error.to_string())])
+                return Err(vec![
+                    SpannedError::new(import.file.span, "Error finding file")
+                        .with_label(error.to_string()),
+                ]);
             }
         };
 
@@ -75,7 +74,6 @@ fn parse_file(
         })?;
     let file = File {
         src: src.val,
-        start_address: None,
         block: block.val,
     };
 
