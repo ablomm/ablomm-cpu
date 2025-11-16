@@ -53,26 +53,23 @@ module cu_tb;
     $display("\ntesting cu");
 
     en = 1;
-    test_fetch;
+    #1;
+
     test_alu(alu_pkg::AND);
-    test_fetch;
     test_alu(alu_pkg::SHL);
-    test_fetch;
   end
 
   task static next_state;
     begin
-      clk = 1;
-      #1;
       clk = 0;
+      #1;
+      clk = 1;
       #1;
     end
   endtask
 
   task static test_fetch;
     begin
-      next_state;
-      // FETCH state
       $display("sel_b_reg: %d, oe_b_reg_file: %d, rd: %d, ld_ir: %d, post_inc_pc: %d", sel_b_reg,
                oe_b_reg, rd, ld_ir, post_inc_pc);
 
@@ -85,6 +82,8 @@ module cu_tb;
                        input logic set_status_in = 0, input reg_e reg_a_in = reg_pkg::R0,
                        input reg_e reg_b_in = reg_pkg::R1, input reg_e reg_c_in = reg_pkg::R2);
     begin
+      // FETCH
+      test_fetch;
       ir.condition = NONE;
       ir.instruction = instruction_e'(8'(op_in) | 8'hf0);  // alu ops start with 0xf*
       ir.operands.alu_op.flags.immediate = 0;
@@ -96,6 +95,10 @@ module cu_tb;
       ir.operands.alu_op.reg_c = reg_c_in;
 
       next_state;
+      // DECODE
+
+      next_state;
+      // ALU
 
       $display(
           "sel_a_reg: %d, oe_a_reg_file: %d, sel_b_reg: %d, oe_b_reg_file: %d, alu_op: %d, sel_in_reg: %d, ld_reg_file: %d",
@@ -103,6 +106,9 @@ module cu_tb;
 
       assert (sel_a_reg === reg_b_in && oe_a_reg === 1 && sel_b_reg === reg_c_in && oe_b_reg === 1 && alu_op === op_in && sel_in_reg === reg_a_in && ld_reg === 1)
       else $fatal;
+
+      next_state;
+      // FETCH
     end
   endtask
 endmodule

@@ -52,7 +52,9 @@ module cu (
   // CU states (multi-clock instructions)
   typedef enum {
     FETCH,
+    DECODE,
 
+    // Execute states
     NOP,
     LD,
     LDR,
@@ -78,26 +80,13 @@ module cu (
 
   states_e state = FETCH;
 
-  // only stop when it finishes doing whatever it's doing. Need this because we
-  // have state changes on negative edge, but everything else happens on
-  // posedge
-  logic sync_en = 'b0;
-  always_ff @(negedge clk or posedge rst)
-    if (rst) sync_en <= 'b0;
-    else sync_en <= en;
-
   // state changes
-  // negative edge to simplify startup sequence, as we won't have to have an
-  // extra state to wait for fetch to load the ir on startup since the first
-  // move to fetch happens on a negative edge, and ir gets loaded on the next
-  // posedge, after which the next negedge will have a loaded ir
-  // also saves a decode state (or makes it easier to branch if decode
-  // was pipelined with fetch)
-  always_ff @(negedge clk or posedge rst)
+  always_ff @(posedge clk or posedge rst)
     if (rst) state <= FETCH;
-    else if (sync_en) begin
+    else if (en) begin
       unique case (state)
-        FETCH: begin
+        FETCH: state <= DECODE;
+        DECODE: begin
           if (satisfies_condition(ir.condition, status.alu_status)) begin
             unique casez (ir.instruction)
               cu_pkg::NOP: state <= NOP;
@@ -114,6 +103,9 @@ module cu (
               'hf?: state <= ALU;
               default: state <= EXCEPT1;
             endcase
+          end else begin
+            if (irq & status.imask) state <= HWINT1;
+            else state <= FETCH;
           end
         end
 
@@ -195,7 +187,7 @@ module cu (
     b_reg_mask = 32'hffffffff;
     b_reg_offset = 0;
 
-    if (sync_en) begin
+    if (en) begin
       unique case (state)
 
         // ir <- *(pc++)
@@ -206,6 +198,8 @@ module cu (
           ld_ir = 1;
           post_inc_pc = 1;
         end
+
+        DECODE: ;
 
         NOP: ;
 
@@ -313,6 +307,8 @@ module cu (
         end
 
         // push PC
+        // imask <- 0
+        // mode <- SUPERVISOR
         SWINT1, HWINT1, EXCEPT1: begin
           pre_dec_sp = 1;
           sel_a_reg = reg_pkg::PC;
@@ -320,6 +316,10 @@ module cu (
           sel_b_reg = reg_pkg::SP;
           oe_b_reg = 1;
           wr = 1;
+          imask_in = 0;
+          ld_imask = 1;
+          mode_in = reg_pkg::SUPERVISOR;
+          ld_mode = 1;
         end
 
         // push status
@@ -333,8 +333,6 @@ module cu (
         end
 
         // PC <- 00000001
-        // imask <- 0
-        // mode <- SUPERVISOR
         HWINT3: begin
           sel_b_reg = reg_e'(4'h1);
           oe_b_consts = 1;
@@ -342,15 +340,9 @@ module cu (
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
-          imask_in = 0;
-          ld_imask = 1;
-          mode_in = reg_pkg::SUPERVISOR;
-          ld_mode = 1;
         end
 
         // PC <- 00000002
-        // imask <- 0
-        // mode <- SUPERVISOR
         SWINT3: begin
           sel_b_reg = reg_e'(4'h2);
           oe_b_consts = 1;
@@ -358,15 +350,9 @@ module cu (
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
-          imask_in = 0;
-          ld_imask = 1;
-          mode_in = reg_pkg::SUPERVISOR;
-          ld_mode = 1;
         end
 
-        // pc <- 00000003
-        // imask <- 0
-        // mode <- SUPERVISOR
+        // PC <- 00000003
         EXCEPT3: begin
           sel_b_reg = reg_e'(4'h3);
           oe_b_consts = 1;
@@ -374,10 +360,6 @@ module cu (
           oe_alu = 1;
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
-          imask_in = 0;
-          ld_imask = 1;
-          mode_in = reg_pkg::SUPERVISOR;
-          ld_mode = 1;
         end
         default: ;
       endcase
