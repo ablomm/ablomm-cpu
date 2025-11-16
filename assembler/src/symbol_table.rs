@@ -8,18 +8,13 @@ use crate::{
 };
 
 pub type Key = Intern<String>;
-pub type Value = Rc<RefCell<STEntry>>;
+pub type Value = STEntry;
 
 pub mod setup;
 
 #[derive(Debug, Clone)]
 pub struct STEntry {
-    pub expression: Option<Spanned<Expression>>,
-    pub result: Option<Spanned<ExpressionResult>>,
-
-    // the symbol_table of where the identifier was defined, needed to evaluate imported
-    // identifiers
-    pub symbol_table: Rc<RefCell<SymbolTable>>,
+    pub symbol: Rc<RefCell<Symbol>>,
 
     //TODO: Not have these shared (in the Rc)
     // the span of the original definition identifier
@@ -33,25 +28,13 @@ pub struct STEntry {
 }
 
 impl STEntry {
-    pub fn new(symbol_table: Rc<RefCell<SymbolTable>>, key_span: Span) -> Self {
+    pub fn new(symbol: Rc<RefCell<Symbol>>, key_span: Span) -> Self {
         Self {
-            expression: None,
-            result: None,
-            symbol_table,
+            symbol,
             key_span,
             import_span: None,
             export_span: None,
         }
-    }
-
-    pub fn with_expression(mut self, expression: Spanned<Expression>) -> Self {
-        self.expression = Some(expression);
-        self
-    }
-
-    pub fn with_result(mut self, result: Spanned<ExpressionResult>) -> Self {
-        self.result = Some(result);
-        self
     }
 
     pub fn with_import_span(mut self, import_span: Span) -> Self {
@@ -61,6 +44,38 @@ impl STEntry {
 
     pub fn with_export_span(mut self, export_span: Span) -> Self {
         self.export_span = Some(export_span);
+        self
+    }
+}
+
+// not sure of a good name for this, but it's just the value that can be shared among multiple
+// tables
+#[derive(Debug, Clone)]
+pub struct Symbol {
+    pub result: Option<Spanned<ExpressionResult>>,
+    pub expression: Option<Spanned<Expression>>,
+
+    // the symbol_table of where the identifier was defined, needed to evaluate imported
+    // identifiers
+    pub symbol_table: Rc<RefCell<SymbolTable>>,
+}
+
+impl Symbol {
+    pub fn new(symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
+        Self {
+            result: None,
+            expression: None,
+            symbol_table,
+        }
+    }
+
+    pub fn with_result(mut self, result: Spanned<ExpressionResult>) -> Self {
+        self.result = Some(result);
+        self
+    }
+
+    pub fn with_expression(mut self, expression: Spanned<Expression>) -> Self {
+        self.expression = Some(expression);
         self
     }
 }
@@ -112,8 +127,8 @@ impl SymbolTable {
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
     {
-        if let Some(value) = self.get(key) {
-            return Some(Rc::clone(value));
+        if let Some(entry) = self.get(key) {
+            return Some(entry.clone());
         }
 
         if let Some(parent) = &self.parent {
@@ -134,37 +149,35 @@ impl SymbolTable {
     // gets Value with the result field set (evaluates expresssion)
     // TODO: detect cycles
     pub fn try_get_with_result(&self, ident: &Spanned<&Key>) -> Result<Value, SpannedError> {
-        let binding = self.try_get(ident)?;
-        let mut entry = binding.borrow_mut();
+        let entry = self.try_get(ident)?;
+        let mut symbol = entry.symbol.borrow_mut();
 
-        if entry.result.is_none() {
-            let expression = entry
+        if symbol.result.is_none() {
+            let expression = symbol
                 .expression
                 .as_ref()
                 .expect("Symbol has neither expression nor result");
-            let expression_result = expression.as_ref().eval(&entry.symbol_table.borrow());
-            (*entry).result = Some(expression.span_to(expression_result?.result));
+            let expression_result = expression.as_ref().eval(&symbol.symbol_table.borrow());
+            (*symbol).result = Some(expression.span_to(expression_result?.result));
         }
 
-        Ok(binding.clone())
+        Ok(entry.clone())
     }
 
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
-    fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
+    fn try_insert(&mut self, key: Key, new_entry: Value) -> Result<(), SpannedError> {
         if let Some(entry) = self.table.get(&key) {
-            let entry = entry.borrow();
-            let value = value.borrow();
             return Err(SpannedError::identifier_already_defined(
                 entry.key_span,
                 entry.import_span,
-                value.key_span,
-                value.import_span,
+                new_entry.key_span,
+                new_entry.import_span,
             ));
         }
-        self.insert(key, value);
+        self.insert(key, new_entry);
 
         Ok(())
     }

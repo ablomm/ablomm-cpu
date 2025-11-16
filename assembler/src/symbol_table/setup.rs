@@ -12,7 +12,7 @@ use crate::{
     },
     span::Spanned,
     src::{self, Src},
-    symbol_table,
+    symbol_table::{self, Symbol},
 };
 
 use super::{STEntry, SymbolTable};
@@ -57,10 +57,12 @@ fn resolve_symbol_types(
 
                 block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
-                    Rc::new(RefCell::new(
-                        STEntry::new(Rc::clone(&block.symbol_table), label.identifier.span)
-                            .with_result(result),
-                    )),
+                    STEntry::new(
+                        Rc::new(RefCell::new(
+                            Symbol::new(Rc::clone(&block.symbol_table)).with_result(result),
+                        )),
+                        label.identifier.span,
+                    ),
                 )?;
 
                 if label.export {
@@ -75,10 +77,13 @@ fn resolve_symbol_types(
             Statement::Assignment(assignment) => {
                 block.symbol_table.borrow_mut().try_insert(
                     assignment.identifier.val,
-                    Rc::new(RefCell::new(
-                        STEntry::new(Rc::clone(&block.symbol_table), assignment.identifier.span)
-                            .with_expression(assignment.expression.clone()),
-                    )),
+                    STEntry::new(
+                        Rc::new(RefCell::new(
+                            Symbol::new(Rc::clone(&block.symbol_table))
+                                .with_expression(assignment.expression.clone()),
+                        )),
+                        assignment.identifier.span,
+                    ),
                 )?;
 
                 if assignment.export {
@@ -165,13 +170,13 @@ pub fn calculate_addresses(
                     .identifier
                     .span_to(ExpressionResult::Number(Some(Number(address))));
 
-                let symbol = block
+                let entry = block
                     .symbol_table
                     .borrow_mut()
                     .try_get(&label.identifier.as_ref())
                     .expect("Label type didn't exist in symbol table when inserting final value");
 
-                symbol.borrow_mut().result = Some(result);
+                entry.symbol.borrow_mut().result = Some(result);
             }
 
             Statement::Block(sub_block) => {
@@ -196,7 +201,6 @@ fn export(
             SpannedError::new(identifier.span, "Identifier already exported")
                 .with_label_span(
                     entry
-                        .borrow()
                         .export_span
                         .expect("Exported identifier doesn't have export_span"),
                     "Exported first here",
@@ -206,9 +210,9 @@ fn export(
         );
     }
 
-    let export_val = symbol_table.try_get(&identifier.as_ref())?;
-    export_val.borrow_mut().export_span = Some(identifier.span);
-    exports.insert(identifier.val, export_val);
+    let mut export_entry = symbol_table.try_get(&identifier.as_ref())?;
+    export_entry.export_span = Some(identifier.span);
+    exports.insert(identifier.val, export_entry);
 
     Ok(())
 }
@@ -222,7 +226,7 @@ fn import(
         // selective import (i.e. import <ident> [as <ident>[, ...]] from <file>
         ImportSpecifier::Named(named_imports) => {
             for named_import in named_imports {
-                let import_val = exports.get(&named_import.identifier).ok_or(
+                let import_entry = exports.get(&named_import.identifier).ok_or(
                     SpannedError::new(named_import.identifier.span, "Identifier not found")
                         .with_label(format!(
                             "Identifier is not exported in '{}'",
@@ -230,15 +234,31 @@ fn import(
                         )),
                 )?;
 
-                let original_definition = import_val
-                    .borrow()
+                // if the import is aliased, then treat it as a new definition, since the names
+                // are different (i.e., it is defined at the alias identifier instead of the
+                // definition inside the import)
+                let import_span = if named_import.alias.is_some() {
+                    None
+                } else {
+                    Some(import.specifier.span)
+                };
+
+                let original_definition = import_entry
                     .key_span
                     .spanned(named_import.identifier.val)
                     .clone();
                 let import_key = named_import.alias.as_ref().unwrap_or(&original_definition);
 
                 symbol_table
-                    .try_insert(import_key.val, Rc::clone(import_val))
+                    .try_insert(
+                        import_key.val,
+                        STEntry {
+                            symbol: Rc::clone(&import_entry.symbol),
+                            key_span: import_entry.key_span,
+                            import_span: import_span,
+                            export_span: import_entry.export_span,
+                        },
+                    )
                     .map_err(|error| {
                         error.with_help(format!(
                             "Try aliasing the import by adding {}",
@@ -250,9 +270,17 @@ fn import(
 
         // unselective import (i.e. import * from <file>
         ImportSpecifier::Blob => {
-            for (import_key, import_val) in exports {
+            for (import_key, import_entry) in exports {
                 symbol_table
-                    .try_insert(*import_key, Rc::clone(import_val))
+                    .try_insert(
+                        *import_key,
+                        STEntry {
+                            symbol: Rc::clone(&import_entry.symbol),
+                            key_span: import_entry.key_span,
+                            import_span: import_entry.import_span,
+                            export_span: import_entry.export_span,
+                        },
+                    )
                     .map_err(|error| {
                         error.with_help(format!(
                             "Try using named import aliases: {}{}",

@@ -38,14 +38,14 @@ impl Spanned<&Expression> {
             Expression::String(string) => ExpressionResult::String(Some(String(string.clone()))),
             Expression::Number(a) => ExpressionResult::Number(Some(Number(*a))),
             Expression::Ident(a) => {
-                let identifier = symbol_table.try_get_with_result(&self.span_to(a))?;
-                let identifier = identifier.borrow();
-                let result = identifier
+                let entry = symbol_table.try_get_with_result(&self.span_to(a))?;
+                let symbol = entry.symbol.borrow();
+                let result = symbol
                     .result
                     .clone()
                     .expect("Symbol doesn't contain result");
                 if !result.val.is_known_val() {
-                    waiting_map.insert(*a, identifier.key_span);
+                    waiting_map.insert(*a, entry.key_span);
                 }
                 result.val
             }
