@@ -1,6 +1,6 @@
 use std::{fmt::Display, io::Write};
 
-use crate::{src::Src, Span};
+use crate::{Span, src::Src};
 use ariadne::{Cache, Color, Fmt};
 use chumsky::error::{RichPattern, RichReason};
 use internment::Intern;
@@ -18,7 +18,7 @@ pub struct SpannedError {
     message: String,
     labels: Vec<(Span, String)>,
     notes: Vec<String>,
-    help: Option<String>,
+    helps: Vec<String>,
 }
 
 impl SpannedError {
@@ -28,7 +28,7 @@ impl SpannedError {
             message: message.into(),
             labels: Vec::new(),
             notes: Vec::new(),
-            help: None,
+            helps: Vec::new(),
         }
     }
 
@@ -50,7 +50,7 @@ impl SpannedError {
     }
 
     pub fn with_help(mut self, help: impl Into<String>) -> Self {
-        self.help = Some(help.into());
+        self.helps.push(help.into());
         self
     }
 
@@ -75,9 +75,7 @@ impl SpannedError {
         // the previous
         report.with_notes(self.notes.clone());
 
-        if let Some(help) = &self.help {
-            report = report.with_help(help);
-        }
+        report.with_helps(self.helps.clone());
 
         report.finish().write(cache, writer)
     }

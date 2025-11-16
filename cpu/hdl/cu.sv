@@ -361,6 +361,7 @@ module cu (
           sel_in_reg = reg_pkg::PC;
           ld_reg = 1;
         end
+
         default: ;
       endcase
     end
