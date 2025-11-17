@@ -158,11 +158,13 @@ fn fill_labels(start_address: u32, block: &Spanned<&Block>) -> Result<u32, Spann
                     .identifier
                     .span_to(ExpressionResult::Number(Some(Number(address))));
 
-                let entry = block
-                    .symbol_table
-                    .borrow_mut()
-                    .try_get(&label.identifier.as_ref())
-                    .expect("Label type didn't exist in symbol table when inserting final value");
+                let symbol_table = block.symbol_table.borrow_mut();
+
+                let entry = symbol_table
+                    .get(&label.identifier.as_ref())
+                    .unwrap_or_else(|| {
+                        panic!("Label {} type did not exist in symbol table when inserting final value", label.identifier.val)
+                    });
 
                 entry.symbol.borrow_mut().result = Some(result);
             }
@@ -188,9 +190,12 @@ fn export(
         return Err(
             SpannedError::new(identifier.span, "Identifier already exported")
                 .with_label_span(
-                    entry
-                        .export_span
-                        .expect("Exported identifier doesn't have export_span"),
+                    entry.export_span.unwrap_or_else(|| {
+                        panic!(
+                            "Exported identifier {} doesn't have export_span",
+                            identifier.val
+                        )
+                    }),
                     "Exported first here",
                 )
                 .with_label("Exported again here")

@@ -52,7 +52,7 @@ impl Spanned<&Expression> {
                 let result = symbol
                     .result
                     .clone()
-                    .expect("Symbol doesn't contain result");
+                    .unwrap_or_else(|| panic!("Identifier {} does not contain result", a));
                 if !result.val.is_known_val() {
                     waiting_map.insert(*a, entry.key_span);
                 }
