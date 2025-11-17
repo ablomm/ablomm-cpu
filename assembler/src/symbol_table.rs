@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
+use indexmap::IndexMap;
 use internment::Intern;
 
 use crate::{
@@ -147,9 +148,28 @@ impl SymbolTable {
     }
 
     // gets Value with the result field set (evaluates expresssion)
-    // TODO: detect cycles
-    pub fn try_get_with_result(&self, ident: &Spanned<&Key>) -> Result<Value, SpannedError> {
+    pub fn try_get_with_result(
+        &self,
+        ident: &Spanned<&Key>,
+        // using pointer as a unique id for map to determine equality
+        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+    ) -> Result<Value, SpannedError> {
         let entry = self.try_get(ident)?;
+        let symbol_id = Rc::as_ptr(&entry.symbol);
+
+        if loop_check.contains_key(&symbol_id) {
+            let mut error = SpannedError::new(entry.key_span, "Circular definition");
+
+            for (i, (_, back_span)) in loop_check.iter().enumerate() {
+                error = error.with_label_span(*back_span, format!("Assignment {} of the loop", i + 1));
+            }
+
+            error = error.with_label("This completes the loop, causing a circular definiton");
+
+            return Err(error);
+        }
+        loop_check.insert(symbol_id, entry.key_span);
+
         let mut symbol = entry.symbol.borrow_mut();
 
         if symbol.result.is_none() {
@@ -157,9 +177,13 @@ impl SymbolTable {
                 .expression
                 .as_ref()
                 .expect("Symbol has neither expression nor result");
-            let expression_result = expression.as_ref().eval(&symbol.symbol_table.borrow());
+            let expression_result = expression
+                .as_ref()
+                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check);
             (*symbol).result = Some(expression.span_to(expression_result?.result));
         }
+
+        loop_check.shift_remove(&symbol_id);
 
         Ok(entry.clone())
     }

@@ -37,7 +37,7 @@ I tried this for a while, but couldn't figure out how to make it work with the b
 Currently, the assembler will do 3 passes to fill the symbol tables, but for the second and third pass, it re-fills a bunch of symbols when it doesn't need to.
 Also consider adding a sensitivity list for each symbol to recursively evaluate expressions for the symbol table. (update: didn't do the sensitivity list).
 
-- [ ] Circular imports:  
+- [x] Circular imports:  
 Currently, circular imports is not supported.
 
 - [ ] Multithreading:  

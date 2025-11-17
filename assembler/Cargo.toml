@@ -7,4 +7,5 @@ edition = "2024"
 ariadne = "0.6.0"
 chumsky = "0.11.2"
 clap = { version = "4.5.51", features = ["derive"] }
+indexmap = "2.12.0"
 internment = "0.8.6"

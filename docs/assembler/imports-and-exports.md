@@ -37,9 +37,6 @@ import value from "exports.asm"; // imports identifier "value"
 
 The imported file is written relative to the current file (relative to importer).
 
-> [!WARNING]
-> Circular imports is currently not supported, but may in the future.
-
 ### Blob Imports
 
 You may also import all exports from another document by using the glob (`*`) import:

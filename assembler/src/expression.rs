@@ -1,14 +1,15 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap};
 
 use ariadne::Fmt;
 use expression_result::{Ashr, AsmDeref, AsmRef, ExpressionResult, Number, String};
+use indexmap::IndexMap;
 use internment::Intern;
 
 use crate::{
     ATTENTION_COLOR, Span, SpannedError,
     ast::{Expression, Register},
     span::Spanned,
-    symbol_table::SymbolTable,
+    symbol_table::{Symbol, SymbolTable},
 };
 
 pub mod expression_result;
@@ -32,13 +33,21 @@ pub struct EvalReturn {
 
 impl Spanned<&Expression> {
     pub fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, SpannedError> {
+        self.eval_with_loop_check(symbol_table, &mut IndexMap::new())
+    }
+
+    pub fn eval_with_loop_check(
+        &self,
+        symbol_table: &SymbolTable,
+        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+    ) -> Result<EvalReturn, SpannedError> {
         let mut waiting_map = HashMap::new();
         let result = match self.val {
             Expression::Register(reg) => ExpressionResult::Register(Some(*reg)),
             Expression::String(string) => ExpressionResult::String(Some(String(string.clone()))),
             Expression::Number(a) => ExpressionResult::Number(Some(Number(*a))),
             Expression::Ident(a) => {
-                let entry = symbol_table.try_get_with_result(&self.span_to(a))?;
+                let entry = symbol_table.try_get_with_result(&self.span_to(a), loop_check)?;
                 let symbol = entry.symbol.borrow();
                 let result = symbol
                     .result
