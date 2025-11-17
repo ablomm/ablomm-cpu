@@ -3,7 +3,7 @@ use crate::ast::{AluModifier, AsmMnemonic, Condition, CpuMnemonic, Register};
 use super::*;
 
 pub fn mnemonic_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AsmMnemonic, Extra<'src>> {
-    return choice((
+    choice((
         text::keyword("nop").to(AsmMnemonic::Nop),
         text::keyword("ld").to(AsmMnemonic::Ld),
         text::keyword("push").to(AsmMnemonic::Push),
@@ -21,11 +21,11 @@ pub fn mnemonic_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AsmMnemon
         text::keyword("ashr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ashr)),
         text::keyword("rol").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Rol)),
         text::keyword("ror").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ror)),
-    ));
+    ))
 }
 
 pub fn register_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Register, Extra<'src>> {
-    return choice((
+    choice((
         text::keyword("r0").to(Register::R0),
         text::keyword("r1").to(Register::R1),
         text::keyword("r2").to(Register::R2),
@@ -44,19 +44,19 @@ pub fn register_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Register,
         // just instead of keyword because this is not a valid identifier
         just("pc.link").to(Register::Pclink), // pseudo register, used to jump with link
         text::keyword("pc").to(Register::Pc),
-    ));
+    ))
 }
 
 pub fn alu_modifier_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AluModifier, Extra<'src>>
 {
-    return choice((
+    choice((
         text::keyword("s").to(AluModifier::S),
         text::keyword("t").to(AluModifier::T),
-    ));
+    ))
 }
 
 pub fn condition_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Condition, Extra<'src>> {
-    return choice((
+    choice((
         text::keyword("eq").to(Condition::Eq),
         text::keyword("ne").to(Condition::Ne),
         text::keyword("neg").to(Condition::Neg),
@@ -78,5 +78,5 @@ pub fn condition_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Conditio
         text::keyword("zc").to(Condition::Ne),
         text::keyword("cs").to(Condition::Uge),
         text::keyword("cc").to(Condition::Ult),
-    ));
+    ))
 }

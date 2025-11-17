@@ -161,7 +161,8 @@ impl SymbolTable {
             let mut error = SpannedError::new(entry.key_span, "Circular definition");
 
             for (i, (_, back_span)) in loop_check.iter().enumerate() {
-                error = error.with_label_span(*back_span, format!("Assignment {} of the loop", i + 1));
+                error =
+                    error.with_label_span(*back_span, format!("Assignment {} of the loop", i + 1));
             }
 
             error = error.with_label("This completes the loop, causing a circular definiton");
@@ -180,7 +181,7 @@ impl SymbolTable {
             let expression_result = expression
                 .as_ref()
                 .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check);
-            (*symbol).result = Some(expression.span_to(expression_result?.result));
+            symbol.result = Some(expression.span_to(expression_result?.result));
         }
 
         loop_check.shift_remove(&symbol_id);

@@ -19,21 +19,20 @@ use super::{STEntry, SymbolTable};
 
 type ExportMap = HashMap<Intern<String>, symbol_table::Value>;
 
-pub fn init_symbol_tables(file_queue: &mut Vec<Spanned<File>>) -> Result<(), SpannedError> {
+pub fn init_symbol_tables(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
     let mut file_exports_map = HashMap::new();
-    for file in file_queue.into_iter() {
+    for file in file_queue.iter() {
         // can't do map_err because of borrow checker
-        let exports =
-            resolve_symbol_types(&file.src, &file.span_to(&file.block), &file_exports_map)?;
+        let exports = resolve_symbol_types(&file.span_to(&file.block))?;
 
         file_exports_map.insert(file.src, exports);
     }
-    for file in file_queue.into_iter() {
+    for file in file_queue.iter() {
         add_imports(&file.src, &file.span_to(&file.block), &file_exports_map)?;
     }
 
     let mut address_accumulator = 0;
-    for file in file_queue.iter_mut().rev() {
+    for file in file_queue.iter().rev() {
         address_accumulator = calculate_addresses(address_accumulator, &file.span_to(&file.block))?;
     }
 
@@ -41,13 +40,7 @@ pub fn init_symbol_tables(file_queue: &mut Vec<Spanned<File>>) -> Result<(), Spa
 }
 
 // generates symbol table for block and sub_blocks, returns exported symbols
-fn resolve_symbol_types(
-    src: &Intern<Src>,
-    block: &Spanned<&Block>,
-    // if start_address is None, it will simply fill the symbol_table to the best of it's ability
-    // without any addresses
-    file_exports_map: &HashMap<Intern<Src>, ExportMap>,
-) -> Result<ExportMap, SpannedError> {
+fn resolve_symbol_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
     let mut exports = HashMap::new();
 
     for statement in &block.statements {
@@ -104,8 +97,7 @@ fn resolve_symbol_types(
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
 
-                let sub_exports =
-                    resolve_symbol_types(src, &statement.span_to(sub_block), file_exports_map)?;
+                let sub_exports = resolve_symbol_types(&statement.span_to(sub_block))?;
 
                 for (key, val) in sub_exports {
                     block.symbol_table.borrow_mut().try_insert(key, val)?;
@@ -243,10 +235,8 @@ fn import(
                     Some(import.specifier.span)
                 };
 
-                let original_definition = import_entry
-                    .key_span
-                    .spanned(named_import.identifier.val)
-                    .clone();
+                let original_definition =
+                    import_entry.key_span.spanned(named_import.identifier.val);
                 let import_key = named_import.alias.as_ref().unwrap_or(&original_definition);
 
                 symbol_table
@@ -255,7 +245,7 @@ fn import(
                         STEntry {
                             symbol: Rc::clone(&import_entry.symbol),
                             key_span: import_entry.key_span,
-                            import_span: import_span,
+                            import_span,
                             export_span: import_entry.export_span,
                         },
                     )

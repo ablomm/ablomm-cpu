@@ -3,7 +3,7 @@ use crate::ast::{
     Operation, Register,
 };
 use crate::ast::{Ast, Statement};
-use crate::error::{SpannedError, ATTENTION_COLOR};
+use crate::error::{ATTENTION_COLOR, SpannedError};
 use crate::expression::expression_result::ExpressionResult;
 use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
