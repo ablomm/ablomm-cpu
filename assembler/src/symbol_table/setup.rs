@@ -49,12 +49,16 @@ fn infer_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
 
                 block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
-                    STEntry::new(
-                        Rc::new(RefCell::new(
-                            Symbol::new(Rc::clone(&block.symbol_table)).with_result(result),
-                        )),
-                        label.identifier.span,
-                    ),
+                    STEntry {
+                        symbol: Rc::new(RefCell::new(Symbol {
+                            result: Some(result),
+                            expression: None,
+                            symbol_table: Rc::clone(&block.symbol_table),
+                        })),
+                        key_span: label.identifier.span,
+                        import_span: None,
+                        export_span: None,
+                    },
                 )?;
 
                 if label.export {
@@ -69,13 +73,16 @@ fn infer_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
             Statement::Assignment(assignment) => {
                 block.symbol_table.borrow_mut().try_insert(
                     assignment.identifier.val,
-                    STEntry::new(
-                        Rc::new(RefCell::new(
-                            Symbol::new(Rc::clone(&block.symbol_table))
-                                .with_expression(assignment.expression.clone()),
-                        )),
-                        assignment.identifier.span,
-                    ),
+                    STEntry {
+                        symbol: Rc::new(RefCell::new(Symbol {
+                            result: None,
+                            expression: Some(assignment.expression.clone()),
+                            symbol_table: Rc::clone(&block.symbol_table),
+                        })),
+                        key_span: assignment.identifier.span,
+                        import_span: None,
+                        export_span: None,
+                    },
                 )?;
 
                 if assignment.export {
@@ -119,8 +126,7 @@ fn add_imports(
         match &statement.val {
             Statement::Import(import_val) => {
                 let import_src = src::get_import_src(src, import_val).unwrap_or_else(|error| {
-                    // should not occur because should already have gotten this import in
-                    // generate_file_queue()
+                    // infer_types() should have already created it
                     panic!(
                         "Could not find import '{}' in file '{}': {}",
                         import_val.file.val, src, error
@@ -129,7 +135,7 @@ fn add_imports(
 
                 // the import files' exports
                 let exports = file_exports_map.get(&import_src).unwrap_or_else(||
-                    // should not occur because the order should ensure all dependencies are parsed
+                    // infer_types() should have already created it
                     panic!(
                         "Attempted to import '{}' when the exporter's symbol table has not been filled",
                         import_src
@@ -227,9 +233,9 @@ fn import(
                         )),
                 )?;
 
-                // if the import is aliased, then treat it as a new definition, since the names
-                // are different (i.e., it is defined at the alias identifier instead of the
-                // definition inside the import)
+                // if the import is aliased, then treat it as a new definition, in regards to
+                // errors, since the namesare different (i.e., it is defined at the alias
+                // identifier instead of the definition inside the import)
                 let import_span = if named_import.alias.is_some() {
                     None
                 } else {

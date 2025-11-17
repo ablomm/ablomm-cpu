@@ -14,6 +14,12 @@ pub type Value = STEntry;
 pub mod setup;
 
 #[derive(Debug, Clone)]
+pub struct SymbolTable {
+    pub table: HashMap<Key, Value>,
+    pub parent: Option<Rc<RefCell<SymbolTable>>>,
+}
+
+#[derive(Debug, Clone)]
 pub struct STEntry {
     pub symbol: Rc<RefCell<Symbol>>,
 
@@ -28,27 +34,6 @@ pub struct STEntry {
     pub export_span: Option<Span>,
 }
 
-impl STEntry {
-    pub fn new(symbol: Rc<RefCell<Symbol>>, key_span: Span) -> Self {
-        Self {
-            symbol,
-            key_span,
-            import_span: None,
-            export_span: None,
-        }
-    }
-
-    pub fn with_import_span(mut self, import_span: Span) -> Self {
-        self.import_span = Some(import_span);
-        self
-    }
-
-    pub fn with_export_span(mut self, export_span: Span) -> Self {
-        self.export_span = Some(export_span);
-        self
-    }
-}
-
 // not sure of a good name for this, but it's just the value that can be shared among multiple
 // tables
 #[derive(Debug, Clone)]
@@ -59,32 +44,6 @@ pub struct Symbol {
     // the symbol_table of where the identifier was defined, needed to evaluate imported
     // identifiers
     pub symbol_table: Rc<RefCell<SymbolTable>>,
-}
-
-impl Symbol {
-    pub fn new(symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
-        Self {
-            result: None,
-            expression: None,
-            symbol_table,
-        }
-    }
-
-    pub fn with_result(mut self, result: Spanned<ExpressionResult>) -> Self {
-        self.result = Some(result);
-        self
-    }
-
-    pub fn with_expression(mut self, expression: Spanned<Expression>) -> Self {
-        self.expression = Some(expression);
-        self
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct SymbolTable {
-    pub table: HashMap<Key, Value>,
-    pub parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
 impl SymbolTable {

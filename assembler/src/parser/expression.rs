@@ -28,8 +28,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
         .padded()
         .repeated()
         .foldr(atom, |op, rhs| {
-            let span = op.span.union(&rhs.span); // can't inline because value is moved before span
-            // can be created
+            let span = op.span.union(&rhs.span); // can't inline because value is moved before span can be created
             Spanned::new(op(Box::new(rhs)), span)
         })
         .boxed();
