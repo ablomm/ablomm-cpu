@@ -10,7 +10,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
             number_parser().map(Expression::Number),
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
-                .map(Expression::Ident),
+                .map(Expression::Identifier),
             expression.padded().delimited_by(just('('), just(')')),
         ))
         .map_with(|val, e| Spanned::new(val, e.span()))
@@ -39,7 +39,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
                 choice((
                     just('*').to(Expression::Mul as fn(_, _) -> _),
                     just('/').to(Expression::Div as fn(_, _) -> _),
-                    just('%').to(Expression::Remainder as fn(_, _) -> _),
+                    just('%').to(Expression::Rem as fn(_, _) -> _),
                 ))
                 .padded()
                 .then(unary.clone())

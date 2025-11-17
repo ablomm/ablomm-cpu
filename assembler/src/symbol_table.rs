@@ -46,6 +46,19 @@ pub struct Symbol {
     pub symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
+impl Symbol {
+    pub fn get_definition_span(&self) -> Span {
+        if let Some(result) = &self.result {
+            result.span
+        } else if let Some(expression) = &self.expression {
+            expression.span
+        } else {
+            // every symbol should have either expression or result
+            panic!("Attempted to get definition span of Symbol that has no result nor expression");
+        }
+    }
+}
+
 impl SymbolTable {
     pub fn contains_key<Q>(&self, key: &Q) -> bool
     where
@@ -121,22 +134,24 @@ impl SymbolTable {
 
             for (i, (_, back_span)) in loop_check.iter().enumerate() {
                 error =
-                    error.with_label_span(*back_span, format!("Assignment {} of the loop", i + 1));
+                    error.with_label_span(*back_span, format!("Definition {} of the loop", i + 1));
             }
 
             error = error.with_label("This completes the loop, causing a circular definiton");
 
             return Err(error);
         }
-        loop_check.insert(symbol_id, entry.key_span);
+        loop_check.insert(symbol_id, entry.symbol.borrow().get_definition_span());
 
         let mut symbol = entry.symbol.borrow_mut();
 
         if symbol.result.is_none() {
-            let expression = symbol
-                .expression
-                .as_ref()
-                .expect("Symbol has neither expression nor result");
+            let expression = symbol.expression.as_ref().unwrap_or_else(|| {
+                panic!(
+                    "Symbol with identifier {} has neither expression nor result",
+                    ident.val
+                )
+            });
             let expression_result = expression
                 .as_ref()
                 .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)?;
