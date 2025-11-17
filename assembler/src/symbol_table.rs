@@ -180,8 +180,8 @@ impl SymbolTable {
                 .expect("Symbol has neither expression nor result");
             let expression_result = expression
                 .as_ref()
-                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check);
-            symbol.result = Some(expression.span_to(expression_result?.result));
+                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)?;
+            symbol.result = Some(expression.span_to(expression_result.result));
         }
 
         loop_check.shift_remove(&symbol_id);

@@ -12,7 +12,7 @@ use crate::{
 };
 
 // takes in a canonical file path, address, and cache and returns a queue of the order in which to
-// generate the symbol tables / exports in order to satisfy import dependencies (i.e. post order)
+// generate the machine code
 pub fn generate_file_queue(
     src: &Spanned<Intern<Src>>,
     cache: &mut HashMap<Intern<Src>, String>,
@@ -40,10 +40,11 @@ pub fn generate_file_queue(
         file_queue.append(&mut generate_file_queue(&import_src, cache)?);
     }
 
-    // only add itself after imports are added (post order)
+    // only add itself after imports are added to satisfy borrow checker
     file_queue.push(file);
 
-    Ok(file_queue)
+    // depth-first
+    Ok(file_queue.into_iter().rev().collect())
 }
 
 // takes a src, reads it, and parses the contents
@@ -51,8 +52,6 @@ fn parse_file(
     src: &Spanned<Intern<Src>>,
     cache: &mut HashMap<Intern<Src>, String>,
 ) -> Result<Spanned<File>, Vec<SpannedError>> {
-    // need to do a match here because map_err causes the borrow checker to think that cache is
-    // moved into the map_err closure
     let assembly_code = fs::read_to_string(src.as_path()).map_err(|error| {
         vec![SpannedError::new(src.span, "Error reading file").with_label(error.to_string())]
     })?;

@@ -45,18 +45,12 @@ pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
         Err(error) => return Err(Error::Spanned(error, sources(cache))),
     };
 
-    // needed to get types (and as much values as possible without addresses) because the number of
-    // words for a statement may depend on the type and value of symbols
     match st_setup::init_symbol_tables(&mut file_queue) {
         Ok(_) => (),
         Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
     }
 
-    let ast = Ast {
-        // reverse order to get correct generation order, which is opposite of symbol table
-        // creation order (i.e. had to create imported file's symbol table before itself)
-        files: file_queue.into_iter().rev().collect(),
-    };
+    let ast = Ast { files: file_queue };
 
     generator::compile_ast(&ast).map_err(|error| Error::Spanned(error, sources(cache)))
 }

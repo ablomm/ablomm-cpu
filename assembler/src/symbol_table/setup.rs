@@ -22,25 +22,24 @@ type ExportMap = HashMap<Intern<String>, symbol_table::Value>;
 pub fn init_symbol_tables(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
     let mut file_exports_map = HashMap::new();
     for file in file_queue.iter() {
-        // can't do map_err because of borrow checker
-        let exports = resolve_symbol_types(&file.span_to(&file.block))?;
-
+        let exports = infer_types(&file.span_to(&file.block))?;
         file_exports_map.insert(file.src, exports);
     }
+
     for file in file_queue.iter() {
         add_imports(&file.src, &file.span_to(&file.block), &file_exports_map)?;
     }
 
     let mut address_accumulator = 0;
-    for file in file_queue.iter().rev() {
-        address_accumulator = calculate_addresses(address_accumulator, &file.span_to(&file.block))?;
+    for file in file_queue.iter() {
+        address_accumulator = fill_labels(address_accumulator, &file.span_to(&file.block))?;
     }
 
     Ok(())
 }
 
-// generates symbol table for block and sub_blocks, returns exported symbols
-fn resolve_symbol_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
+// generates symbol table for block and sub_blocks, returns exported symbols with inferred types
+fn infer_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
     let mut exports = HashMap::new();
 
     for statement in &block.statements {
@@ -97,7 +96,7 @@ fn resolve_symbol_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedErr
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
 
-                let sub_exports = resolve_symbol_types(&statement.span_to(sub_block))?;
+                let sub_exports = infer_types(&statement.span_to(sub_block))?;
 
                 for (key, val) in sub_exports {
                     block.symbol_table.borrow_mut().try_insert(key, val)?;
@@ -110,6 +109,7 @@ fn resolve_symbol_types(block: &Spanned<&Block>) -> Result<ExportMap, SpannedErr
     Ok(exports)
 }
 
+// add every imported identifier to each symbol table whose scope imported it
 fn add_imports(
     src: &Intern<Src>,
     block: &Spanned<&Block>,
@@ -148,12 +148,8 @@ fn add_imports(
     Ok(())
 }
 
-// needed because some future imports symbols depend on the size of the importer's length
-// (yeah, I know; it's confusing)
-pub fn calculate_addresses(
-    start_address: u32,
-    block: &Spanned<&Block>,
-) -> Result<u32, SpannedError> {
+// calculat label addresses
+fn fill_labels(start_address: u32, block: &Spanned<&Block>) -> Result<u32, SpannedError> {
     let mut address = start_address;
     for statement in &block.statements {
         match &statement.val {
@@ -172,7 +168,7 @@ pub fn calculate_addresses(
             }
 
             Statement::Block(sub_block) => {
-                calculate_addresses(address, &statement.span_to(sub_block))?;
+                fill_labels(address, &statement.span_to(sub_block))?;
             }
             _ => (),
         }
