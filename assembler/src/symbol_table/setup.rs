@@ -274,7 +274,7 @@ fn import(
                         STEntry {
                             symbol: Rc::clone(&import_entry.symbol),
                             key_span: import_entry.key_span,
-                            import_span: import_entry.import_span,
+                            import_span: Some(import.specifier.span),
                             export_span: import_entry.export_span,
                         },
                     )

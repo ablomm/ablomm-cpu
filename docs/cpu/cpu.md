@@ -14,13 +14,15 @@ Ablomm CPU is a 32-bit CPU.
 | wr| Signal to write to memory | 1 |
 | irq | Interrupt request; causes a hardware interrupt as outlined in [ISA document](isa.md#interrupt-vector-table) | 1 |
 | rst | Reset; causes the CPU to reset all registers as outlined in the [ISA document](isa.md#interrupt-vector-table) | 1 |
-| en | Enable; starts the CPU when set, pauses the CPU when clear. Takes affect on the next falling edge of the clock | 1 |
+| en | Enable; starts the CPU when set, pauses the CPU when clear | 1 |
 | clk | Clock | 1 |
 
 ## Starting
 
-The CPU will power on in a disabled state. To enable, simply set the `en` port. On the next falling edge, the CPU will begin executing. This also applies to resets.
+The CPU will run when the `en` port is set.
 
 ## Stopping
 
-The CPU can be paused by clearing the `en` port. On the next falling edge, the CPU will pause execution.
+The CPU will be paused when the `en` port is clear.
+
+The CPU will be reset when `rst` is set on the next rising edge of `clk`.

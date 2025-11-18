@@ -43,7 +43,7 @@ pub fn generate_file_queue(
     // only add itself after imports are added to satisfy borrow checker
     file_queue.push(file);
 
-    // depth-first
+    // depth first
     Ok(file_queue.into_iter().rev().collect())
 }
 

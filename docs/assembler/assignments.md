@@ -63,16 +63,18 @@ ld r0, r1;
 
 This means `r0` will contain the value `321` after it is ran **NOT** the value `123`; expressions do not evaluate registers.
 
-## Hoisting
+## Scope
 
-All identifiers are hoisted in their scope; this allows for using labels before they were defined.
+All identifiers are usable in their scope, regardless of where they are defined in the scope; this allows for using any identifiers before the line in which they were defined.
 
 For example, this is legal:
 
 ```c
-ld r0, value;
+value2 = value * 2;
+ld r0, value2;
 value = 123;
 ```
+Scopes are detailed more in the [Scopes document](scopes.md).
 
 ## Shadowing
 
@@ -83,7 +85,7 @@ An example of shadowing an identifier is as shown:
 ```c
 value = 123;
 {
-    value = value * 2; // shadowing the identifier defined above
+    value = 123 * 2; // shadowing the identifier defined above
     ld r0, value;
 }
 ld r1, value;
