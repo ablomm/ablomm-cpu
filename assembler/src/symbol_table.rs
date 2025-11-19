@@ -34,15 +34,13 @@ pub struct STEntry {
     pub export_span: Option<Span>,
 }
 
-// not sure of a good name for this, but it's just the value that can be shared among multiple
-// tables
+// not sure of a good name for this, but it's just the value that can be shared among multiple tables
 #[derive(Debug, Clone)]
 pub struct Symbol {
     pub result: Option<Spanned<ExpressionResult>>,
     pub expression: Option<Spanned<Expression>>,
 
-    // the symbol_table of where the identifier was defined, needed to evaluate imported
-    // identifiers
+    // the symbol_table of where the identifier was defined, needed to evaluate imported identifiers
     pub symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
@@ -54,7 +52,9 @@ impl Symbol {
             expression.span
         } else {
             // every symbol should have either expression or result
-            panic!("Attempted to get definition span of Symbol that has no result nor expression");
+            panic!(
+                "Attempted to get definition span of symbol that has neither result nor expression"
+            );
         }
     }
 }
@@ -127,6 +127,11 @@ impl SymbolTable {
         loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
     ) -> Result<Value, SpannedError> {
         let entry = self.try_get(ident)?;
+
+        if entry.symbol.borrow().result.is_some() {
+            return Ok(entry);
+        }
+
         let symbol_id = Rc::as_ptr(&entry.symbol);
 
         if loop_check.contains_key(&symbol_id) {
@@ -137,30 +142,34 @@ impl SymbolTable {
                     error.with_label_span(*back_span, format!("Definition {} of the loop", i + 1));
             }
 
-            error = error.with_label("This completes the loop, causing a circular definiton");
+            error = error.with_label("This completes the loop, causing a circular definition");
 
             return Err(error);
         }
         loop_check.insert(symbol_id, entry.symbol.borrow().get_definition_span());
 
-        let mut symbol = entry.symbol.borrow_mut();
+        let result = {
+            let symbol = entry.symbol.borrow();
 
-        if symbol.result.is_none() {
             let expression = symbol.expression.as_ref().unwrap_or_else(|| {
                 panic!(
-                    "Symbol with identifier {} has neither expression nor result",
+                    "Symbol with identifier '{}' has neither expression nor result",
                     ident.val
                 )
             });
+
             let expression_result = expression
                 .as_ref()
                 .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)?;
-            symbol.result = Some(expression.span_to(expression_result.result));
-        }
+
+            expression.span_to(expression_result.result)
+        };
+
+        entry.symbol.borrow_mut().result = Some(result);
 
         loop_check.shift_remove(&symbol_id);
 
-        Ok(entry.clone())
+        Ok(entry)
     }
 
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {

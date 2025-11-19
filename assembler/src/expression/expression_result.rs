@@ -125,7 +125,9 @@ impl AsmRef for &Spanned<&ExpressionResult> {
                 vec!["indirect"],
                 Some(self.val),
             )
-            .with_note("You can only take a reference of a value was previously dereferenced")),
+            .with_note(
+                "You can only take a reference of a value that was previously dereferenced",
+            )),
         }
     }
 }

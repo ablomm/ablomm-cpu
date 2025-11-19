@@ -38,8 +38,8 @@ pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
     // print error messages and check if a file has already been parsed
     let mut cache = HashMap::new();
 
-    // file queue is order in which to generate symbol tables
-    // can't do map_err because of borrow checker
+    // file queue is order in which to generate machine code
+    // can't do map_err because of borrow checker :(
     let mut file_queue = match file::generate_file_queue(&src, &mut cache) {
         Ok(file_queue) => file_queue,
         Err(error) => return Err(Error::Spanned(error, sources(cache))),
@@ -52,5 +52,6 @@ pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
 
     let ast = Ast { files: file_queue };
 
-    generator::compile_ast(&ast).map_err(|error| Error::Spanned(error, sources(cache)))
+    ast.assemble()
+        .map_err(|error| Error::Spanned(error, sources(cache)))
 }
