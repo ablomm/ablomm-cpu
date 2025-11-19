@@ -3,7 +3,7 @@ use crate::ast::{
     Operation, Register,
 };
 use crate::ast::{Ast, Statement};
-use crate::error::{SpannedError, ATTENTION_COLOR};
+use crate::error::{ATTENTION_COLOR, SpannedError};
 use crate::expression::expression_result::ExpressionResult;
 use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
@@ -18,19 +18,18 @@ mod nop;
 mod pop;
 mod push;
 
-// cannot include span because blocks may span multiple different files
-pub fn compile_ast(ast: &Ast) -> Result<String, Vec<SpannedError>> {
-    let mut machine_code: String = "".to_owned();
-
-    for opcode in ast.generate()? {
-        machine_code.push_str(&format!("{:0>8x}\n", opcode));
-    }
-
-    Ok(machine_code)
-}
-
 // no span because ast can span many different files
 impl Ast {
+    pub fn assemble(&self) -> Result<String, Vec<SpannedError>> {
+        let mut machine_code: String = "".to_owned();
+
+        for opcode in self.generate()? {
+            machine_code.push_str(&format!("{:0>8x}\n", opcode));
+        }
+
+        Ok(machine_code)
+    }
+
     fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
         let mut opcodes = Vec::new();
 

@@ -11,7 +11,6 @@ pub struct Ast {
 #[derive(Debug, Clone)]
 pub struct File {
     pub src: Intern<Src>,
-    pub start_address: Option<u32>,
     pub block: Block,
 }
 
@@ -69,7 +68,7 @@ pub enum Expression {
     Register(Register),
     String(String),
     Number(u32),
-    Ident(Intern<String>),
+    Identifier(Intern<String>),
     Ref(Box<Spanned<Expression>>),
     Deref(Box<Spanned<Expression>>),
     #[allow(dead_code)]
@@ -77,7 +76,7 @@ pub enum Expression {
     Not(Box<Spanned<Expression>>),
     Mul(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Div(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
-    Remainder(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
+    Rem(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Add(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Sub(Box<Spanned<Expression>>, Box<Spanned<Expression>>),
     Shl(Box<Spanned<Expression>>, Box<Spanned<Expression>>),

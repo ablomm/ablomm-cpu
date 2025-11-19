@@ -1,10 +1,10 @@
+use crate::Span;
 use crate::ast::{
     Assignment, Block, FullMnemonic, Import, ImportSpecifier, Label, Modifier, NamedImport,
     Operation, Statement,
 };
 use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
-use crate::Span;
 use chumsky::input::StrInput;
 use chumsky::prelude::*;
 use internment::Intern;

@@ -37,4 +37,4 @@ But, in general, it is not possible to solve these types of dependencies, as the
 The assembler does not try to solve it, and instead just gives up.
 
 > [!NOTE]
-> Imported files are ordered after the importer, as described in the [Imports and Exports document](imports-and-exports.md#imports-structure-in-machine-code), which means, for all intents and purposes, an imported identifier is defined after all statements in the importer, regardless of where the import statement appears.
+> Imported files are often ordered after the importer, as described in the [Imports and Exports document](imports-and-exports.md#imports-structure-in-machine-code), which means an imported identifier may be defined after all statements of the importer, regardless of where the import statement appears in the assembly code.

@@ -1,6 +1,6 @@
 # Imports and Exports
 
-The assembler supports an import and export system of identifiers.
+The assembler supports an import and export system for identifiers.
 
 Identifiers are simply either labels, as described in the [Labels document](labels.md), or the identifier part of an assignments as described in the [Assignments document](assignments.md).
 
@@ -36,9 +36,6 @@ import value from "exports.asm"; // imports identifier "value"
 ```
 
 The imported file is written relative to the current file (relative to importer).
-
-> [!WARNING]
-> Circular imports is currently not supported, but may in the future.
 
 ### Blob Imports
 
@@ -99,24 +96,29 @@ Consider the following import graph:
 
 ```mermaid
 graph TD;
-    hello_world.asm-->strings.asm;
     hello_world.asm-->lib/print.asm;
-    hello_world.asm-->lib/defines.asm;
-    lib/print.asm-->lib/defines.asm;
     lib/print.asm-->lib/tty.asm;
-    lib/tty.asm-->defines.asm;
+    lib/tty.asm-->lib/defines.asm;
+    lib/print.asm-->lib/defines.asm;
+    hello_world.asm-->strings.asm;
+    hello_world.asm-->loop.asm;
+    loop.asm-->hello_world.asm;
+    hello_world.asm-->lib/defines.asm;
 ```
 
-The machine code will be generated for each file in a pre-order traversal, while already generated files are pruned, so multiple imports to the same file does not cause duplications in the machine code; it is generated once.
+The machine code will be generated for each file depth first, with already generated files being skipped.
 
-The above graph would be generated to machine code in the following order (pre-order traversal):
+This means multiple imports to the same file does not cause duplications in the machine code; it is generated only once.
+
+The above graph would be generated to machine code in the following order (depth first):
 
 ```
 <machine code for hello_world.asm>
-<machine code for strings.asm>
-<machine code for lib/defines.asm>
 <machine code for lib/print.asm>
 <machine code for lib/tty.asm>
+<machine code for lib/defines.asm>
+<machine code for strings.asm>
+<machine code for loop.asm>
 ```
 
 This means that the root file will also start at address 0, but there is no guarantee which address imported files will start at.
@@ -126,9 +128,10 @@ This also means that if you do not prevent the control flow from going off a fil
 For example, consider if `hello_world.asm` was the following:
 
 ```c
-import string_address from "strings.asm";
-import * from "lib/defines.asm";
 import print from "lib/print.asm";
+import string_address from "strings.asm";
+import * from "lib/loop.asm";
+import * from "lib/defines.asm";
 
     ld r0, string_address;
     push r0;
@@ -137,12 +140,13 @@ import print from "lib/print.asm";
 
 This would cause the program to print whatever `string_address` is pointing to, but then it will not stop executing and start executing whatever is in `strings.asm`.
 
-To prevent such a case you can either shutdown (specific to hardware/simulator), or you can loop indefinitely:
+To prevent such a case, you can either shutdown (specific to hardware/simulator), or you can loop indefinitely:
 
 ```c
-import string_address from "strings.asm";
-import * from "lib/defines.asm";
 import print from "lib/print.asm";
+import string_address from "strings.asm";
+import * from "lib/loop.asm";
+import * from "lib/defines.asm";
 
     ld r0, string_address;
     push r0;

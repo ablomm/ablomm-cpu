@@ -238,7 +238,7 @@ label: {
     identifier = 123;
 
     {
-        identifier = identifier * 2; // shadows the parent identifier
+        identifier = 123 * 2; // shadows the parent identifier
         ld r0, identifier; // r0 = 246
     }
 
@@ -263,7 +263,7 @@ label: {
     identifier = 123;
 
     {
-        identifier = identifier * 2; // shadows the parent identifier
+        identifier = 123 * 2; // shadows the parent identifier
         ld r0, identifier; // r0 = 246
     }
 

@@ -1,18 +1,29 @@
 use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
+use indexmap::IndexMap;
 use internment::Intern;
 
-use crate::{expression::expression_result::ExpressionResult, span::Spanned, Span, SpannedError};
+use crate::{
+    Span, SpannedError, ast::Expression, expression::expression_result::ExpressionResult,
+    span::Spanned,
+};
 
-type Key = Intern<String>;
-type Value = STEntry;
+pub type Key = Intern<String>;
+pub type Value = STEntry;
 
 pub mod setup;
 
 #[derive(Debug, Clone)]
-pub struct STEntry {
-    pub result: Spanned<ExpressionResult>,
+pub struct SymbolTable {
+    pub table: HashMap<Key, Value>,
+    pub parent: Option<Rc<RefCell<SymbolTable>>>,
+}
 
+#[derive(Debug, Clone)]
+pub struct STEntry {
+    pub symbol: Rc<RefCell<Symbol>>,
+
+    //TODO: Not have these shared (in the Rc)
     // the span of the original definition identifier
     pub key_span: Span,
 
@@ -21,42 +32,31 @@ pub struct STEntry {
 
     // the span of the export statement of the import
     pub export_span: Option<Span>,
-
-    // if it's allowable to import again
-    pub updatable: bool,
 }
 
-impl STEntry {
-    pub fn new(result: Spanned<ExpressionResult>, key_span: Span) -> Self {
-        Self {
-            result,
-            key_span,
-            import_span: None,
-            export_span: None,
-            updatable: false,
+// not sure of a good name for this, but it's just the value that can be shared among multiple tables
+#[derive(Debug, Clone)]
+pub struct Symbol {
+    pub result: Option<Spanned<ExpressionResult>>,
+    pub expression: Option<Spanned<Expression>>,
+
+    // the symbol_table of where the identifier was defined, needed to evaluate imported identifiers
+    pub symbol_table: Rc<RefCell<SymbolTable>>,
+}
+
+impl Symbol {
+    pub fn get_definition_span(&self) -> Span {
+        if let Some(result) = &self.result {
+            result.span
+        } else if let Some(expression) = &self.expression {
+            expression.span
+        } else {
+            // every symbol should have either expression or result
+            panic!(
+                "Attempted to get definition span of symbol that has neither result nor expression"
+            );
         }
     }
-
-    pub fn with_import_span(mut self, import_span: Span) -> Self {
-        self.import_span = Some(import_span);
-        self
-    }
-
-    pub fn with_export_span(mut self, export_span: Span) -> Self {
-        self.export_span = Some(export_span);
-        self
-    }
-
-    pub fn updatable(mut self) -> Self {
-        self.updatable = true;
-        self
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct SymbolTable {
-    pub table: HashMap<Key, Value>,
-    pub parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
 impl SymbolTable {
@@ -100,8 +100,8 @@ impl SymbolTable {
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
     {
-        if let Some(value) = self.get(key) {
-            return Some(value.clone());
+        if let Some(entry) = self.get(key) {
+            return Some(entry.clone());
         }
 
         if let Some(parent) = &self.parent {
@@ -119,79 +119,74 @@ impl SymbolTable {
         )
     }
 
+    // gets Value with the result field set (evaluates expresssion)
+    pub fn try_get_with_result(
+        &self,
+        ident: &Spanned<&Key>,
+        // using pointer as a unique id for map to determine equality
+        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+    ) -> Result<Value, SpannedError> {
+        let entry = self.try_get(ident)?;
+
+        if entry.symbol.borrow().result.is_some() {
+            return Ok(entry);
+        }
+
+        let symbol_id = Rc::as_ptr(&entry.symbol);
+
+        if loop_check.contains_key(&symbol_id) {
+            let mut error = SpannedError::new(entry.key_span, "Circular definition");
+
+            for (i, (_, back_span)) in loop_check.iter().enumerate() {
+                error =
+                    error.with_label_span(*back_span, format!("Definition {} of the loop", i + 1));
+            }
+
+            error = error.with_label("This completes the loop, causing a circular definition");
+
+            return Err(error);
+        }
+        loop_check.insert(symbol_id, entry.symbol.borrow().get_definition_span());
+
+        let result = {
+            let symbol = entry.symbol.borrow();
+
+            let expression = symbol.expression.as_ref().unwrap_or_else(|| {
+                panic!(
+                    "Symbol with identifier '{}' has neither expression nor result",
+                    ident.val
+                )
+            });
+
+            let expression_result = expression
+                .as_ref()
+                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)?;
+
+            expression.span_to(expression_result.result)
+        };
+
+        entry.symbol.borrow_mut().result = Some(result);
+
+        loop_check.shift_remove(&symbol_id);
+
+        Ok(entry)
+    }
+
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
-    pub fn try_insert(&mut self, key: Key, value: Value) -> Result<(), SpannedError> {
-        self.try_insert_expr(
-            key,
-            value.result,
-            value.key_span,
-            value.import_span,
-            value.export_span,
-            value.updatable,
-        )
-    }
-
-    // try_insert calls this rather than the other way arround because this way ensures that
-    // if the insert is skipped, then the expression will not be evaluated
-    pub fn try_insert_expr<T: STInto<Spanned<ExpressionResult>>>(
-        &mut self,
-        key: Key,
-        expression: T,
-        key_span: Span,
-        import_span: Option<Span>,
-        export_span: Option<Span>,
-        updatable: bool,
-    ) -> Result<(), SpannedError> {
-        if let Some(entry) = self.table.get_mut(&key) {
-            if !entry.updatable {
-                return Err(SpannedError::identifier_already_defined(
-                    entry.key_span,
-                    entry.import_span,
-                    key_span,
-                    import_span,
-                ));
-            } else if entry.result.is_known_val() {
-                // no need to insert; value is already known
-                entry.updatable = updatable;
-                return Ok(());
-            }
+    fn try_insert(&mut self, key: Key, new_entry: Value) -> Result<(), SpannedError> {
+        if let Some(entry) = self.table.get(&key) {
+            return Err(SpannedError::identifier_already_defined(
+                entry.key_span,
+                entry.import_span,
+                new_entry.key_span,
+                new_entry.import_span,
+            ));
         }
-
-        let result = expression.st_into(self)?;
-
-        self.insert(
-            key,
-            STEntry {
-                result,
-                key_span,
-                import_span,
-                export_span,
-                updatable,
-            },
-        );
+        self.insert(key, new_entry);
 
         Ok(())
-    }
-
-    // flags every entry to be able to insert again. Useful for progressive passes containing more
-    // and more info while keeping each pass only able to insert a symbol once
-    pub fn set_entries_updatable(&mut self) {
-        for entry in self.table.values_mut() {
-            entry.updatable = true;
-        }
-    }
-}
-
-// trait similar to TryInto but can use the symbol_table
-pub trait STInto<T> {
-    fn st_into(self, symbol_table: &SymbolTable) -> Result<T, SpannedError>;
-}
-
-impl<T, U: Into<T>> STInto<T> for U {
-    fn st_into(self, _symbol_table: &SymbolTable) -> Result<T, SpannedError> {
-        Ok(self.into())
     }
 }

@@ -300,17 +300,17 @@ This is because the instructions are fixed-width, and there is only space for 16
 It is in theory possible to make it work with 32-bit addresses, but it would cause so much trouble to be not worth it. For example, you would have to do something similar to:
 
 ```c
-// some code ...
+    // some code ...
     add pc, 1; // need to jump over the gen literal
 far_away_label_address: far_away_label;
-// some more code ...
-// address 2^16
+    // some more code ...
+    // address 2^16
     ld r0, far_away_label_address;
     ld r0, *r0; // load r0 with far_away_label
     ld pc, r0;
-// even more code ...
+    // even more code ...
 far_away_label:
-// I want to jump here
+    // I want to jump here
 ```
 
 > [!NOTE]

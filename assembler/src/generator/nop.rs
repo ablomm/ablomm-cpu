@@ -1,5 +1,5 @@
-use crate::generator::*;
 use crate::SpannedError;
+use crate::generator::*;
 
 pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, SpannedError> {
     assert!(matches!(
@@ -7,6 +7,7 @@ pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, SpannedError
         AsmMnemonic::Nop
     ));
 
+    #[allow(clippy::len_zero)]
     if operation.operands.len() != 0 {
         return Err(SpannedError::incorrect_num(
             operation.operands.span,
