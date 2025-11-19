@@ -42,7 +42,7 @@ This is equivalent to the following:
 ld r1, *(r1 + 24);
 ```
 
-The location an assignment is defined does not affect the result; expressions do not evaluate registers.
+The location an assignment is defined does not affect the result: expressions do not evaluate registers.
 
 For example, consider the following:
 
@@ -61,7 +61,7 @@ ld r1, 321;
 ld r0, r1;
 ```
 
-This means `r0` will contain the value `321` after it is ran **NOT** the value `123`; expressions do not evaluate registers.
+This means `r0` will contain the value `321` after it is ran **NOT** the value `123`: expressions do not evaluate registers.
 
 ## Scope
 
