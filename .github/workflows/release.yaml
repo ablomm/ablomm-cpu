@@ -1,0 +1,74 @@
+name: Release Artifacts
+
+on:
+  release:
+    types: [published]
+    
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release-assembler:
+    name: Release Assembler Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: assembler/
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build
+      run: cargo build --release --verbose
+      
+    - name: Make artifacts directory
+      run: mkdir ${{ github.workspace }}/artifacts
+      
+    - name: Rename artifact for release
+      run: cp target/release/ablomm_asm ${{ github.workspace }}/artifacts/assembler
+      
+    - name: Update GitHub release with assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          artifacts/assembler
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+  release-cpu:
+    name: Release CPU Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: cpu/
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Icarus Verilog and Verilator
+      run: sudo apt-get install -y iverilog verilator
+      
+    - name: Build
+      run: ./scripts/build_all.sh
+      
+    - name: Make artifacts directory
+      run: mkdir ${{ github.workspace }}/artifacts
+      
+    - name: Rename Icarus Veirlog artifact for release
+      run: cp build/iverilog/Vsimulator ${{ github.workspace }}/artifacts/iverilog_simulator
+      
+    - name: Rename Verilator artifact for release
+      run: cp build/verilator/Vsimulator ${{ github.workspace }}/artifacts/verilator_simulator
+      
+    - name: Update GitHub release with assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          artifacts/iverilog_simulator
+          artifacts/verilator_simulator
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

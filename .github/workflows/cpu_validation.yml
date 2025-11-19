@@ -21,10 +21,14 @@ jobs:
         working-directory: cpu/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Install Icarus Verilog and Verilator
       run: sudo apt-get install -y iverilog verilator
+      
     - name: Build
       run: ./scripts/build_all.sh
+      
     - name: Run tests
       run: ./build/iverilog/Vtest && ./build/verilator/Vtest
