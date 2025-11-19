@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
     
+permissions:
+  contents: write
+    
 env:
   CARGO_TERM_COLOR: always
 
@@ -34,8 +37,6 @@ jobs:
       with:
         files: |
           artifacts/assembler
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
   release-cpu:
     name: Release CPU Artifacts
@@ -70,5 +71,3 @@ jobs:
         files: |
           artifacts/iverilog_simulator
           artifacts/verilator_simulator
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
