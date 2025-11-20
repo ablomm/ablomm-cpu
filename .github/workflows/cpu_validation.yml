@@ -13,7 +13,6 @@ on:
 
 jobs:
   build:
-  
     runs-on: ubuntu-latest
     timeout-minutes: 5
     defaults:
@@ -30,5 +29,8 @@ jobs:
     - name: Build
       run: ./scripts/build_all.sh
       
-    - name: Run tests
-      run: ./build/iverilog/Vtest && ./build/verilator/Vtest
+    - name: Run Icarus Verilog tests
+      run: ./build/iverilog/Vtest
+
+    - name: Run Verilator tests
+      run: ./build/verilator/Vtest
