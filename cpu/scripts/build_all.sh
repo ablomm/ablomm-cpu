@@ -1,7 +1,5 @@
 #!/bin/bash
 cd "$(dirname "$BASH_SOURCE")"
 
-verilator/simulation.sh
-verilator/test.sh
-iverilog/simulation.sh
-iverilog/test.sh
+./build_simulator.sh
+./build_test.sh
