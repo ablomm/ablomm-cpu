@@ -1,3 +1,4 @@
+# Builds CPU and runs tests
 name: CPU Validation
 
 on:

@@ -1,4 +1,5 @@
-name: Release Artifacts
+# Builds and publishes artifacts to GitHub release
+name: Release
 
 on:
   release:
@@ -31,11 +32,10 @@ jobs:
     - name: Rename artifact for release
       run: mv target/release/ablomm_asm ${{ github.workspace }}/artifacts/assembler
       
-    - name: Upload artifacts to release 
+    - name: Upload artifacts to GitHub release 
       uses: softprops/action-gh-release@v2
       with:
-        files: |
-          artifacts/*
+        files: artifacts/*
     
   release-cpu:
     name: Release CPU Artifacts
@@ -64,8 +64,7 @@ jobs:
     - name: Rename Verilator artifact for release
       run: mv build/verilator/Vsimulator ${{ github.workspace }}/artifacts/verilator_simulator
       
-    - name: Upload artifacts to release
+    - name: Upload artifacts to GitHub release
       uses: softprops/action-gh-release@v2
       with:
-        files: |
-          artifacts/*
+        files: artifacts/*
