@@ -56,7 +56,7 @@ impl SpannedError {
 
     pub fn write(
         &self,
-        cache: impl ariadne::Cache<Intern<Src>>,
+        cache: impl Cache<Intern<Src>>,
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Label, Report, ReportKind};
@@ -122,7 +122,6 @@ impl SpannedError {
         found: Option<impl Display>,
     ) -> Self {
         let expected = if expected.is_empty() {
-            // "nothing" has no highlights, so it's clear it is not a value called "nothing"
             "nothing".fg(ATTENTION_COLOR).to_string()
         } else {
             expected
@@ -132,7 +131,6 @@ impl SpannedError {
                 .join(" or ")
         };
 
-        // "nothing" has no highlights, so it's clear it is not a value called "nothing"
         let found = found.map_or("nothing".fg(ATTENTION_COLOR).to_string(), |found| {
             found.fg(ATTENTION_COLOR).to_string()
         });

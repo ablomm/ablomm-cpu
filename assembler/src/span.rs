@@ -5,7 +5,10 @@ use crate::src::Src;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {
-    src: Intern<Src>,
+    pub src: Intern<Src>,
+
+    // tuple instead of Range<usize> because Range<usize> doesn't implement copy
+    // private to ensure start <= end
     range: (usize, usize),
 }
 
@@ -22,17 +25,14 @@ impl Span {
         Spanned::new(val, self)
     }
 
-    pub fn src(&self) -> Intern<Src> {
-        self.src
-    }
-
-    pub fn range(&self) -> std::ops::Range<usize> {
+    pub fn range(&self) -> Range<usize> {
         self.range.0..self.range.1
     }
 
     pub fn start(&self) -> usize {
         self.range.0
     }
+
     pub fn end(&self) -> usize {
         self.range.1
     }
@@ -50,22 +50,20 @@ impl chumsky::span::Span for Span {
     type Context = Intern<Src>;
     type Offset = usize;
 
-    fn new(src: Self::Context, range: Range<usize>) -> Self {
-        assert!(range.start <= range.end);
-        Self {
-            src,
-            range: (range.start, range.end),
-        }
+    fn new(src: Self::Context, range: Range<Self::Offset>) -> Self {
+        Span::new(src, range)
     }
 
     fn context(&self) -> Self::Context {
         self.src
     }
+
     fn start(&self) -> Self::Offset {
-        self.range.0
+        self.start()
     }
+
     fn end(&self) -> Self::Offset {
-        self.range.1
+        self.end()
     }
 }
 
@@ -77,11 +75,11 @@ impl ariadne::Span for Span {
     }
 
     fn start(&self) -> usize {
-        self.range.0
+        self.start()
     }
 
     fn end(&self) -> usize {
-        self.range.1
+        self.end()
     }
 }
 
@@ -97,14 +95,6 @@ impl<T> Spanned<T> {
         Self { val, span }
     }
 
-    /*
-    pub fn new_extra<'a, I: Input<'a>>(val: T, extra: impl ParserExtra<'a, I>) -> Self {
-        Self {
-            val,
-            span: extra.span(),
-        }
-    }
-    */
     // converts &Spanned<T> to Spanned<&T>
     pub fn as_ref(&self) -> Spanned<&T> {
         Spanned::new(&self.val, self.span)
