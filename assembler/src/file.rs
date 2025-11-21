@@ -1,9 +1,11 @@
+use ariadne::Cache;
 use chumsky::prelude::*;
-use std::{collections::HashMap, fs};
+use std::collections::HashSet;
 
 use internment::Intern;
 
 use crate::{
+    SrcCache,
     ast::{Block, File, Import, Statement},
     error::SpannedError,
     parser,
@@ -15,8 +17,18 @@ use crate::{
 // generate the machine code
 pub fn generate_file_queue(
     src: &Spanned<Intern<Src>>,
-    cache: &mut HashMap<Intern<Src>, String>,
+    cache: &mut SrcCache,
 ) -> Result<Vec<Spanned<File>>, Vec<SpannedError>> {
+    generate_file_queue_with_src_map(src, cache, &mut HashSet::new())
+}
+
+fn generate_file_queue_with_src_map(
+    src: &Spanned<Intern<Src>>,
+    cache: &mut SrcCache,
+    src_map: &mut HashSet<Intern<Src>>,
+) -> Result<Vec<Spanned<File>>, Vec<SpannedError>> {
+    src_map.insert(src.val);
+
     let mut file_queue = Vec::new();
 
     let file = parse_file(src, cache)?;
@@ -32,12 +44,16 @@ pub fn generate_file_queue(
             }
         };
 
-        if cache.contains_key(&import_src.val) {
+        if src_map.contains(&import_src.val) {
             // we already did this import
             continue;
         }
 
-        file_queue.append(&mut generate_file_queue(&import_src, cache)?);
+        file_queue.append(&mut generate_file_queue_with_src_map(
+            &import_src,
+            cache,
+            src_map,
+        )?);
     }
 
     // only add itself after imports are added to satisfy borrow checker
@@ -50,15 +66,21 @@ pub fn generate_file_queue(
 // takes a src, reads it, and parses the contents
 fn parse_file(
     src: &Spanned<Intern<Src>>,
-    cache: &mut HashMap<Intern<Src>, String>,
+    cache: &mut SrcCache,
 ) -> Result<Spanned<File>, Vec<SpannedError>> {
-    let assembly_code = fs::read_to_string(src.as_path()).map_err(|error| {
-        vec![SpannedError::new(src.span, "Error reading file").with_label(error.to_string())]
-    })?;
-
-    // need to insert before parsing so it can show parsing errors
-    cache.insert(src.val, assembly_code);
-    let assembly_code = cache.get(&src.val).unwrap(); // unwrap safe because we just inserted
+    // technically this cache will save the full file in memory for the length of the program. I
+    // have tested not using the cache here and it only saved about 5mb in a 100k LoC program, so I
+    // felt it wasn't worth the downside of a file being potentially changed during compilation and
+    // breaking error messages
+    let assembly_code = cache
+        .fetch(&src.val)
+        .map_err(|error| {
+            vec![
+                SpannedError::new(src.span, "Error reading file")
+                    .with_label(format!("{:?}", error)),
+            ]
+        })?
+        .text();
 
     let block = parser::file_block_parser()
         .parse(assembly_code.with_context(src.val))
@@ -71,6 +93,7 @@ fn parse_file(
                 .map(|error| error.into())
                 .collect::<Vec<SpannedError>>()
         })?;
+
     let file = File {
         src: src.val,
         block: block.val,

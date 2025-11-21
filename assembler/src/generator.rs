@@ -20,17 +20,7 @@ mod push;
 
 // no span because ast can span many different files
 impl Ast {
-    pub fn assemble(&self) -> Result<String, Vec<SpannedError>> {
-        let mut machine_code: String = "".to_owned();
-
-        for opcode in self.generate()? {
-            machine_code.push_str(&format!("{:0>8x}\n", opcode));
-        }
-
-        Ok(machine_code)
-    }
-
-    fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
+    pub fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
         let mut opcodes = Vec::new();
 
         for file in &self.files {

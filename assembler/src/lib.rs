@@ -1,6 +1,6 @@
-use std::{collections::HashMap, path::Path};
+use std::{fs, io, path::Path};
 
-use ariadne::{Cache, sources};
+use ariadne::{Cache, FnCache};
 use ast::Ast;
 
 use error::{ATTENTION_COLOR, Error, SpannedError};
@@ -19,9 +19,11 @@ mod span;
 mod src;
 mod symbol_table;
 
+pub type SrcCache = FnCache<Intern<Src>, fn(&Intern<Src>) -> io::Result<String>, String>;
+
 // return a string which is the machine code
 // error includes cache in order to print errors without re-reading files
-pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
+pub fn assemble(src: &str) -> Result<Vec<u32>, Error<impl Cache<Intern<Src>>>> {
     // fails if file not found
     // this is the root file, given in the command-line argument
     let src =
@@ -35,23 +37,22 @@ pub fn assemble(src: &str) -> Result<String, Error<impl Cache<Intern<Src>>>> {
     let src = Spanned::new(src, dummy_span);
 
     // cache of file name and corresponding file contents, used to
-    // print error messages and check if a file has already been parsed
-    let mut cache = HashMap::new();
+    // associate file names to contents for printing errors
+    let mut cache: SrcCache = FnCache::new(|src: &Intern<Src>| fs::read_to_string(src.as_path()));
 
     // file queue is order in which to generate machine code
     // can't do map_err because of borrow checker :(
     let mut file_queue = match file::generate_file_queue(&src, &mut cache) {
         Ok(file_queue) => file_queue,
-        Err(error) => return Err(Error::Spanned(error, sources(cache))),
+        Err(error) => return Err(Error::Spanned(error, cache)),
     };
 
     match st_setup::init_symbol_tables(&mut file_queue) {
         Ok(_) => (),
-        Err(error) => return Err(Error::Spanned(vec![error], sources(cache))),
+        Err(error) => return Err(Error::Spanned(vec![error], cache)),
     }
 
     let ast = Ast { files: file_queue };
 
-    ast.assemble()
-        .map_err(|error| Error::Spanned(error, sources(cache)))
+    ast.generate().map_err(|error| Error::Spanned(error, cache))
 }
