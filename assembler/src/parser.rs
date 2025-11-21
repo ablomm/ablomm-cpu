@@ -41,6 +41,7 @@ pub fn file_block_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Spanned
             })),
         })
         .map_with(|val, e| Spanned::new(val, e.span()))
+        .labelled("file block")
 }
 
 fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
@@ -48,40 +49,48 @@ fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<
         .and_is(just("\n").not())
         .repeated()
         .collect::<String>()
-        .delimited_by(just("//"), just("\n"));
+        .delimited_by(just("//"), just("\n"))
+        .labelled("single-line comment");
 
     let multiline_comment = any()
         .and_is(just("*/").not())
         .repeated()
         .collect::<String>()
-        .delimited_by(just("/*"), just("*/"));
+        .delimited_by(just("/*"), just("*/"))
+        .labelled("multi-line comment");
 
-    line_comment.or(multiline_comment)
+    line_comment.or(multiline_comment).labelled("comment")
 }
 
 fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
-    let escape_string = just('\\').ignore_then(choice((
-        just('\\').to('\\'),
-        just('\"').to('"'),
-        just('0').to('\0'),
-        just('t').to('\t'),
-        just('n').to('\n'),
-        just('r').to('\r'),
-    )));
+    let escape_char = just('\\')
+        .ignore_then(choice((
+            just('\\').to('\\'),
+            just('\"').to('"'),
+            just('0').to('\0'),
+            just('t').to('\t'),
+            just('n').to('\n'),
+            just('r').to('\r'),
+        )))
+        .labelled("escape character");
 
     any()
         .filter(|c| *c != '\\' && *c != '"')
-        .or(escape_string)
+        .or(escape_char)
+        .labelled("character")
         .repeated()
         .collect::<String>()
         .delimited_by(just('"'), just('"'))
+        .labelled("string")
 }
 
 fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, Extra<'src>> {
-    let modifier = just('.').ignore_then(choice((
-        keywords::alu_modifier_parser().map(Modifier::AluModifier),
-        keywords::condition_parser().map(Modifier::Condition),
-    )));
+    let modifier = just('.')
+        .ignore_then(choice((
+            keywords::alu_modifier_parser().map(Modifier::AluModifier),
+            keywords::condition_parser().map(Modifier::Condition),
+        )))
+        .labelled("modifier");
 
     let full_mnemonic = keywords::mnemonic_parser()
         .map_with(|val, e| Spanned::new(val, e.span()))
@@ -112,6 +121,7 @@ fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, E
             full_mnemonic,
             operands,
         })
+        .labelled("operation")
 }
 
 fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, Extra<'src>> {
@@ -126,7 +136,8 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
         .map(|(export, identifier)| Label {
             export: export.is_some(),
             identifier,
-        });
+        })
+        .labelled("label");
 
     let assignment = text::keyword("export")
         .or_not()
@@ -142,16 +153,19 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
             export: export.is_some(),
             identifier,
             expression,
-        });
+        })
+        .labelled("assignment");
 
-    let export = text::keyword("export").ignore_then(
-        text::ident()
-            .map(|s: &str| Intern::new(s.to_string()))
-            .map_with(|val, e| Spanned::new(val, e.span()))
-            .padded()
-            .separated_by(just(','))
-            .collect::<Vec<_>>(),
-    );
+    let export = text::keyword("export")
+        .ignore_then(
+            text::ident()
+                .map(|s: &str| Intern::new(s.to_string()))
+                .map_with(|val, e| Spanned::new(val, e.span()))
+                .padded()
+                .separated_by(just(','))
+                .collect::<Vec<_>>(),
+        )
+        .labelled("export");
 
     recursive(|statement| {
         let block = statement
@@ -167,7 +181,8 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
                     table: HashMap::new(),
                     parent: None,
                 })),
-            });
+            })
+            .labelled("block");
 
         choice((
             block.map(Statement::Block),
@@ -194,6 +209,7 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
                 .map(Statement::Import),
             comment_parser().map(Statement::Comment),
         ))
+        .labelled("statement")
         .boxed()
     })
 }
@@ -234,4 +250,5 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
                 .ignore_then(string_parser().map_with(|val, e| Spanned::new(val, e.span()))),
         )
         .map(|(specifier, file)| Import { file, specifier })
+        .labelled("import")
 }

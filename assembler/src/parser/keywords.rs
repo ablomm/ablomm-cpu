@@ -22,6 +22,7 @@ pub fn mnemonic_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AsmMnemon
         text::keyword("rol").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Rol)),
         text::keyword("ror").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ror)),
     ))
+    .labelled("mnemonic")
 }
 
 pub fn register_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Register, Extra<'src>> {
@@ -45,6 +46,7 @@ pub fn register_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Register,
         just("pc.link").to(Register::Pclink), // pseudo register, used to jump with link
         text::keyword("pc").to(Register::Pc),
     ))
+    .labelled("register")
 }
 
 pub fn alu_modifier_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AluModifier, Extra<'src>>
@@ -53,6 +55,7 @@ pub fn alu_modifier_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AluMo
         text::keyword("s").to(AluModifier::S),
         text::keyword("t").to(AluModifier::T),
     ))
+    .labelled("ALU modifier")
 }
 
 pub fn condition_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Condition, Extra<'src>> {
@@ -79,4 +82,5 @@ pub fn condition_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Conditio
         text::keyword("cs").to(Condition::Uge),
         text::keyword("cc").to(Condition::Ult),
     ))
+    .labelled("condition")
 }
