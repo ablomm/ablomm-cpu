@@ -44,86 +44,6 @@ pub fn file_block_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Spanned
         .labelled("file block")
 }
 
-fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
-    let line_comment = any()
-        .and_is(just("\n").not())
-        .repeated()
-        .collect::<String>()
-        .delimited_by(just("//"), just("\n"))
-        .labelled("single-line comment");
-
-    let multiline_comment = any()
-        .and_is(just("*/").not())
-        .repeated()
-        .collect::<String>()
-        .delimited_by(just("/*"), just("*/"))
-        .labelled("multi-line comment");
-
-    line_comment.or(multiline_comment).labelled("comment")
-}
-
-fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
-    let escape_char = just('\\')
-        .ignore_then(choice((
-            just('\\').to('\\'),
-            just('\"').to('"'),
-            just('0').to('\0'),
-            just('t').to('\t'),
-            just('n').to('\n'),
-            just('r').to('\r'),
-        )))
-        .labelled("escape character");
-
-    any()
-        .filter(|c| *c != '\\' && *c != '"')
-        .or(escape_char)
-        .labelled("character")
-        .repeated()
-        .collect::<String>()
-        .delimited_by(just('"'), just('"'))
-        .labelled("string")
-}
-
-fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, Extra<'src>> {
-    let modifier = just('.')
-        .ignore_then(choice((
-            keywords::alu_modifier_parser().map(Modifier::AluModifier),
-            keywords::condition_parser().map(Modifier::Condition),
-        )))
-        .labelled("modifier");
-
-    let full_mnemonic = keywords::mnemonic_parser()
-        .map_with(|val, e| Spanned::new(val, e.span()))
-        .then(
-            modifier
-                .map_with(|val, e| Spanned::new(val, e.span()))
-                .repeated()
-                .collect::<Vec<_>>()
-                .map_with(|val, e| Spanned::new(val, e.span())),
-        )
-        .map(|(mnemonic, modifiers)| FullMnemonic {
-            mnemonic,
-            modifiers,
-        });
-
-    full_mnemonic
-        .map_with(|val, e| Spanned::new(val, e.span()))
-        .padded()
-        .then(
-            expression::expression_parser()
-                .map_with(|val, e| Spanned::new(val, e.span()))
-                .padded()
-                .separated_by(just(','))
-                .collect::<Vec<_>>()
-                .map_with(|val, e| Spanned::new(val, e.span())),
-        )
-        .map(|(full_mnemonic, operands)| Operation {
-            full_mnemonic,
-            operands,
-        })
-        .labelled("operation")
-}
-
 fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, Extra<'src>> {
     let label = text::keyword("export")
         .or_not()
@@ -209,9 +129,57 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
                 .map(Statement::Import),
             comment_parser().map(Statement::Comment),
         ))
+        .recover_with(skip_until(
+            // once it reaches '}' (or end()), then this statement couldn't recover anything.
+            // If this just('}').not() wasn't present, then the parser would skip over a '}'
+            // just to find a statement from another scope
+            any().and_is(just('}').not()).ignored(),
+            choice((just(';'), just(':'))).ignored(),
+            || Statement::Error,
+        ))
         .labelled("statement")
         .boxed()
     })
+}
+
+fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, Extra<'src>> {
+    let modifier = just('.')
+        .ignore_then(choice((
+            keywords::alu_modifier_parser().map(Modifier::AluModifier),
+            keywords::condition_parser().map(Modifier::Condition),
+        )))
+        .labelled("modifier");
+
+    let full_mnemonic = keywords::mnemonic_parser()
+        .map_with(|val, e| Spanned::new(val, e.span()))
+        .then(
+            modifier
+                .map_with(|val, e| Spanned::new(val, e.span()))
+                .repeated()
+                .collect::<Vec<_>>()
+                .map_with(|val, e| Spanned::new(val, e.span())),
+        )
+        .map(|(mnemonic, modifiers)| FullMnemonic {
+            mnemonic,
+            modifiers,
+        });
+
+    full_mnemonic
+        .map_with(|val, e| Spanned::new(val, e.span()))
+        .padded()
+        .then(
+            expression::expression_parser()
+                .map_with(|val, e| Spanned::new(val, e.span()))
+                .padded()
+                .separated_by(just(','))
+                .collect::<Vec<_>>()
+                .map_with(|val, e| Spanned::new(val, e.span())),
+        )
+        .map(|(full_mnemonic, operands)| Operation {
+            full_mnemonic,
+            operands,
+        })
+        .labelled("operation")
 }
 
 fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'src>> {
@@ -244,11 +212,27 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
             .map_with(|val, e| Spanned::new(val, e.span()))
             .padded(),
         )
-        .then(
-            text::keyword("from")
-                .padded()
-                .ignore_then(string_parser().map_with(|val, e| Spanned::new(val, e.span()))),
-        )
+        .then(text::keyword("from").padded().ignore_then(
+            expression::string_parser().map_with(|val, e| Spanned::new(val, e.span())),
+        ))
         .map(|(specifier, file)| Import { file, specifier })
         .labelled("import")
+}
+
+fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
+    let line_comment = any()
+        .and_is(text::newline().not())
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just("//"), text::newline())
+        .labelled("single-line comment");
+
+    let multiline_comment = any()
+        .and_is(just("*/").not())
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just("/*"), just("*/"))
+        .labelled("multi-line comment");
+
+    line_comment.or(multiline_comment).labelled("comment")
 }

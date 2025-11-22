@@ -31,6 +31,7 @@ pub enum Statement {
     Import(Import),
     #[allow(dead_code)]
     Comment(String), // added because maybe it will be useful some day; not used
+    Error, // if statement has invalid syntax
 }
 
 #[derive(Debug, Clone)]

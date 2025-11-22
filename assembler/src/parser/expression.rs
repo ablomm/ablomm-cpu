@@ -3,7 +3,7 @@ use crate::ast::Expression;
 use super::*;
 
 pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Expression, Extra<'src>> {
-    let expr = recursive(|expression| {
+    recursive(|expression| {
         let atom = choice((
             keywords::register_parser().map(Expression::Register),
             string_parser().map(Expression::String),
@@ -145,9 +145,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
             .boxed();
 
         or.map(|expression| expression.val).labelled("expression")
-    });
-
-    expr
+    })
 }
 
 pub fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<'src>> {
@@ -195,4 +193,26 @@ pub fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<
         .labelled("character");
 
     choice((bin_num, oct_num, hex_num, dec_num, char_num)).labelled("number")
+}
+
+pub fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
+    let escape_char = just('\\')
+        .ignore_then(choice((
+            just('\\').to('\\'),
+            just('\"').to('"'),
+            just('0').to('\0'),
+            just('t').to('\t'),
+            just('n').to('\n'),
+            just('r').to('\r'),
+        )))
+        .labelled("escape character");
+
+    any()
+        .filter(|c| *c != '\\' && *c != '"')
+        .or(escape_char)
+        .labelled("character")
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just('"'), just('"'))
+        .labelled("string")
 }

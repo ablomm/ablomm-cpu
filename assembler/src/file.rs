@@ -89,7 +89,7 @@ fn parse_file(
         .into_result()
         .map_err(|errors| {
             errors
-                .into_iter()
+                .iter()
                 .map(|error| error.into())
                 .collect::<Vec<SpannedError>>()
         })?;

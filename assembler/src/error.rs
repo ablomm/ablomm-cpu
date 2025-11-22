@@ -170,8 +170,8 @@ impl SpannedError {
 
 // workaround for chumsky calling merge() multiple times on the same span: simply convert
 // error::Rich to SpannedError after everything is merged by error::Rich
-impl From<chumsky::error::Rich<'_, char, Span>> for SpannedError {
-    fn from(value: chumsky::error::Rich<'_, char, Span>) -> Self {
+impl From<&chumsky::error::Rich<'_, char, Span>> for SpannedError {
+    fn from(value: &chumsky::error::Rich<'_, char, Span>) -> Self {
         match value.reason() {
             RichReason::ExpectedFound { expected, found } => Self::incorrect_value(
                 *value.span(),
