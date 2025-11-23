@@ -20,6 +20,7 @@ pub enum ExpressionResult {
     Register(Option<Register>),
     RegisterOffset(Option<RegisterOffset>),
     Indirect(Indirect),
+    Error,
 }
 
 // newtypes
@@ -79,6 +80,7 @@ impl Display for ExpressionResult {
             ExpressionResult::Register(_) => "register",
             ExpressionResult::RegisterOffset(_) => "register offset",
             ExpressionResult::Indirect(indirect) => &format!("{} {}", "indirect", **indirect),
+            ExpressionResult::Error => "error type",
         };
 
         write!(f, "{}", string)

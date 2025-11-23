@@ -144,11 +144,14 @@ impl SymbolTable {
 
             error = error.with_label("This completes the loop, causing a circular definition");
 
+            // no need to set result to error here because we know that the symbol is already in
+            // the loop twice
             return Err(error);
         }
+
         loop_check.insert(symbol_id, entry.symbol.borrow().get_definition_span());
 
-        let result = {
+        let (result, error) = {
             let symbol = entry.symbol.borrow();
 
             let expression = symbol.expression.as_ref().unwrap_or_else(|| {
@@ -158,18 +161,24 @@ impl SymbolTable {
                 )
             });
 
-            let expression_result = expression
+            match expression
                 .as_ref()
-                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)?;
-
-            expression.span_to(expression_result.result)
+                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)
+            {
+                Ok(expression_result) => (expression.span_to(expression_result.result), None),
+                Err(error) => (expression.span_to(ExpressionResult::Error), Some(error)),
+            }
         };
 
         entry.symbol.borrow_mut().result = Some(result);
 
         loop_check.shift_remove(&symbol_id);
 
-        Ok(entry)
+        if let Some(error) = error {
+            Err(error)
+        } else {
+            Ok(entry)
+        }
     }
 
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {

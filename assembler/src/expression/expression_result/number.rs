@@ -19,9 +19,7 @@ impl Not for &Spanned<&Option<Number>> {
 
     fn not(self) -> Self::Output {
         if let Some(val) = self.val {
-            Ok(ExpressionResult::Number(Some(Number(
-                !(**val as i32) as u32,
-            ))))
+            Ok(ExpressionResult::Number(Some(Number(!**val))))
         } else {
             Ok(ExpressionResult::Number(None))
         }
