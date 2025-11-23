@@ -1,13 +1,11 @@
 use std::{fs, io, path::Path};
 
 use ariadne::{Cache, FnCache};
-use ast::Ast;
 
 use error::{ATTENTION_COLOR, Error, SpannedError};
 use internment::Intern;
 use span::{Span, Spanned};
 use src::Src;
-use symbol_table::setup as st_setup;
 
 use crate::error::{RecoveredError, RecoveredResult};
 
@@ -23,7 +21,6 @@ mod symbol_table;
 
 pub type SrcCache = FnCache<Intern<Src>, fn(&Intern<Src>) -> io::Result<String>, String>;
 
-// return a string which is the machine code
 // error includes cache in order to print errors without re-reading files
 // error includes recovered machine_code
 pub fn assemble(src: &str) -> RecoveredResult<Vec<u32>, Vec<u32>, Error<impl Cache<Intern<Src>>>> {
@@ -47,22 +44,18 @@ pub fn assemble(src: &str) -> RecoveredResult<Vec<u32>, Vec<u32>, Error<impl Cac
     // associate file names to contents for printing errors
     let mut cache: SrcCache = FnCache::new(|src: &Intern<Src>| fs::read_to_string(src.as_path()));
 
-    // file queue is order in which to generate machine code
-    // can't do map_err because of borrow checker :(
-    let mut file_queue = match file::generate_file_queue(src, &mut cache) {
-        Ok(file_queue) => file_queue,
-        Err(RecoveredError(file_queue, mut file_errors)) => {
+    let mut ast = match src.build_ast(&mut cache) {
+        Ok(ast) => ast,
+        Err(RecoveredError(ast, mut file_errors)) => {
             errors.append(&mut file_errors);
-            file_queue
+            ast
         }
     };
 
-    match st_setup::init_symbol_tables(&mut file_queue) {
+    match ast.init_symbol_tables() {
         Ok(_) => (),
         Err(mut symbol_table_errors) => errors.append(&mut symbol_table_errors),
     }
-
-    let ast = Ast { files: file_queue };
 
     let machine_code = match ast.generate() {
         Ok(machine_code) => machine_code,

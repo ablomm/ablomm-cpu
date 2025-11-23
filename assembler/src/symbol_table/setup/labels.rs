@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    ast::{Block, Expression, Operation, Statement},
+    ast::{Ast, Block, Expression, File, Operation, Statement},
     error::{RecoveredError, RecoveredResult, SpannedError},
     expression::{
         EvalReturn,
@@ -11,53 +11,85 @@ use crate::{
     symbol_table::SymbolTable,
 };
 
-// calculates label addresses
-pub fn set_labels(start_address: u32, mut block: Spanned<&mut Block>) -> RecoveredResult<u32> {
-    let mut address = start_address;
-    let mut errors = Vec::new();
+impl Ast {
+    // calculates label addresses
+    pub fn set_labels(&mut self) -> Result<(), Vec<SpannedError>> {
+        let mut errors = Vec::new();
 
-    // to satisfy borrow checker
-    let symbol_table = Rc::clone(&block.symbol_table);
-
-    // filter out statements that cause errors so that an erroneous statement doesn't cascade errors
-    block.statements.retain_mut(|statement| {
-        match statement_set_labels(address, statement.as_mut_ref(), &symbol_table) {
-            Ok(new_address) => {
-                address = new_address;
-                true
-            }
-            Err(RecoveredError(new_address, mut statement_errors)) => {
-                address = new_address;
-                errors.append(&mut statement_errors);
-                false
+        let mut address_accumulator = 0;
+        for file in self.files.iter_mut() {
+            address_accumulator = match file.as_mut_ref().set_labels(address_accumulator) {
+                Ok(address) => address,
+                Err(RecoveredError(address, mut label_errors)) => {
+                    errors.append(&mut label_errors);
+                    address
+                }
             }
         }
-    });
 
-    if errors.is_empty() {
-        Ok(address)
-    } else {
-        Err(RecoveredError(address, errors))
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 
-pub fn statement_set_labels(
-    start_address: u32,
-    statement: Spanned<&mut Statement>,
-    symbol_table: &Rc<RefCell<SymbolTable>>,
-) -> RecoveredResult<u32> {
-    let mut address = start_address;
-    let mut errors = Vec::new();
+impl Spanned<&mut File> {
+    fn set_labels(&mut self, start_address: u32) -> RecoveredResult<u32> {
+        self.span.spanned(&mut self.block).set_labels(start_address)
+    }
+}
 
-    match statement.val {
-        Statement::Label(label) => {
-            let result = label
-                .identifier
-                .span_to(ExpressionResult::Number(Some(Number(address))));
+impl Spanned<&mut Block> {
+    fn set_labels(&mut self, start_address: u32) -> RecoveredResult<u32> {
+        let mut address = start_address;
+        let mut errors = Vec::new();
 
-            let symbol_table = symbol_table.borrow_mut();
+        // to satisfy borrow checker
+        let symbol_table = Rc::clone(&self.symbol_table);
 
-            let entry = symbol_table
+        // filter out statements that cause errors so that an erroneous statement doesn't cascade errors
+        self.statements.retain_mut(|statement| {
+            match statement.as_mut_ref().set_labels(address, &symbol_table) {
+                Ok(new_address) => {
+                    address = new_address;
+                    true
+                }
+                Err(RecoveredError(new_address, mut statement_errors)) => {
+                    address = new_address;
+                    errors.append(&mut statement_errors);
+                    false
+                }
+            }
+        });
+
+        if errors.is_empty() {
+            Ok(address)
+        } else {
+            Err(RecoveredError(address, errors))
+        }
+    }
+}
+
+impl Spanned<&mut Statement> {
+    fn set_labels(
+        &mut self,
+        start_address: u32,
+        symbol_table: &Rc<RefCell<SymbolTable>>,
+    ) -> RecoveredResult<u32> {
+        let mut address = start_address;
+        let mut errors = Vec::new();
+
+        match self.val {
+            Statement::Label(label) => {
+                let result = label
+                    .identifier
+                    .span_to(ExpressionResult::Number(Some(Number(address))));
+
+                let symbol_table = symbol_table.borrow_mut();
+
+                let entry = symbol_table
                 .get(&label.identifier.as_ref())
                 .unwrap_or_else(|| {
                     panic!(
@@ -66,30 +98,29 @@ pub fn statement_set_labels(
                     )
                 });
 
-            entry.symbol.borrow_mut().result = Some(result);
-        }
+                entry.symbol.borrow_mut().result = Some(result);
+            }
 
-        Statement::Block(sub_block) => {
-            match set_labels(address, statement.span.spanned(sub_block)) {
+            Statement::Block(sub_block) => match self.span.spanned(sub_block).set_labels(address) {
                 Ok(_) => (),
                 Err(RecoveredError(_, mut sub_errors)) => errors.append(&mut sub_errors),
+            },
+            _ => (),
+        }
+
+        address += match self.to_borrow().num_words(&symbol_table.borrow()) {
+            Ok(length) => length,
+            Err(error) => {
+                errors.push(error);
+                0
             }
-        }
-        _ => (),
-    }
+        };
 
-    address += match statement.to_borrow().num_words(&symbol_table.borrow()) {
-        Ok(length) => length,
-        Err(error) => {
-            errors.push(error);
-            0
+        if errors.is_empty() {
+            Ok(address)
+        } else {
+            Err(RecoveredError(address, errors))
         }
-    };
-
-    if errors.is_empty() {
-        Ok(address)
-    } else {
-        Err(RecoveredError(address, errors))
     }
 }
 
