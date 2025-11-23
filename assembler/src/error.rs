@@ -63,7 +63,7 @@ impl SpannedError {
         cache: impl Cache<Intern<Src>>,
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
-        use ariadne::{Label, Report, ReportKind};
+        use ariadne::{Config, IndexType, Label, Report, ReportKind};
 
         let labels = self.labels.iter().map(|(span, message)| {
             Label::new(*span)
@@ -81,7 +81,10 @@ impl SpannedError {
 
         report.with_helps(self.helps.clone());
 
-        report.finish().write(cache, writer)
+        report
+            .with_config(Config::new().with_index_type(IndexType::Byte))
+            .finish()
+            .write(cache, writer)
     }
 
     pub fn eprint(&self, cache: impl ariadne::Cache<Intern<Src>>) -> Result<(), std::io::Error> {
