@@ -1,4 +1,4 @@
-use ablomm_asm::error::Error;
+use ablomm_asm::error::{Error, RecoveredError};
 use clap::Parser;
 use std::{fs, process::ExitCode};
 
@@ -34,7 +34,7 @@ fn main() -> ExitCode {
 
             ExitCode::SUCCESS
         }
-        Err(error) => {
+        Err(RecoveredError(_, error)) => {
             match error {
                 Error::Spanned(errors, mut cache) => errors.iter().for_each(|error| {
                     error.eprint(&mut cache).ok();

@@ -12,6 +12,10 @@ pub enum Error<T: Cache<Intern<Src>>> {
     Bare(String),
 }
 
+// if there was errors, but we were able to recover some result
+pub struct RecoveredError<T, E = Vec<SpannedError>>(pub T, pub E);
+pub type RecoveredResult<T, Te = T, E = Vec<SpannedError>> = Result<T, RecoveredError<Te, E>>;
+
 #[derive(Debug)]
 pub struct SpannedError {
     span: Span, // main span

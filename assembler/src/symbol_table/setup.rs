@@ -5,7 +5,7 @@ use internment::Intern;
 
 use crate::{
     ast::{Block, Expression, File, Import, ImportSpecifier, Operation, Statement},
-    error::{ATTENTION_COLOR, SpannedError},
+    error::{ATTENTION_COLOR, RecoveredError, RecoveredResult, SpannedError},
     expression::{
         EvalReturn,
         expression_result::{ExpressionResult, Number},
@@ -19,35 +19,58 @@ use super::{STEntry, SymbolTable};
 
 type ExportMap = HashMap<Intern<String>, symbol_table::Value>;
 
-pub fn init_symbol_tables(file_queue: &mut [Spanned<File>]) -> Result<(), SpannedError> {
+pub fn init_symbol_tables(file_queue: &mut [Spanned<File>]) -> Result<(), Vec<SpannedError>> {
+    let mut errors = Vec::new();
+
     let mut file_exports_map = HashMap::new();
     for file in file_queue.iter() {
-        let exports = add_symbols(&file.span_to(&file.block))?;
+        let exports = match add_symbols(&file.span_to(&file.block)) {
+            Ok(exports) => exports,
+            Err(RecoveredError(exports, mut symbol_errors)) => {
+                errors.append(&mut symbol_errors);
+                exports
+            }
+        };
+
         file_exports_map.insert(file.src, exports);
     }
 
     for file in file_queue.iter() {
-        add_imports(&file.src, &file.span_to(&file.block), &file_exports_map)?;
+        match add_imports(&file.src, &file.span_to(&file.block), &file_exports_map) {
+            Ok(_) => (),
+            Err(mut import_errors) => errors.append(&mut import_errors),
+        }
     }
 
     let mut address_accumulator = 0;
     for file in file_queue.iter() {
-        address_accumulator = set_labels(address_accumulator, &file.span_to(&file.block))?;
+        address_accumulator = match set_labels(address_accumulator, &file.span_to(&file.block)) {
+            Ok(address) => address,
+            Err(RecoveredError(address, mut label_errors)) => {
+                errors.append(&mut label_errors);
+                address
+            }
+        }
     }
 
-    Ok(())
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
 }
 
 // generates symbol table for block and sub_blocks (excluding imports), returns exported symbols
-fn add_symbols(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
+fn add_symbols(block: &Spanned<&Block>) -> RecoveredResult<ExportMap> {
     let mut exports = HashMap::new();
+    let mut errors = Vec::new();
 
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
                 let result = label.identifier.span_to(ExpressionResult::Number(None));
 
-                block.symbol_table.borrow_mut().try_insert(
+                match block.symbol_table.borrow_mut().try_insert(
                     label.identifier.val,
                     STEntry {
                         symbol: Rc::new(RefCell::new(Symbol {
@@ -59,19 +82,25 @@ fn add_symbols(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
                         import_span: None,
                         export_span: None,
                     },
-                )?;
+                ) {
+                    Ok(_) => (),
+                    Err(insert_error) => errors.push(insert_error),
+                }
 
                 if label.export {
-                    export(
+                    match export(
                         &label.identifier,
                         &block.symbol_table.borrow(),
                         &mut exports,
-                    )?;
+                    ) {
+                        Ok(_) => (),
+                        Err(mut export_errors) => errors.append(&mut export_errors),
+                    }
                 }
             }
 
             Statement::Assignment(assignment) => {
-                block.symbol_table.borrow_mut().try_insert(
+                match block.symbol_table.borrow_mut().try_insert(
                     assignment.identifier.val,
                     STEntry {
                         symbol: Rc::new(RefCell::new(Symbol {
@@ -83,37 +112,59 @@ fn add_symbols(block: &Spanned<&Block>) -> Result<ExportMap, SpannedError> {
                         import_span: None,
                         export_span: None,
                     },
-                )?;
+                ) {
+                    Ok(_) => (),
+                    Err(insert_error) => errors.push(insert_error),
+                }
 
                 if assignment.export {
-                    export(
+                    match export(
                         &assignment.identifier,
                         &block.symbol_table.borrow(),
                         &mut exports,
-                    )?;
+                    ) {
+                        Ok(_) => (),
+                        Err(mut export_errors) => errors.append(&mut export_errors),
+                    }
                 }
             }
 
             Statement::Export(identifiers) => {
                 for identifier in identifiers {
-                    export(identifier, &block.symbol_table.borrow(), &mut exports)?;
+                    match export(identifier, &block.symbol_table.borrow(), &mut exports) {
+                        Ok(_) => (),
+                        Err(mut export_errors) => errors.append(&mut export_errors),
+                    }
                 }
             }
 
             Statement::Block(sub_block) => {
                 sub_block.symbol_table.borrow_mut().parent = Some(Rc::clone(&block.symbol_table));
 
-                let sub_exports = add_symbols(&statement.span_to(sub_block))?;
+                let sub_exports = match add_symbols(&statement.span_to(sub_block)) {
+                    Ok(sub_exports) => sub_exports,
+                    Err(RecoveredError(sub_exports, mut sub_errors)) => {
+                        errors.append(&mut sub_errors);
+                        sub_exports
+                    }
+                };
 
                 for (key, val) in sub_exports {
-                    block.symbol_table.borrow_mut().try_insert(key, val)?;
+                    match block.symbol_table.borrow_mut().try_insert(key, val) {
+                        Ok(_) => (),
+                        Err(insert_error) => errors.push(insert_error),
+                    }
                 }
             }
             _ => (),
         }
     }
 
-    Ok(exports)
+    if errors.is_empty() {
+        Ok(exports)
+    } else {
+        Err(RecoveredError(exports, errors))
+    }
 }
 
 // add every imported identifier to each symbol table whose scope imported it
@@ -121,42 +172,58 @@ fn add_imports(
     src: &Intern<Src>,
     block: &Spanned<&Block>,
     file_exports_map: &HashMap<Intern<Src>, ExportMap>,
-) -> Result<(), SpannedError> {
+) -> Result<(), Vec<SpannedError>> {
+    let mut errors = Vec::new();
+
     for statement in &block.statements {
         match &statement.val {
             Statement::Import(import_val) => {
-                let import_src = src::get_import_src(src, import_val).unwrap_or_else(|error| {
-                    // infer_types() should have already created it
-                    panic!(
-                        "Could not find import '{}' in file '{}': {}",
-                        import_val.file.val, src, error
-                    )
-                });
+                let import_src = match src::get_import_src(src, import_val) {
+                    Ok(import_src) => import_src,
+
+                    // we should have already inserted the error previously when generating file_queue
+                    // TODO: save the import src in the import struct so we don't have to recompute it,
+                    // which allows deleting or modifing the files during compilation with no issues
+                    // also would allow continue on None (which IMO is more intuitive then on Err)
+                    Err(_) => continue,
+                };
 
                 // the import files' exports
                 let exports = file_exports_map.get(&import_src).unwrap_or_else(||
-                    // infer_types() should have already created it
+                    // add_symbols() should have already created it
                     panic!(
                         "Attempted to import '{}' when the exporter's symbol table has not been filled",
                         import_src
                     ));
 
-                import(import_val, &mut block.symbol_table.borrow_mut(), exports)?
+                match import(import_val, &mut block.symbol_table.borrow_mut(), exports) {
+                    Ok(_) => (),
+                    Err(import_error) => errors.push(import_error),
+                }
             }
 
             Statement::Block(sub_block) => {
-                add_imports(src, &statement.span_to(sub_block), file_exports_map)?;
+                match add_imports(src, &statement.span_to(sub_block), file_exports_map) {
+                    Ok(_) => (),
+                    Err(mut sub_errors) => errors.append(&mut sub_errors),
+                }
             }
             _ => (),
         }
     }
 
-    Ok(())
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
 }
 
 // calculates label addresses
-fn set_labels(start_address: u32, block: &Spanned<&Block>) -> Result<u32, SpannedError> {
+fn set_labels(start_address: u32, block: &Spanned<&Block>) -> RecoveredResult<u32> {
     let mut address = start_address;
+    let mut errors = Vec::new();
+
     for statement in &block.statements {
         match &statement.val {
             Statement::Label(label) => {
@@ -176,24 +243,38 @@ fn set_labels(start_address: u32, block: &Spanned<&Block>) -> Result<u32, Spanne
             }
 
             Statement::Block(sub_block) => {
-                set_labels(address, &statement.span_to(sub_block))?;
+                match set_labels(address, &statement.span_to(sub_block)) {
+                    Ok(_) => (),
+                    Err(RecoveredError(_, mut sub_errors)) => errors.append(&mut sub_errors),
+                }
             }
             _ => (),
         }
 
-        address += statement.as_ref().num_words(&block.symbol_table.borrow())?;
+        address += match statement.as_ref().num_words(&block.symbol_table.borrow()) {
+            Ok(length) => length,
+            Err(error) => {
+                errors.push(error);
+                0
+            }
+        }
     }
 
-    Ok(address)
+    if errors.is_empty() {
+        Ok(address)
+    } else {
+        Err(RecoveredError(address, errors))
+    }
 }
 
 fn export(
     identifier: &Spanned<Intern<String>>,
     symbol_table: &SymbolTable,
     exports: &mut ExportMap,
-) -> Result<(), SpannedError> {
+) -> Result<(), Vec<SpannedError>> {
+    let mut errors = Vec::new();
     if let Some(entry) = exports.get(&identifier.val) {
-        return Err(
+        errors.push(
             SpannedError::new(identifier.span, "Identifier already exported")
                 .with_label_span(
                     entry.export_span.unwrap_or_else(|| {
@@ -205,15 +286,26 @@ fn export(
                     "Exported first here",
                 )
                 .with_label("Exported again here")
-                .with_note("Try removing one of these exports"),
+                .with_help("Try removing one of these exports"),
         );
     }
 
-    let mut export_entry = symbol_table.try_get(&identifier.as_ref())?;
+    let mut export_entry = match symbol_table.try_get(&identifier.as_ref()) {
+        Ok(export_entry) => export_entry,
+        Err(error) => {
+            errors.push(error);
+            return Err(errors);
+        }
+    };
+
     export_entry.export_span = Some(identifier.span);
     exports.insert(identifier.val, export_entry);
 
-    Ok(())
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
 }
 
 fn import(
@@ -234,7 +326,7 @@ fn import(
                 )?;
 
                 // if the import is aliased, then treat it as a new definition, in regards to
-                // errors, since the namesare different (i.e., it is defined at the alias
+                // errors, since the names are different (i.e., it is defined at the alias
                 // identifier instead of the definition inside the import)
                 let import_span = if named_import.alias.is_some() {
                     None

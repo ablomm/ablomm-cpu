@@ -3,7 +3,7 @@ use crate::ast::{
     Operation, Register,
 };
 use crate::ast::{Ast, Statement};
-use crate::error::{ATTENTION_COLOR, SpannedError};
+use crate::error::{ATTENTION_COLOR, RecoveredError, RecoveredResult, SpannedError};
 use crate::expression::expression_result::ExpressionResult;
 use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
@@ -20,7 +20,8 @@ mod push;
 
 // no span because ast can span many different files
 impl Ast {
-    pub fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
+    // if errors, it will return an errors with a recovered program
+    pub fn generate(&self) -> RecoveredResult<Vec<u32>> {
         let mut opcodes = Vec::new();
 
         for file in &self.files {
@@ -32,36 +33,42 @@ impl Ast {
 }
 
 impl Spanned<&Block> {
-    fn generate(&self) -> Result<Vec<u32>, Vec<SpannedError>> {
+    fn generate(&self) -> RecoveredResult<Vec<u32>> {
         let mut opcodes = Vec::new();
         let mut errors = Vec::new();
+
         for statement in &self.statements {
-            match statement.as_ref().generate(&self.symbol_table.borrow()) {
-                Ok(mut opcode) => opcodes.append(&mut opcode),
-                Err(mut error) => errors.append(&mut error),
-            }
+            let mut sub_opcodes = match statement.as_ref().generate(&self.symbol_table.borrow()) {
+                Ok(sub_opcodes) => sub_opcodes,
+                Err(RecoveredError(sub_opcodes, mut sub_errors)) => {
+                    errors.append(&mut sub_errors);
+                    sub_opcodes
+                }
+            };
+
+            opcodes.append(&mut sub_opcodes);
         }
 
-        if !errors.is_empty() {
-            return Err(errors);
+        if errors.is_empty() {
+            Ok(opcodes)
+        } else {
+            Err(RecoveredError(opcodes, errors))
         }
-
-        Ok(opcodes)
     }
 }
 
 impl Spanned<&Statement> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Vec<SpannedError>> {
+    fn generate(&self, symbol_table: &SymbolTable) -> RecoveredResult<Vec<u32>> {
         match &self.val {
             Statement::Operation(operation) => self
                 .span_to(operation)
                 .generate(symbol_table)
-                .map_err(|error| vec![error]),
+                .map_err(|error| RecoveredError(Vec::new(), vec![error])),
             Statement::Block(block) => self.span_to(block).generate(),
             Statement::GenLiteral(literal) => self
                 .span_to(literal)
                 .generate(symbol_table)
-                .map_err(|error| vec![error]),
+                .map_err(|error| RecoveredError(Vec::new(), vec![error])),
             _ => Ok(vec![]),
         }
     }
