@@ -1,5 +1,5 @@
 use internment::Intern;
-use std::ops::{Deref, Range};
+use std::ops::{Deref, DerefMut, Range};
 
 use crate::src::Src;
 
@@ -100,6 +100,10 @@ impl<T> Spanned<T> {
         Spanned::new(&self.val, self.span)
     }
 
+    pub fn as_mut_ref(&mut self) -> Spanned<&mut T> {
+        Spanned::new(&mut self.val, self.span)
+    }
+
     pub fn span_to<V>(&self, to: V) -> Spanned<V> {
         Spanned::new(to, self.span)
     }
@@ -111,10 +115,22 @@ impl<T: Copy> Spanned<&T> {
     }
 }
 
+impl<T> Spanned<&mut T> {
+    pub fn to_borrow(&self) -> Spanned<&T> {
+        Spanned::new(self.val, self.span)
+    }
+}
+
 // just for simplicity (i.e. removes ".val" everywhere)
 impl<T> Deref for Spanned<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         &self.val
+    }
+}
+
+impl<T> DerefMut for Spanned<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.val
     }
 }

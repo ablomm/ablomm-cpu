@@ -49,7 +49,7 @@ pub fn assemble(src: &str) -> RecoveredResult<Vec<u32>, Vec<u32>, Error<impl Cac
 
     // file queue is order in which to generate machine code
     // can't do map_err because of borrow checker :(
-    let mut file_queue = match file::generate_file_queue(&src, &mut cache) {
+    let mut file_queue = match file::generate_file_queue(src, &mut cache) {
         Ok(file_queue) => file_queue,
         Err(RecoveredError(file_queue, mut file_errors)) => {
             errors.append(&mut file_errors);

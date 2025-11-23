@@ -93,7 +93,7 @@ fn path_relative_from(path: &Path, base: &Path) -> Option<PathBuf> {
     }
 }
 
-pub fn get_import_src(importer: &Intern<Src>, import: &Import) -> io::Result<Intern<Src>> {
+pub fn get_import_src(importer: Intern<Src>, import: &Import) -> io::Result<Intern<Src>> {
     Ok(Intern::new(
         importer.get_relative(Path::new(&import.file.val))?,
     ))
