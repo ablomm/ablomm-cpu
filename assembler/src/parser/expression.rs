@@ -1,6 +1,8 @@
 use crate::ast::Expression;
-
-use super::*;
+use crate::parser::{self, Extra, Input, ParseError, keywords};
+use crate::span::Spanned;
+use chumsky::prelude::*;
+use internment::Intern;
 
 pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Expression, Extra<'src>> {
     recursive(|expression| {
@@ -12,7 +14,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
                 .map(|s: &str| Intern::new(s.to_string()))
                 .map(Expression::Identifier),
             expression
-                .padded()
+                .padded_by(parser::comment_pad())
                 .delimited_by(just('('), just(')'))
                 .labelled("sub-expression"),
         ))
@@ -22,14 +24,13 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
         let unary = choice((
             just('&').to(Expression::Ref as fn(_) -> _),
             just('*').to(Expression::Deref as fn(_) -> _),
-            // purposely disallow negatives, as everything should be unsigned
-            // (negatives are still used in register offsets, as the cpu treats that as signed)
+            // purposely disallow negatives, as everything should be unsigned (for now)
             // just('-').to(Expression::Neg as fn(_) -> _),
             just('~').to(Expression::Not as fn(_) -> _),
         ))
         .labelled("unary operator")
         .map_with(|val, e| Spanned::new(val, e.span()))
-        .padded()
+        .padded_by(parser::comment_pad())
         .repeated()
         .foldr(atom, |op, rhs| {
             let span = op.span.union(&rhs.span); // can't inline because value is moved before span can be created
@@ -46,7 +47,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
                     just('%').to(Expression::Rem as fn(_, _) -> _),
                 ))
                 .labelled("binary operator")
-                .padded()
+                .padded_by(parser::comment_pad())
                 .then(unary.clone())
                 .repeated(),
                 |lhs, (op, rhs)| {
@@ -65,7 +66,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
                     just('-').to(Expression::Sub as fn(_, _) -> _),
                 ))
                 .labelled("binary operator")
-                .padded()
+                .padded_by(parser::comment_pad())
                 .then(product.clone())
                 .repeated(),
                 |lhs, (op, rhs)| {
@@ -85,7 +86,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
                     just(">>").to(Expression::Shr as fn(_, _) -> _),
                 ))
                 .labelled("binary operator")
-                .padded()
+                .padded_by(parser::comment_pad())
                 .then(sum.clone())
                 .repeated(),
                 |lhs, (op, rhs)| {
@@ -101,7 +102,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
             .foldl(
                 just('&')
                     .labelled("binary operator")
-                    .padded()
+                    .padded_by(parser::comment_pad())
                     .then(shift.clone())
                     .repeated(),
                 |lhs, (_op, rhs)| {
@@ -117,7 +118,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
             .foldl(
                 just('^')
                     .labelled("binary operator")
-                    .padded()
+                    .padded_by(parser::comment_pad())
                     .then(and.clone())
                     .repeated(),
                 |lhs, (_op, rhs)| {
@@ -133,7 +134,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
             .foldl(
                 just('|')
                     .labelled("binary operator")
-                    .padded()
+                    .padded_by(parser::comment_pad())
                     .then(xor.clone())
                     .repeated(),
                 |lhs, (_op, rhs)| {
@@ -207,9 +208,8 @@ pub fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Ext
         )))
         .labelled("escape character");
 
-    any()
-        .filter(|c| *c != '\\' && *c != '"')
-        .or(escape_char)
+    escape_char
+        .or(any().and_is(just('\\').or(just('"')).not()))
         .labelled("character")
         .repeated()
         .collect::<String>()

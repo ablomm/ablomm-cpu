@@ -10,7 +10,9 @@ For example:
 
 ```c
 add r1, r2; // this is an inline comment!
-sub r1, r2;
+sub // mnemonic
+r1, // operand 1
+r2; // operand 2
 ```
 
 ## Multi-line Comments
@@ -25,7 +27,7 @@ this program does the following:
 r1 = r1 + r2;
 r1 = r1 - r2;
 */
-add r1, r2;
+add /* here are the operands: */ r1, r2;
 sub r1, r2;
 ```
 
@@ -41,21 +43,3 @@ sub r1, r2;
 
 > [!WARNING]
 > This example will not assemble.
-
-## Limitations
-
-Currently, comments must come after a complete statement, and cannot come between tokens.
-
-For example, the following example will **NOT** assemble:
-
-```c
-add /* comment */ r1, r2;
-add //comment
-r1, r2;
-```
-
-> [!WARNING]
-> This example will not assemble.
-
-> [!NOTE]
-> In the future this may be changed.

@@ -1,6 +1,6 @@
 use crate::ast::{AluModifier, AsmMnemonic, Condition, CpuMnemonic, Register};
-
-use super::*;
+use crate::parser::{Extra, Input};
+use chumsky::prelude::*;
 
 pub fn mnemonic_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, AsmMnemonic, Extra<'src>> {
     choice((

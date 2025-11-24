@@ -30,7 +30,7 @@ pub fn file_block_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Spanned
 {
     statement_parser()
         .map_with(|val, e| Spanned::new(val, e.span()))
-        .padded()
+        .padded_by(comment_pad())
         .repeated()
         .collect::<Vec<_>>()
         .map(|statements| Block {
@@ -51,7 +51,7 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
                 .map_with(|val, e| Spanned::new(val, e.span()))
-                .padded(),
+                .padded_by(comment_pad()),
         )
         .map(|(export, identifier)| Label {
             export: export.is_some(),
@@ -65,9 +65,9 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
                 .map_with(|val, e| Spanned::new(val, e.span()))
-                .padded(),
+                .padded_by(comment_pad()),
         )
-        .then_ignore(just('=').padded())
+        .then_ignore(just('=').padded_by(comment_pad()))
         .then(expression::expression_parser().map_with(|val, e| Spanned::new(val, e.span())))
         .map(|((export, identifier), expression)| Assignment {
             export: export.is_some(),
@@ -81,7 +81,7 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
                 .map_with(|val, e| Spanned::new(val, e.span()))
-                .padded()
+                .padded_by(comment_pad())
                 .separated_by(just(','))
                 .collect::<Vec<_>>(),
         )
@@ -90,10 +90,10 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
     recursive(|statement| {
         let block = statement
             .map_with(|val, e| Spanned::new(val, e.span()))
-            .padded()
+            .padded_by(comment_pad())
             .repeated()
             .collect::<Vec<_>>()
-            .padded() // if there is no statements in the block
+            .padded_by(comment_pad()) // if there is no statements in the block
             .delimited_by(just('{'), just('}'))
             .map(|statements| Block {
                 statements,
@@ -107,27 +107,29 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
         choice((
             block.map(Statement::Block),
             operation_parser()
-                .padded()
+                .padded_by(comment_pad())
                 .then_ignore(just(';'))
                 .map(Statement::Operation),
-            label.padded().then_ignore(just(':')).map(Statement::Label),
+            label
+                .padded_by(comment_pad())
+                .then_ignore(just(':'))
+                .map(Statement::Label),
             assignment
-                .padded()
+                .padded_by(comment_pad())
                 .then_ignore(just(';'))
                 .map(Statement::Assignment),
             expression::expression_parser()
-                .padded()
+                .padded_by(comment_pad())
                 .then_ignore(just(';'))
                 .map(Statement::GenLiteral),
             export
-                .padded()
+                .padded_by(comment_pad())
                 .then_ignore(just(';'))
                 .map(Statement::Export),
             import_parser()
-                .padded()
+                .padded_by(comment_pad())
                 .then_ignore(just(';'))
                 .map(Statement::Import),
-            comment_parser().map(Statement::Comment),
         ))
         .recover_with(skip_until(
             // once it reaches '}' (or end()), then this statement couldn't recover anything.
@@ -166,11 +168,11 @@ fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, E
 
     full_mnemonic
         .map_with(|val, e| Spanned::new(val, e.span()))
-        .padded()
+        .padded_by(comment_pad())
         .then(
             expression::expression_parser()
                 .map_with(|val, e| Spanned::new(val, e.span()))
-                .padded()
+                .padded_by(comment_pad())
                 .separated_by(just(','))
                 .collect::<Vec<_>>()
                 .map_with(|val, e| Spanned::new(val, e.span())),
@@ -188,7 +190,7 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
         .map_with(|val, e| Spanned::new(val, e.span()))
         .then(
             text::keyword("as")
-                .padded()
+                .padded_by(comment_pad())
                 .ignore_then(
                     text::ident()
                         .map(|s: &str| Intern::new(s.to_string()))
@@ -204,15 +206,15 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
                 just("*").to(ImportSpecifier::Blob),
                 named_import
                     .map_with(|val, e| Spanned::new(val, e.span()))
-                    .padded()
+                    .padded_by(comment_pad())
                     .separated_by(just(','))
                     .collect::<Vec<_>>()
                     .map(ImportSpecifier::Named),
             ))
             .map_with(|val, e| Spanned::new(val, e.span()))
-            .padded(),
+            .padded_by(comment_pad()),
         )
-        .then(text::keyword("from").padded().ignore_then(
+        .then(text::keyword("from").padded_by(comment_pad()).ignore_then(
             expression::string_parser().map_with(|val, e| Spanned::new(val, e.span())),
         ))
         .map(|(specifier, file)| Import { file, specifier })
@@ -235,4 +237,8 @@ fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<
         .labelled("multi-line comment");
 
     line_comment.or(multiline_comment).labelled("comment")
+}
+
+fn comment_pad<'src, I: Input<'src>>() -> impl Parser<'src, I, (), Extra<'src>> {
+    comment_parser().padded().repeated().padded().ignored()
 }
