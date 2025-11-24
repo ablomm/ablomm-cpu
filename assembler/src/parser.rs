@@ -229,12 +229,24 @@ fn comment_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<
         .delimited_by(just("//"), text::newline())
         .labelled("single-line comment");
 
-    let multiline_comment = any()
-        .and_is(just("*/").not())
+    // nested multi-line comments!
+    let multiline_comment = recursive(|multiline_comment| {
+        choice((
+            // for nested comments, give back the /**/ (because they are part of the text of the parent comment)
+            multiline_comment.map(|comment| format!("/*{}*/", comment).to_string()),
+            // a string up until the next nested comment
+            any()
+                .and_is(just("/*").or(just("*/")).not())
+                .repeated()
+                .at_least(1)
+                .collect::<String>(),
+        ))
         .repeated()
-        .collect::<String>()
+        .collect::<Vec<_>>()
+        .map(|strings| strings.join(""))
         .delimited_by(just("/*"), just("*/"))
-        .labelled("multi-line comment");
+        .labelled("multi-line comment")
+    });
 
     line_comment.or(multiline_comment).labelled("comment")
 }

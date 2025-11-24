@@ -31,11 +31,12 @@ add /* here are the operands: */ r1, r2;
 sub r1, r2;
 ```
 
-Multi-line comments cannot nest, so this will **NOT** assemble:
+Multi-line comments *can* nest, so this will assemble with no issues:
 
-```c
+```rs
 /*
-this is a comment /* nested comment */
+this is a comment /* and this is a nested comment */
+this is some more comment
 */
 add r1, r2;
 sub r1, r2;
