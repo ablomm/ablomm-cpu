@@ -31,7 +31,7 @@ add /* here are the operands: */ r1, r2;
 sub r1, r2;
 ```
 
-Multi-line comments *can* nest, so this will assemble with no issues:
+Multi-line comments **can** nest, so this will assemble with no issues:
 
 ```rs
 /*
@@ -41,6 +41,3 @@ this is some more comment
 add r1, r2;
 sub r1, r2;
 ```
-
-> [!WARNING]
-> This example will not assemble.
