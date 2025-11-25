@@ -150,30 +150,45 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
 }
 
 pub fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<'src>> {
-    let bin_num =
-        just("0b")
-            .ignore_then(text::digits(2).collect::<String>().try_map(|s, span| {
-                u32::from_str_radix(&s, 2).map_err(|e| ParseError::custom(span, e))
-            }))
-            .labelled("binary number");
+    let bin_num = just("0b")
+        .ignore_then(
+            text::digits(2)
+                .collect::<String>()
+                .try_map(|num_string, span| {
+                    u32::from_str_radix(&num_string, 2)
+                        .map_err(|error| ParseError::custom(span, error))
+                }),
+        )
+        .labelled("binary number");
 
-    let oct_num =
-        just("0o")
-            .ignore_then(text::digits(8).collect::<String>().try_map(|s, span| {
-                u32::from_str_radix(&s, 8).map_err(|e| ParseError::custom(span, e))
-            }))
-            .labelled("octodecimal number");
+    let oct_num = just("0o")
+        .ignore_then(
+            text::digits(8)
+                .collect::<String>()
+                .try_map(|num_string, span| {
+                    u32::from_str_radix(&num_string, 8)
+                        .map_err(|error| ParseError::custom(span, error))
+                }),
+        )
+        .labelled("octodecimal number");
 
     let hex_num = just("0x")
-        .ignore_then(text::digits(16).collect::<String>().try_map(|s, span| {
-            u32::from_str_radix(&s, 16).map_err(|e| ParseError::custom(span, e))
-        }))
+        .ignore_then(
+            text::digits(16)
+                .collect::<String>()
+                .try_map(|num_string, span| {
+                    u32::from_str_radix(&num_string, 16)
+                        .map_err(|error| ParseError::custom(span, error))
+                }),
+        )
         .labelled("hexadecimal number");
 
     #[allow(clippy::from_str_radix_10)]
     let dec_num = text::digits(10)
         .collect::<String>()
-        .try_map(|s, span| u32::from_str_radix(&s, 10).map_err(|e| ParseError::custom(span, e)))
+        .try_map(|num_string, span| {
+            u32::from_str_radix(&num_string, 10).map_err(|error| ParseError::custom(span, error))
+        })
         .labelled("decimal number");
 
     // no need to escape ' or \ since ' and \ can be represented by ''' and '\'

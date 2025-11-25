@@ -10,7 +10,7 @@ use crate::{
     error::{RecoveredError, RecoveredResult, SpannedError},
     parser,
     span::Spanned,
-    src::{self, Src},
+    src::Src,
 };
 
 impl Spanned<Intern<Src>> {
@@ -47,7 +47,7 @@ impl Spanned<Intern<Src>> {
 
         src_map.insert(self.val);
 
-        let mut sub_files = match file.block.get_import_files(self.val, cache, src_map) {
+        let mut sub_files = match file.as_mut_ref().get_import_files(cache, src_map) {
             Ok(sub_files) => sub_files,
             Err(RecoveredError(sub_files, mut file_errors)) => {
                 errors.append(&mut file_errors);
@@ -84,18 +84,12 @@ impl Spanned<Intern<Src>> {
             }
         };
 
-        let (block, errors) = parser::file_block_parser()
+        let (file, errors) = parser::file_parser()
+            .map_with(|val, e| Spanned::new(val, e.span()))
             .parse(assembly_code.with_context(self.val))
             .into_output_errors();
 
         let errors: Vec<_> = errors.iter().map(|error| error.into()).collect();
-
-        let file = block.map(|block| {
-            block.span.spanned(File {
-                src: self.val,
-                block: block.val,
-            })
-        });
 
         if let Some(file) = file {
             if errors.is_empty() {
@@ -108,11 +102,23 @@ impl Spanned<Intern<Src>> {
         }
     }
 }
-impl Block {
-    // gets list of files for each import in the block
-    pub fn get_import_files(
+
+impl Spanned<&mut File> {
+    fn get_import_files(
         &mut self,
-        src: Intern<Src>,
+        cache: &mut SrcCache,
+        src_map: &mut HashSet<Intern<Src>>,
+    ) -> RecoveredResult<Vec<Spanned<File>>> {
+        self.span
+            .spanned(&mut self.block)
+            .get_import_files(cache, src_map)
+    }
+}
+
+impl Spanned<&mut Block> {
+    // gets list of files for each import in the block
+    fn get_import_files(
+        &mut self,
         cache: &mut SrcCache,
         src_map: &mut HashSet<Intern<Src>>,
     ) -> RecoveredResult<Vec<Spanned<File>>> {
@@ -120,7 +126,7 @@ impl Block {
         let mut errors = Vec::new();
 
         self.statements.retain_mut(|statement| {
-            match statement.get_import_files(src, cache, src_map) {
+            match statement.as_mut_ref().get_import_files(cache, src_map) {
                 Ok(mut statement_files) => {
                     files.append(&mut statement_files);
                     true
@@ -152,34 +158,23 @@ impl Block {
     }
 }
 
-impl Spanned<Statement> {
+impl Spanned<&mut Statement> {
     // get list of files that the statement is importing
-    pub fn get_import_files(
+    fn get_import_files(
         &mut self,
-        src: Intern<Src>,
         cache: &mut SrcCache,
         src_map: &mut HashSet<Intern<Src>>,
     ) -> RecoveredResult<Vec<Spanned<File>>> {
         match &mut self.val {
-            Statement::Import(import) => match src::get_import_src(src, import) {
-                Ok(import_src) => {
-                    let import_src = import.file.span_to(import_src);
-                    if src_map.contains(&import_src) {
-                        // we already did this import
-                        Ok(Vec::new())
-                    } else {
-                        import_src.build_file_queue(cache, src_map)
-                    }
+            Statement::Import(import) => {
+                if src_map.contains(&import.src) {
+                    // we already did this import
+                    Ok(Vec::new())
+                } else {
+                    import.src.build_file_queue(cache, src_map)
                 }
-                Err(error) => Err(RecoveredError(
-                    Vec::new(),
-                    vec![
-                        SpannedError::new(import.file.span, "Error finding file")
-                            .with_label(error.to_string()),
-                    ],
-                )),
-            },
-            Statement::Block(block) => block.get_import_files(src, cache, src_map),
+            }
+            Statement::Block(block) => self.span.spanned(block).get_import_files(cache, src_map),
             _ => Ok(Vec::new()),
         }
     }

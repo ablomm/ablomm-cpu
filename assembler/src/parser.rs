@@ -1,6 +1,6 @@
 use crate::Span;
 use crate::ast::{
-    Assignment, Block, FullMnemonic, Import, ImportSpecifier, Label, Modifier, NamedImport,
+    Assignment, Block, File, FullMnemonic, Import, ImportSpecifier, Label, Modifier, NamedImport,
     Operation, Statement,
 };
 use crate::span::Spanned;
@@ -11,6 +11,7 @@ use internment::Intern;
 use std::cell::RefCell;
 use std::char;
 use std::collections::HashMap;
+use std::path::Path;
 use std::rc::Rc;
 
 mod expression;
@@ -26,8 +27,7 @@ pub trait Input<'src>: StrInput<'src, Token = char, Span = Span, Slice = &'src s
 impl<'src, T> Input<'src> for T where T: StrInput<'src, Token = char, Span = Span, Slice = &'src str>
 {}
 
-pub fn file_block_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Spanned<Block>, Extra<'src>>
-{
+pub fn file_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, File, Extra<'src>> {
     statement_parser()
         .map_with(|val, e| Spanned::new(val, e.span()))
         .padded_by(comment_pad())
@@ -40,7 +40,7 @@ pub fn file_block_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Spanned
                 parent: None,
             })),
         })
-        .map_with(|val, e| Spanned::new(val, e.span()))
+        .map(|block| File { block })
         .labelled("file block")
 }
 
@@ -215,9 +215,20 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
             .padded_by(comment_pad()),
         )
         .then(text::keyword("from").padded_by(comment_pad()).ignore_then(
-            expression::string_parser().map_with(|val, e| Spanned::new(val, e.span())),
+            expression::string_parser().try_map(|import_string, span: Span| {
+                // there seems to be a bug in chumsky where this span is being changed to a single character
+                // instead of using the full string span
+                let import_src = span
+                    .src
+                    .get_relative(Path::new(&import_string))
+                    .map_err(|error| ParseError::custom(span, error))?;
+                Ok(Spanned::new(Intern::new(import_src), span))
+            }),
         ))
-        .map(|(specifier, file)| Import { file, specifier })
+        .map(|(specifier, file)| Import {
+            src: file,
+            specifier,
+        })
         .labelled("import")
 }
 

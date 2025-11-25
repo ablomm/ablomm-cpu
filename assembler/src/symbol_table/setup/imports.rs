@@ -1,13 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
 use ariadne::Fmt;
-use internment::Intern;
 
 use crate::{
     ast::{Ast, Block, File, Import, ImportSpecifier, Statement},
     error::{ATTENTION_COLOR, SpannedError},
     span::Spanned,
-    src::{self, Src},
     symbol_table::{
         STEntry, SymbolTable,
         setup::symbols::{ExportMap, FileExportMap},
@@ -39,20 +37,14 @@ impl Ast {
 
 impl Spanned<&mut File> {
     fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<SpannedError>> {
-        let src = self.src; // to satisfy borrow checker
-
         self.span
             .spanned(&mut self.block)
-            .add_imports(src, file_exports_map)
+            .add_imports(file_exports_map)
     }
 }
 
 impl Spanned<&mut Block> {
-    fn add_imports(
-        &mut self,
-        src: Intern<Src>,
-        file_exports_map: &FileExportMap,
-    ) -> Result<(), Vec<SpannedError>> {
+    fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<SpannedError>> {
         let mut errors = Vec::new();
 
         // to satisfy borrow checker
@@ -62,7 +54,7 @@ impl Spanned<&mut Block> {
         self.statements.retain_mut(|statement| {
             match statement
                 .as_mut_ref()
-                .add_imports(src, &symbol_table, file_exports_map)
+                .add_imports(&symbol_table, file_exports_map)
             {
                 Ok(_) => true,
                 Err(mut statement_errors) => {
@@ -83,45 +75,29 @@ impl Spanned<&mut Block> {
 impl Spanned<&mut Statement> {
     fn add_imports(
         &mut self,
-        src: Intern<Src>,
         symbol_table: &Rc<RefCell<SymbolTable>>,
         file_exports_map: &FileExportMap,
     ) -> Result<(), Vec<SpannedError>> {
         let mut errors = Vec::new();
 
         match self.val {
-            Statement::Import(import_val) => {
-                let import_src = src::get_import_src(src, import_val).unwrap_or_else(|_| {
-                    // should not occur because generate_file_queue() should have filtered out any
-                    // imports that are not valid
-                    // TODO: save Src from generate_file_queue() so we don't have to compute it again,
-                    // and also allows for deleting the file during compilation and not failing
-                    panic!(
-                        "Attempted to get Src of '{}' (from '{}'), but found errors",
-                        import_val.file.val, src
-                    )
-                });
-
+            Statement::Import(import) => {
                 // the import files' exports
-                let exports = file_exports_map.get(&import_src).unwrap_or_else(||
+                let exports = file_exports_map.get(&import.src).unwrap_or_else(||
                     // add_symbols() should have already created it
                     panic!(
                         "Attempted to import '{}' when the exporter's symbol table has not been filled",
-                        import_src
+                        import.src.val
                     ));
 
-                match symbol_table.borrow_mut().import(import_val, exports) {
+                match symbol_table.borrow_mut().import(import, exports) {
                     Ok(_) => (),
                     Err(import_error) => errors.push(import_error),
                 }
             }
 
             Statement::Block(sub_block) => {
-                match self
-                    .span
-                    .spanned(sub_block)
-                    .add_imports(src, file_exports_map)
-                {
+                match self.span.spanned(sub_block).add_imports(file_exports_map) {
                     Ok(_) => (),
                     Err(mut sub_errors) => errors.append(&mut sub_errors),
                 }
@@ -147,7 +123,7 @@ impl SymbolTable {
                         SpannedError::new(named_import.identifier.span, "Identifier not found")
                             .with_label(format!(
                                 "Identifier is not exported in '{}'",
-                                import.file.val.as_str().fg(ATTENTION_COLOR)
+                                import.src.val.fg(ATTENTION_COLOR)
                             )),
                     )?;
 

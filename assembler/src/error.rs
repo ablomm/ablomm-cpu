@@ -187,7 +187,7 @@ impl From<&chumsky::error::Rich<'_, char, Span>> for SpannedError {
                 found.map(|c| format!("'{}'", c.escape_default())),
             ),
             chumsky::error::RichReason::Custom(message) => {
-                Self::new(*value.span(), message).with_label(message)
+                Self::new(*value.span(), "Parse error").with_label(message)
             }
         }
     }

@@ -8,9 +8,10 @@ pub struct Ast {
     pub files: Vec<Spanned<File>>,
 }
 
+// this technically isn't needed, but I'm keeping it here just incase it becomes useful to
+// distinguish between a normal block and a full file. you can get the Src through the Spanned<File>
 #[derive(Debug, Clone)]
 pub struct File {
-    pub src: Intern<Src>,
     pub block: Block,
 }
 
@@ -47,7 +48,7 @@ pub struct Assignment {
 
 #[derive(Debug, Clone)]
 pub struct Import {
-    pub file: Spanned<String>,
+    pub src: Spanned<Intern<Src>>,
     pub specifier: Spanned<ImportSpecifier>,
 }
 

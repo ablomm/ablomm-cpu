@@ -1,6 +1,6 @@
 use crate::ast::{
-    AluModifier, AluOpFlags, AsmMnemonic, Block, Condition, CpuMnemonic, Expression, Modifier,
-    Operation, Register,
+    AluModifier, AluOpFlags, AsmMnemonic, Block, Condition, CpuMnemonic, Expression, File,
+    Modifier, Operation, Register,
 };
 use crate::ast::{Ast, Statement};
 use crate::error::{ATTENTION_COLOR, RecoveredError, RecoveredResult, SpannedError};
@@ -18,17 +18,22 @@ mod nop;
 mod pop;
 mod push;
 
-// no span because ast can span many different files
 impl Ast {
     // if errors, it will return an errors with a recovered program
     pub fn generate(&self) -> RecoveredResult<Vec<u32>> {
         let mut opcodes = Vec::new();
 
         for file in &self.files {
-            opcodes.append(&mut file.span_to(&file.block).generate()?);
+            opcodes.append(&mut file.as_ref().generate()?);
         }
 
         Ok(opcodes)
+    }
+}
+
+impl Spanned<&File> {
+    fn generate(&self) -> RecoveredResult<Vec<u32>> {
+        self.span_to(&self.block).generate()
     }
 }
 

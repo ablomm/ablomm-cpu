@@ -29,7 +29,7 @@ impl Ast {
                 }
             };
 
-            file_exports_map.insert(file.src, exports);
+            file_exports_map.insert(file.span.src, exports);
         }
 
         if errors.is_empty() {

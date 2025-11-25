@@ -6,10 +6,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use internment::Intern;
-
-use crate::ast::Import;
-
 // this struct is just to allow formatting error messages using relative paths and to combine all
 // src paths to a single struct
 #[derive(Eq, Hash, PartialEq, Debug, Clone)]
@@ -91,10 +87,4 @@ fn path_relative_from(path: &Path, base: &Path) -> Option<PathBuf> {
         }
         Some(comps.iter().map(|c| c.as_os_str()).collect())
     }
-}
-
-pub fn get_import_src(importer: Intern<Src>, import: &Import) -> io::Result<Intern<Src>> {
-    Ok(Intern::new(
-        importer.get_relative(Path::new(&import.file.val))?,
-    ))
 }
