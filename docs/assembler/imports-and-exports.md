@@ -37,7 +37,7 @@ import value from "exports.asm"; // imports identifier "value"
 
 The imported file is written relative to the current file (relative to importer).
 
-### Blob Imports
+### Glob Imports
 
 You may also import all exports from another document by using the glob (`*`) import:
 

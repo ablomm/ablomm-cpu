@@ -55,7 +55,7 @@ pub struct Import {
 #[derive(Debug, Clone)]
 pub enum ImportSpecifier {
     Named(Vec<Spanned<NamedImport>>), // import print as print2, thing from "lib/import.asm";
-    Blob,                             // import * from "lib/import.asm";
+    Glob,                             // import * from "lib/import.asm";
 }
 #[derive(Debug, Clone)]
 pub struct NamedImport {

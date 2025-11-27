@@ -203,7 +203,7 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
     text::keyword("import")
         .ignore_then(
             choice((
-                just("*").to(ImportSpecifier::Blob),
+                just("*").to(ImportSpecifier::Glob),
                 named_import
                     .map_with(|val, e| Spanned::new(val, e.span()))
                     .padded_by(comment_pad())

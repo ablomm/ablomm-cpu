@@ -159,7 +159,7 @@ impl SymbolTable {
             }
 
             // unselective import (i.e. import * from <file>
-            ImportSpecifier::Blob => {
+            ImportSpecifier::Glob => {
                 for (import_key, import_entry) in exports {
                     self.try_insert(
                         *import_key,
