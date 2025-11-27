@@ -132,20 +132,13 @@ impl Spanned<&mut Block> {
                     true
                 }
                 Err(RecoveredError(mut statement_files, mut statement_errors)) => {
-                    // need the condition before append because append will clear out the lists
-                    if statement_files.is_empty() {
-                        files.append(&mut statement_files);
-                        errors.append(&mut statement_errors);
-
-                        // this import, for whatever reason, did not generate a file (e.g. os read error),
-                        // so we need to remove the import so we don't try to use it in subsequent steps
-                        // which could cause phantom errors
-                        false
-                    } else {
-                        files.append(&mut statement_files);
-                        errors.append(&mut statement_errors);
-                        true
-                    }
+                    // false if this import, for whatever reason, did not generate a file (e.g. os read error),
+                    // so we need to remove the import so we don't try to use it in subsequent steps
+                    let should_retain_statement =
+                        matches!(statement.val, Statement::Import(_)) && statement_files.is_empty();
+                    files.append(&mut statement_files);
+                    errors.append(&mut statement_errors);
+                    should_retain_statement
                 }
             }
         });
