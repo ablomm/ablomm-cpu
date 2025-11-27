@@ -91,7 +91,7 @@ impl Spanned<&mut Statement> {
                     symbol: Rc::new(RefCell::new(Symbol {
                         result: Some(result),
                         expression: None,
-                        symbol_table: Rc::clone(symbol_table),
+                        symbol_table: Rc::downgrade(symbol_table),
                     })),
                     key_span: label.identifier.span,
                     import_span: None,
@@ -119,7 +119,7 @@ impl Spanned<&mut Statement> {
                     symbol: Rc::new(RefCell::new(Symbol {
                         result: None,
                         expression: Some(assignment.expression.clone()),
-                        symbol_table: Rc::clone(symbol_table),
+                        symbol_table: Rc::downgrade(symbol_table),
                     })),
                     key_span: assignment.identifier.span,
                     import_span: None,

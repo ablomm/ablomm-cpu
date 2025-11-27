@@ -1,4 +1,9 @@
-use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    hash::Hash,
+    rc::{Rc, Weak},
+};
 
 use indexmap::IndexMap;
 use internment::Intern;
@@ -23,7 +28,6 @@ pub struct SymbolTable {
 pub struct STEntry {
     pub symbol: Rc<RefCell<Symbol>>,
 
-    //TODO: Not have these shared (in the Rc)
     // the span of the original definition identifier
     pub key_span: Span,
 
@@ -41,7 +45,8 @@ pub struct Symbol {
     pub expression: Option<Spanned<Expression>>,
 
     // the symbol_table of where the identifier was defined, needed to evaluate imported identifiers
-    pub symbol_table: Rc<RefCell<SymbolTable>>,
+    // weak pointer because symbol_table already contains reference to the symbol
+    pub symbol_table: Weak<RefCell<SymbolTable>>,
 }
 
 impl Symbol {
@@ -161,9 +166,16 @@ impl SymbolTable {
                 )
             });
 
+            let home_symbol_table = symbol
+                .symbol_table
+                .upgrade()
+                // should never fail because all SymbolTables are owned by Ast ultimately
+                // and all SymbolTables get dropped togther when Ast gets dropped (maybe use arena)
+                .expect("symbol's symbol table pointer invalid");
+
             match expression
                 .as_ref()
-                .eval_with_loop_check(&symbol.symbol_table.borrow(), loop_check)
+                .eval_with_loop_check(&home_symbol_table.borrow(), loop_check)
             {
                 Ok(expression_result) => (expression.span_to(expression_result.result), None),
                 Err(error) => (expression.span_to(ExpressionResult::Error), Some(error)),
