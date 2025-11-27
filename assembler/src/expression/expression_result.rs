@@ -26,10 +26,17 @@ pub enum ExpressionResult {
 // newtypes
 #[derive(Debug, Clone, Copy)]
 pub struct Number(pub u32);
+
 impl Deref for Number {
     type Target = u32;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl Spanned<&Number> {
+    pub fn as_u32(&self) -> Spanned<&u32> {
+        self.span_to(**self)
     }
 }
 

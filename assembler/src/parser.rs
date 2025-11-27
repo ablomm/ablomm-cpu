@@ -225,10 +225,7 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
                 Ok(Spanned::new(Intern::new(import_src), span))
             }),
         ))
-        .map(|(specifier, file)| Import {
-            src: file,
-            specifier,
-        })
+        .map(|(specifier, src)| Import { src, specifier })
         .labelled("import")
 }
 

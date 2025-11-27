@@ -1,4 +1,11 @@
-use crate::{expression::expression_result::ExpressionResult, generator::*};
+use crate::{
+    ast::{AsmMnemonic, CpuMnemonic, Modifier, Operation, Register},
+    error::SpannedError,
+    expression::expression_result::ExpressionResult,
+    generator::{self, Generatable},
+    span::Spanned,
+    symbol_table::SymbolTable,
+};
 
 pub fn generate_pop(
     operation: &Spanned<&Operation>,
@@ -18,17 +25,18 @@ pub fn generate_pop(
         ));
     }
 
-    let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand =
+        operation.operands[0].span_to(operation.operands[0].as_ref().eval(symbol_table)?.result);
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
             generate_pop_reg(&operation.full_mnemonic.modifiers.as_ref(), register)
         }
         _ => Err(SpannedError::incorrect_value(
-            operation.operands[0].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -38,7 +46,7 @@ fn generate_pop_reg(
     register: &Register,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Pop.generate();
     opcode |= register.generate() << 16;
     Ok(opcode)

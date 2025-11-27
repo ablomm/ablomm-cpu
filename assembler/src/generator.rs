@@ -96,9 +96,9 @@ impl Spanned<&Operation> {
 
 impl Spanned<&Expression> {
     fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, SpannedError> {
-        let result = self.eval(symbol_table)?.result;
+        let result = self.span_to(self.eval(symbol_table)?.result);
 
-        match result {
+        match result.val {
             ExpressionResult::Number(number) => {
                 // should never panic because generate occurs after symbol table is filled
                 let number = number.expect("Number value is unknown");
@@ -120,10 +120,10 @@ impl Spanned<&Expression> {
                 Ok(opcodes)
             }
             _ => Err(SpannedError::incorrect_value(
-                self.span,
+                result.span,
                 "type",
                 vec!["number", "string"],
-                Some(result),
+                Some(result.val),
             )),
         }
     }

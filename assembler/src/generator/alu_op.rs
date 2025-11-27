@@ -1,4 +1,11 @@
-use crate::{expression::expression_result::ExpressionResult, generator::*};
+use crate::{
+    ast::{AluOpFlags, AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation, Register},
+    error::SpannedError,
+    expression::expression_result::{ExpressionResult, Number},
+    generator::{self, Generatable},
+    span::Spanned,
+    symbol_table::SymbolTable,
+};
 
 mod unary_alu_op;
 
@@ -44,14 +51,15 @@ fn generate_alu_op_2(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[0].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[0].span_to(operands[0].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_2_num(
                 mnemonic,
                 modifiers,
-                &operands[0].span_to(&**number),
+                &operand.span_to(number),
                 operands,
                 symbol_table,
             )
@@ -61,10 +69,10 @@ fn generate_alu_op_2(
             generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[0].span,
+            operand.span,
             "type",
             vec!["number", "register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -76,26 +84,22 @@ fn generate_alu_op_2_reg(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
-            generate_alu_op_2_reg_num(
-                mnemonic,
-                modifiers,
-                register,
-                &operands[1].span_to(&**number),
-            )
+            generate_alu_op_2_reg_num(mnemonic, modifiers, register, &operand.span_to(number))
         }
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["number", "register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -103,17 +107,17 @@ fn generate_alu_op_2_reg(
 fn generate_alu_op_2_reg_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register: &Register,
+    register1: &Register,
     register2: &Register,
 ) -> Result<u32, SpannedError> {
-    generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register, register, register2)
+    generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register1, register2)
 }
 
 fn generate_alu_op_2_reg_num(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
 ) -> Result<u32, SpannedError> {
     generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register, register, number)
 }
@@ -121,21 +125,22 @@ fn generate_alu_op_2_reg_num(
 fn generate_alu_op_2_num(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -143,7 +148,7 @@ fn generate_alu_op_2_num(
 fn generate_alu_op_2_num_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
     register: &Register,
 ) -> Result<u32, SpannedError> {
     generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register)
@@ -155,17 +160,18 @@ fn generate_alu_op_3(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[0].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[0].span_to(operands[0].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[0].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -177,15 +183,16 @@ fn generate_alu_op_3_reg(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_num(
                 mnemonic,
                 modifiers,
                 register,
-                &operands[1].span_to(&**number),
+                &operand.span_to(number),
                 operands,
                 symbol_table,
             )
@@ -202,10 +209,10 @@ fn generate_alu_op_3_reg(
             )
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["number", "register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -218,8 +225,9 @@ fn generate_alu_op_3_reg_reg(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[2].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[2].span_to(operands[2].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_reg_num(
@@ -227,7 +235,7 @@ fn generate_alu_op_3_reg_reg(
                 modifiers,
                 register1,
                 register2,
-                &operands[2].span_to(&**number),
+                &operand.span_to(number),
             )
         }
         ExpressionResult::Register(register3) => {
@@ -235,10 +243,10 @@ fn generate_alu_op_3_reg_reg(
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[2].span,
+            operand.span,
             "type",
             vec!["number", "register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -252,7 +260,7 @@ fn generate_alu_op_3_reg_reg_reg(
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
     opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_alu(modifiers)?;
     opcode |= register1.generate() << 12;
     opcode |= register2.generate() << 8;
     opcode |= register3.generate() << 4;
@@ -264,16 +272,17 @@ fn generate_alu_op_3_reg_reg_num(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Register,
     register2: &Register,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
 ) -> Result<u32, SpannedError> {
+    generator::assert_range(&number.as_u32().copied(), 0..(1 << 8))?;
+
     let mut opcode = 0;
-    assert_range(&number.copied(), 0..(1 << 8))?;
     opcode |= mnemonic.generate();
-    opcode |= generate_modifiers_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_alu(modifiers)?;
     opcode |= AluOpFlags::Immediate.generate();
     opcode |= register1.generate() << 12;
     opcode |= register2.generate() << 8;
-    opcode |= number.val & 0xff;
+    opcode |= number.as_u32().val & 0xff;
     Ok(opcode)
 }
 
@@ -281,21 +290,22 @@ fn generate_alu_op_3_reg_num(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[2].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[2].span_to(operands[2].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[2].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -304,7 +314,7 @@ fn generate_alu_op_3_reg_num_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Register,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
     register2: &Register,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;

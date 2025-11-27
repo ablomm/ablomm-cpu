@@ -1,7 +1,14 @@
-use super::*;
-
 // a lot of the generation here is delegated to alu_op because, internally, a unary operation uses
 // the least significant bits for it's input (i.e. the second input of a binary operation)
+
+use crate::{
+    ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation},
+    error::SpannedError,
+    expression::expression_result::ExpressionResult,
+    generator::alu_op,
+    span::Spanned,
+    symbol_table::SymbolTable,
+};
 
 pub fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
@@ -43,17 +50,18 @@ fn generate_unary_alu_op_1(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[0].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[0].span_to(operands[0].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
+            alu_op::generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[0].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -64,17 +72,18 @@ fn generate_unary_alu_op_2(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[0].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[0].span_to(operands[0].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
+            alu_op::generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[0].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }

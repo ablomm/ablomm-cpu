@@ -1,5 +1,9 @@
-use crate::SpannedError;
-use crate::generator::*;
+use crate::{
+    SpannedError,
+    ast::{AsmMnemonic, CpuMnemonic, Operation},
+    generator::{self, Generatable},
+    span::Spanned,
+};
 
 pub fn generate_int(operation: &Spanned<&Operation>) -> Result<u32, SpannedError> {
     assert!(matches!(
@@ -18,7 +22,7 @@ pub fn generate_int(operation: &Spanned<&Operation>) -> Result<u32, SpannedError
     }
 
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(&operation.full_mnemonic.modifiers.as_ref())?;
+    opcode |= generator::generate_modifiers_non_alu(&operation.full_mnemonic.modifiers.as_ref())?;
     opcode |= CpuMnemonic::Int.generate();
     Ok(opcode)
 }

@@ -1,6 +1,10 @@
 use crate::{
-    expression::expression_result::{ExpressionResult, RegisterOffset},
-    generator::*,
+    ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation, Register},
+    error::SpannedError,
+    expression::expression_result::{ExpressionResult, Number, RegisterOffset},
+    generator::{self, Generatable},
+    span::Spanned,
+    symbol_table::SymbolTable,
 };
 
 pub fn generate_ld(
@@ -21,8 +25,10 @@ pub fn generate_ld(
         ));
     }
 
-    let operand = operation.operands[0].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand =
+        operation.operands[0].span_to(operation.operands[0].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
             generate_ld_reg(
@@ -34,15 +40,15 @@ pub fn generate_ld(
         }
         ExpressionResult::Indirect(indirect) => generate_ld_indirect(
             &operation.full_mnemonic.modifiers.as_ref(),
-            &operation.operands[0].span_to(indirect),
+            &operand.span_to(indirect),
             &operation.operands.as_ref(),
             symbol_table,
         ),
         _ => Err(SpannedError::incorrect_value(
-            operation.operands[0].span,
+            operand.span,
             "type",
             vec!["register", "indirect"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -53,36 +59,37 @@ fn generate_ld_reg(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
-            generate_ld_reg_num(modifiers, register, &operands[1].span_to(&**number))
+            generate_ld_reg_num(modifiers, register, &operand.span_to(number))
         }
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
             generate_ld_reg_reg(modifiers, register, register2)
         }
         ExpressionResult::Indirect(indirect) => {
-            generate_ld_reg_indirect(modifiers, register, &operands[1].span_to(indirect))
+            generate_ld_reg_indirect(modifiers, register, &operand.span_to(indirect))
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["number", "register", "indirect"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
 
+// MOV
 fn generate_ld_reg_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Register,
     register2: &Register,
 ) -> Result<u32, SpannedError> {
-    // MOV
     let mut opcode = 0;
-    opcode |= generate_modifiers_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_alu(modifiers)?;
     opcode |= CpuMnemonic::Pass.generate();
     opcode |= register1.generate() << 12;
     opcode |= register2.generate() << 4;
@@ -92,14 +99,15 @@ fn generate_ld_reg_reg(
 fn generate_ld_reg_num(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
 ) -> Result<u32, SpannedError> {
-    assert_range(&number.copied(), 0..(1 << 16))?;
+    generator::assert_range(&number.as_u32().copied(), 0..(1 << 16))?;
+
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Ldi.generate();
     opcode |= register.generate() << 16;
-    opcode |= number.val & 0xffff;
+    opcode |= number.as_u32().val & 0xffff;
     Ok(opcode)
 }
 
@@ -111,7 +119,7 @@ fn generate_ld_reg_indirect(
     match indirect.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
-            generate_ld_reg_inum(modifiers, register, &indirect.span_to(&**number))
+            generate_ld_reg_inum(modifiers, register, &indirect.span_to(number))
         }
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
@@ -136,7 +144,7 @@ fn generate_ld_reg_ireg(
     register2: &Register,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Ldr.generate();
     opcode |= register1.generate() << 16;
     opcode |= register2.generate() << 12;
@@ -148,10 +156,11 @@ fn generate_ld_reg_ireg_offset(
     register: &Register,
     reg_offset: &Spanned<&RegisterOffset>,
 ) -> Result<u32, SpannedError> {
-    assert_range(
+    generator::assert_range(
         &reg_offset.span_to(reg_offset.offset),
         (-1 << 11)..(1 << 11),
     )?;
+
     let mut opcode = 0;
     opcode |= generate_ld_reg_ireg(modifiers, register, &reg_offset.reg)?;
     opcode |= reg_offset.offset as u32 & 0xfff;
@@ -161,14 +170,15 @@ fn generate_ld_reg_ireg_offset(
 fn generate_ld_reg_inum(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Register,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
 ) -> Result<u32, SpannedError> {
-    assert_range(&number.copied(), 0..(1 << 16))?;
+    generator::assert_range(&number.as_u32().copied(), 0..(1 << 16))?;
+
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Ld.generate();
     opcode |= register.generate() << 16;
-    opcode |= number.val & 0xffff;
+    opcode |= number.as_u32().val & 0xffff;
     Ok(opcode)
 }
 
@@ -181,12 +191,7 @@ fn generate_ld_indirect(
     match indirect.val {
         ExpressionResult::Number(number) => {
             let number = &number.expect("Expression resulted in None while generating");
-            generate_ld_inum(
-                modifiers,
-                &indirect.span_to(&**number),
-                operands,
-                symbol_table,
-            )
+            generate_ld_inum(modifiers, &indirect.span_to(number), operands, symbol_table)
         }
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
@@ -216,17 +221,18 @@ fn generate_ld_ireg(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
             generate_ld_ireg_reg(modifiers, register, register2)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -237,7 +243,7 @@ fn generate_ld_ireg_reg(
     register2: &Register,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Str.generate();
     opcode |= register2.generate() << 16;
     opcode |= register1.generate() << 12;
@@ -250,17 +256,18 @@ fn generate_ld_ireg_offset(
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
             generate_ld_ireg_offset_reg(modifiers, reg_offset, register)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
@@ -270,10 +277,11 @@ fn generate_ld_ireg_offset_reg(
     reg_offset: &Spanned<&RegisterOffset>,
     register: &Register,
 ) -> Result<u32, SpannedError> {
-    assert_range(
+    generator::assert_range(
         &reg_offset.span_to(reg_offset.offset),
         (-1 << 11)..(1 << 11),
     )?;
+
     let mut opcode = 0;
     opcode |= generate_ld_ireg_reg(modifiers, &reg_offset.reg, register)?;
     opcode |= reg_offset.offset as u32 & 0xfff;
@@ -282,35 +290,37 @@ fn generate_ld_ireg_offset_reg(
 
 fn generate_ld_inum(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
-    let operand = operands[1].as_ref().eval(symbol_table)?.result;
-    match &operand {
+    let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
+
+    match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
             generate_ld_inum_reg(modifiers, number, register)
         }
         _ => Err(SpannedError::incorrect_value(
-            operands[1].span,
+            operand.span,
             "type",
             vec!["register"],
-            Some(operand),
+            Some(operand.val),
         )),
     }
 }
 
 fn generate_ld_inum_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    number: &Spanned<&u32>,
+    number: &Spanned<&Number>,
     register: &Register,
 ) -> Result<u32, SpannedError> {
-    assert_range(&number.copied(), 0..(1 << 16))?;
+    generator::assert_range(&number.as_u32().copied(), 0..(1 << 16))?;
+
     let mut opcode = 0;
-    opcode |= generate_modifiers_non_alu(modifiers)?;
+    opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::St.generate();
     opcode |= register.generate() << 16;
-    opcode |= number.val & 0xffff;
+    opcode |= number.as_u32().val & 0xffff;
     Ok(opcode)
 }
