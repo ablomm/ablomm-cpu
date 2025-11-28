@@ -9,7 +9,7 @@ use crate::{
     ATTENTION_COLOR, Span, SpannedError,
     ast::{Expression, Register},
     span::Spanned,
-    symbol_table::{Symbol, SymbolTable},
+    symbol_table::{Symbol, SymbolTable, SymbolValue},
 };
 
 pub mod expression_result;
@@ -50,12 +50,14 @@ impl Spanned<&Expression> {
                 let entry =
                     symbol_table.try_get_with_result(&self.span_to(identifier), loop_check)?;
                 let symbol = entry.symbol.borrow();
-                let result = symbol.result.clone().unwrap_or_else(|| {
+                let result = if let SymbolValue::Result(result) = &symbol.value.val {
+                    symbol.value.span_to(result.clone())
+                } else {
                     panic!(
                         "Identifier '{}' at {} does not contain result after get_with_result",
                         identifier, self.span
                     )
-                });
+                };
                 if !result.val.is_known_val() {
                     waiting_map.insert(*identifier, entry.key_span);
                 }

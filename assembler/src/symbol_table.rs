@@ -41,28 +41,16 @@ pub struct STEntry {
 // not sure of a good name for this, but it's just the value that can be shared among multiple tables
 #[derive(Debug, Clone)]
 pub struct Symbol {
-    // TODO: make these two fields on enum, since at least one needs to be set a time
-    pub result: Option<Spanned<ExpressionResult>>,
-    pub expression: Option<Spanned<Expression>>,
-
+    pub value: Spanned<SymbolValue>,
     // the symbol_table of where the identifier was defined, needed to evaluate imported identifiers
     // weak pointer because symbol_table already contains reference to the symbol
     pub symbol_table: Weak<RefCell<SymbolTable>>,
 }
 
-impl Symbol {
-    pub fn get_definition_span(&self) -> Span {
-        if let Some(result) = &self.result {
-            result.span
-        } else if let Some(expression) = &self.expression {
-            expression.span
-        } else {
-            // every symbol should have either expression or result
-            panic!(
-                "Attempted to get definition span of symbol that has neither result nor expression"
-            );
-        }
-    }
+#[derive(Debug, Clone)]
+pub enum SymbolValue {
+    Result(ExpressionResult),
+    Expression(Expression),
 }
 
 impl SymbolTable {
@@ -134,58 +122,65 @@ impl SymbolTable {
     ) -> Result<Value, SpannedError> {
         let entry = self.try_get(ident)?;
 
-        if entry.symbol.borrow().result.is_some() {
+        // need to do this here because rust wont allow returning without copying below
+        if matches!(entry.symbol.borrow().value.val, SymbolValue::Result(_)) {
             return Ok(entry);
         }
-
-        let symbol_id = Rc::as_ptr(&entry.symbol);
-
-        if loop_check.contains_key(&symbol_id) {
-            let mut error = SpannedError::new(entry.key_span, "Circular definition");
-
-            for (i, (_, back_span)) in loop_check.iter().enumerate() {
-                error =
-                    error.with_label_span(*back_span, format!("Definition {} of the loop", i + 1));
-            }
-
-            error = error.with_label("This completes the loop, causing a circular definition");
-
-            // no need to set result to error here because we know that the symbol is already in
-            // the loop twice
-            return Err(error);
-        }
-
-        loop_check.insert(symbol_id, entry.symbol.borrow().get_definition_span());
 
         let (result, error) = {
             let symbol = entry.symbol.borrow();
 
-            let expression = symbol.expression.as_ref().unwrap_or_else(|| {
-                panic!(
-                    "Symbol with identifier '{}' at {} has neither expression nor result",
-                    ident.val, ident.span
-                )
-            });
+            match &symbol.value.val {
+                // should never be Result here; see above
+                SymbolValue::Result(_) => return Ok(entry.clone()),
+                SymbolValue::Expression(expression) => {
+                    let symbol_id = Rc::as_ptr(&entry.symbol);
+                    if loop_check.contains_key(&symbol_id) {
+                        let mut error = SpannedError::new(entry.key_span, "Circular definition");
 
-            let home_symbol_table = symbol
-                .symbol_table
-                .upgrade()
-                // should never fail because all SymbolTables are owned by Ast ultimately
-                // and all SymbolTables get dropped togther when Ast gets dropped (maybe use arena)
-                .expect("symbol's symbol table pointer invalid");
+                        for (i, (_, back_span)) in loop_check.iter().enumerate() {
+                            error = error.with_label_span(
+                                *back_span,
+                                format!("Definition {} of the loop", i + 1),
+                            );
+                        }
 
-            match expression
-                .as_ref()
-                .eval_with_loop_check(&home_symbol_table.borrow(), loop_check)
-            {
-                Ok(expression_result) => (expression.span_to(expression_result.result), None),
-                Err(error) => (expression.span_to(ExpressionResult::Error), Some(error)),
+                        error = error
+                            .with_label("This completes the loop, causing a circular definition");
+
+                        // no need to set result to error here because we know that the symbol is already in
+                        // the loop twice
+                        return Err(error);
+                    }
+
+                    loop_check.insert(symbol_id, entry.symbol.borrow().value.span);
+
+                    let expression = symbol.value.span_to(expression);
+
+                    let symbol = entry.symbol.borrow();
+
+                    let home_symbol_table = symbol
+                        .symbol_table
+                        .upgrade()
+                        // should never fail because all SymbolTables are owned by Ast ultimately
+                        // and all SymbolTables get dropped togther when Ast gets dropped (maybe use arena)
+                        .expect("symbol's symbol table pointer invalid");
+
+                    let expression_result =
+                        expression.eval_with_loop_check(&home_symbol_table.borrow(), loop_check);
+                    loop_check.shift_remove(&symbol_id);
+
+                    match expression_result {
+                        Ok(expression_result) => {
+                            (expression.span_to(expression_result.result), None)
+                        }
+                        Err(error) => (expression.span_to(ExpressionResult::Error), Some(error)),
+                    }
+                }
             }
         };
 
-        entry.symbol.borrow_mut().result = Some(result);
-
-        loop_check.shift_remove(&symbol_id);
+        entry.symbol.borrow_mut().value = result.span.spanned(SymbolValue::Result(result.val));
 
         if let Some(error) = error {
             Err(error)

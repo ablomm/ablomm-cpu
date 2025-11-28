@@ -8,7 +8,7 @@ use crate::{
     expression::expression_result::ExpressionResult,
     span::Spanned,
     src::Src,
-    symbol_table::{self, STEntry, Symbol, SymbolTable},
+    symbol_table::{self, STEntry, Symbol, SymbolTable, SymbolValue},
 };
 
 pub type ExportMap = HashMap<symbol_table::Key, symbol_table::Value>;
@@ -89,8 +89,7 @@ impl Spanned<&mut Statement> {
                 let result = label.identifier.span_to(ExpressionResult::Number(None));
                 let st_entry = STEntry {
                     symbol: Rc::new(RefCell::new(Symbol {
-                        result: Some(result),
-                        expression: None,
+                        value: result.span.spanned(SymbolValue::Result(result.val)),
                         symbol_table: Rc::downgrade(symbol_table),
                     })),
                     key_span: label.identifier.span,
@@ -117,8 +116,9 @@ impl Spanned<&mut Statement> {
             Statement::Assignment(assignment) => {
                 let st_entry = STEntry {
                     symbol: Rc::new(RefCell::new(Symbol {
-                        result: None,
-                        expression: Some(assignment.expression.clone()),
+                        value: assignment
+                            .expression
+                            .span_to(SymbolValue::Expression(assignment.expression.val.clone())),
                         symbol_table: Rc::downgrade(symbol_table),
                     })),
                     key_span: assignment.identifier.span,

@@ -8,7 +8,7 @@ use crate::{
         expression_result::{ExpressionResult, Number},
     },
     span::Spanned,
-    symbol_table::SymbolTable,
+    symbol_table::{SymbolTable, SymbolValue},
 };
 
 impl Ast {
@@ -98,7 +98,8 @@ impl Spanned<&mut Statement> {
                     )
                 });
 
-                entry.symbol.borrow_mut().result = Some(result);
+                entry.symbol.borrow_mut().value =
+                    result.span.spanned(SymbolValue::Result(result.val));
             }
 
             Statement::Block(sub_block) => match self.span.spanned(sub_block).set_labels(address) {
