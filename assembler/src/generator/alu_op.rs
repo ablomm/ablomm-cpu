@@ -66,7 +66,13 @@ fn generate_alu_op_2(
         }
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
+            generate_alu_op_2_reg(
+                mnemonic,
+                modifiers,
+                &operand.span_to(register),
+                operands,
+                symbol_table,
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -80,7 +86,7 @@ fn generate_alu_op_2(
 fn generate_alu_op_2_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register: &Register,
+    register: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
@@ -93,7 +99,7 @@ fn generate_alu_op_2_reg(
         }
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
-            generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register2)
+            generate_alu_op_2_reg_reg(mnemonic, modifiers, register, &operand.span_to(register2))
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -107,8 +113,8 @@ fn generate_alu_op_2_reg(
 fn generate_alu_op_2_reg_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register1: &Register,
-    register2: &Register,
+    register1: &Spanned<&Register>,
+    register2: &Spanned<&Register>,
 ) -> Result<u32, SpannedError> {
     generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register1, register2)
 }
@@ -116,7 +122,7 @@ fn generate_alu_op_2_reg_reg(
 fn generate_alu_op_2_reg_num(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register: &Register,
+    register: &Spanned<&Register>,
     number: &Spanned<&Number>,
 ) -> Result<u32, SpannedError> {
     generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register, register, number)
@@ -134,7 +140,7 @@ fn generate_alu_op_2_num(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            generate_alu_op_2_num_reg(mnemonic, modifiers, number, register)
+            generate_alu_op_2_num_reg(mnemonic, modifiers, number, &operand.span_to(register))
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -149,7 +155,7 @@ fn generate_alu_op_2_num_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     number: &Spanned<&Number>,
-    register: &Register,
+    register: &Spanned<&Register>,
 ) -> Result<u32, SpannedError> {
     generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register)
 }
@@ -165,7 +171,13 @@ fn generate_alu_op_3(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            generate_alu_op_3_reg(mnemonic, modifiers, register, operands, symbol_table)
+            generate_alu_op_3_reg(
+                mnemonic,
+                modifiers,
+                &operand.span_to(register),
+                operands,
+                symbol_table,
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -179,7 +191,7 @@ fn generate_alu_op_3(
 fn generate_alu_op_3_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register: &Register,
+    register: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
@@ -203,7 +215,7 @@ fn generate_alu_op_3_reg(
                 mnemonic,
                 modifiers,
                 register,
-                register2,
+                &operand.span_to(register2),
                 operands,
                 symbol_table,
             )
@@ -220,8 +232,8 @@ fn generate_alu_op_3_reg(
 fn generate_alu_op_3_reg_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register1: &Register,
-    register2: &Register,
+    register1: &Spanned<&Register>,
+    register2: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, SpannedError> {
@@ -240,7 +252,13 @@ fn generate_alu_op_3_reg_reg(
         }
         ExpressionResult::Register(register3) => {
             let register3 = &register3.expect("Expression resulted in None while generating");
-            generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, register3)
+            generate_alu_op_3_reg_reg_reg(
+                mnemonic,
+                modifiers,
+                register1,
+                register2,
+                &operand.span_to(register3),
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -254,9 +272,9 @@ fn generate_alu_op_3_reg_reg(
 fn generate_alu_op_3_reg_reg_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register1: &Register,
-    register2: &Register,
-    register3: &Register,
+    register1: &Spanned<&Register>,
+    register2: &Spanned<&Register>,
+    register3: &Spanned<&Register>,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
     opcode |= mnemonic.generate();
@@ -270,8 +288,8 @@ fn generate_alu_op_3_reg_reg_reg(
 fn generate_alu_op_3_reg_reg_num(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register1: &Register,
-    register2: &Register,
+    register1: &Spanned<&Register>,
+    register2: &Spanned<&Register>,
     number: &Spanned<&Number>,
 ) -> Result<u32, SpannedError> {
     generator::assert_range(&number.as_u32().copied(), 0..(1 << 8))?;
@@ -289,7 +307,7 @@ fn generate_alu_op_3_reg_reg_num(
 fn generate_alu_op_3_reg_num(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register: &Register,
+    register: &Spanned<&Register>,
     number: &Spanned<&Number>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -299,7 +317,13 @@ fn generate_alu_op_3_reg_num(
     match &operand.val {
         ExpressionResult::Register(register2) => {
             let register2 = &register2.expect("Expression resulted in None while generating");
-            generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, register2)
+            generate_alu_op_3_reg_num_reg(
+                mnemonic,
+                modifiers,
+                register,
+                number,
+                &operand.span_to(register2),
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -313,9 +337,9 @@ fn generate_alu_op_3_reg_num(
 fn generate_alu_op_3_reg_num_reg(
     mnemonic: &Spanned<&CpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register1: &Register,
+    register1: &Spanned<&Register>,
     number: &Spanned<&Number>,
-    register2: &Register,
+    register2: &Spanned<&Register>,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
     opcode |= generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register1, register2, number)?;

@@ -55,7 +55,12 @@ fn generate_unary_alu_op_1(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            alu_op::generate_alu_op_2_reg_reg(mnemonic, modifiers, register, register)
+            alu_op::generate_alu_op_2_reg_reg(
+                mnemonic,
+                modifiers,
+                &operand.span_to(register),
+                &operand.span_to(register),
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -77,7 +82,13 @@ fn generate_unary_alu_op_2(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            alu_op::generate_alu_op_2_reg(mnemonic, modifiers, register, operands, symbol_table)
+            alu_op::generate_alu_op_2_reg(
+                mnemonic,
+                modifiers,
+                &operand.span_to(register),
+                operands,
+                symbol_table,
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,

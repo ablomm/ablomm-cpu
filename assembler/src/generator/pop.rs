@@ -30,7 +30,10 @@ pub fn generate_pop(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = &register.expect("Expression resulted in None while generating");
-            generate_pop_reg(&operation.full_mnemonic.modifiers.as_ref(), register)
+            generate_pop_reg(
+                &operation.full_mnemonic.modifiers.as_ref(),
+                &operand.span_to(register),
+            )
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -43,7 +46,7 @@ pub fn generate_pop(
 
 fn generate_pop_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-    register: &Register,
+    register: &Spanned<&Register>,
 ) -> Result<u32, SpannedError> {
     let mut opcode = 0;
     opcode |= generator::generate_modifiers_non_alu(modifiers)?;
