@@ -113,82 +113,6 @@ impl SymbolTable {
         )
     }
 
-    // gets Value with the result field set (evaluates expresssion)
-    pub fn try_get_with_result(
-        &self,
-        ident: &Spanned<&Key>,
-        // using pointer as a unique id for map to determine equality
-        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
-    ) -> Result<Value, SpannedError> {
-        let entry = self.try_get(ident)?;
-
-        // need to do this here because rust wont allow returning without copying below
-        if matches!(entry.symbol.borrow().value.val, SymbolValue::Result(_)) {
-            return Ok(entry);
-        }
-
-        let (result, error) = {
-            let symbol = entry.symbol.borrow();
-
-            match &symbol.value.val {
-                // should never be Result here; see above
-                SymbolValue::Result(_) => return Ok(entry.clone()),
-                SymbolValue::Expression(expression) => {
-                    let symbol_id = Rc::as_ptr(&entry.symbol);
-                    if loop_check.contains_key(&symbol_id) {
-                        let mut error = SpannedError::new(entry.key_span, "Circular definition");
-
-                        for (i, (_, back_span)) in loop_check.iter().enumerate() {
-                            error = error.with_label_span(
-                                *back_span,
-                                format!("Definition {} of the loop", i + 1),
-                            );
-                        }
-
-                        error = error
-                            .with_label("This completes the loop, causing a circular definition");
-
-                        // no need to set result to error here because we know that the symbol is already in
-                        // the loop twice
-                        return Err(error);
-                    }
-
-                    loop_check.insert(symbol_id, entry.symbol.borrow().value.span);
-
-                    let expression = symbol.value.span_to(expression);
-
-                    let symbol = entry.symbol.borrow();
-
-                    let home_symbol_table = symbol
-                        .symbol_table
-                        .upgrade()
-                        // should never fail because all SymbolTables are owned by Ast ultimately
-                        // and all SymbolTables get dropped togther when Ast gets dropped (maybe use arena)
-                        .expect("symbol's symbol table pointer invalid");
-
-                    let expression_result =
-                        expression.eval_with_loop_check(&home_symbol_table.borrow(), loop_check);
-                    loop_check.shift_remove(&symbol_id);
-
-                    match expression_result {
-                        Ok(expression_result) => {
-                            (expression.span_to(expression_result.result), None)
-                        }
-                        Err(error) => (expression.span_to(ExpressionResult::Error), Some(error)),
-                    }
-                }
-            }
-        };
-
-        entry.symbol.borrow_mut().value = result.span.spanned(SymbolValue::Result(result.val));
-
-        if let Some(error) = error {
-            Err(error)
-        } else {
-            Ok(entry)
-        }
-    }
-
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
@@ -205,5 +129,35 @@ impl SymbolTable {
         self.insert(key, new_entry);
 
         Ok(())
+    }
+}
+
+impl Symbol {
+    pub fn try_get_result(
+        &mut self,
+        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+    ) -> Result<Spanned<ExpressionResult>, SpannedError> {
+        match &self.value.val {
+            // doesn't matter too much to clone since eval_with_loop_check() would need to clone anyways
+            SymbolValue::Result(result) => Ok(self.value.span_to(result.clone())),
+            SymbolValue::Expression(expression) => {
+                let expression = self.value.span_to(expression);
+
+                let home_symbol_table = self
+                    .symbol_table
+                    .upgrade()
+                    // should never fail because all symbol tables are ultimately owned by the ast
+                    // and all SymbolTables get dropped togther when Ast gets dropped (maybe use arena)
+                    .expect("symbol's symbol table pointer invalid");
+
+                let result = expression
+                    .eval_with_loop_check(&home_symbol_table.borrow(), loop_check)
+                    .map(|eval_return| self.value.span_to(eval_return.result))?;
+
+                self.value = result.span_to(SymbolValue::Result(result.val.clone()));
+
+                Ok(result)
+            }
+        }
     }
 }

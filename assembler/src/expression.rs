@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use ariadne::Fmt;
 use expression_result::{Ashr, AsmDeref, AsmRef, ExpressionResult, Number, String};
@@ -9,7 +9,7 @@ use crate::{
     ATTENTION_COLOR, Span, SpannedError,
     ast::{Expression, Register},
     span::Spanned,
-    symbol_table::{Symbol, SymbolTable, SymbolValue},
+    symbol_table::{STEntry, Symbol, SymbolTable},
 };
 
 pub mod expression_result;
@@ -47,21 +47,11 @@ impl Spanned<&Expression> {
             Expression::String(string) => ExpressionResult::String(Some(String(string.clone()))),
             Expression::Number(number) => ExpressionResult::Number(Some(Number(*number))),
             Expression::Identifier(identifier) => {
-                let entry =
-                    symbol_table.try_get_with_result(&self.span_to(identifier), loop_check)?;
-                let symbol = entry.symbol.borrow();
-                let result = if let SymbolValue::Result(result) = &symbol.value.val {
-                    symbol.value.span_to(result.clone())
-                } else {
-                    panic!(
-                        "Identifier '{}' at {} does not contain result after get_with_result",
-                        identifier, self.span
-                    )
-                };
-                if !result.val.is_known_val() {
-                    waiting_map.insert(*identifier, entry.key_span);
-                }
-                result.val
+                let entry = symbol_table.try_get(&self.span_to(identifier))?;
+
+                check_for_loops(&entry, loop_check)?;
+
+                entry.symbol.borrow_mut().try_get_result(loop_check)?.val
             }
             Expression::Ref(a) => op!(a.asm_ref(), symbol_table, waiting_map, loop_check, a)?,
             Expression::Deref(a) => op!(a.asm_deref(), symbol_table, waiting_map, loop_check, a)?,
@@ -101,4 +91,31 @@ fn get_operand(
         .eval_with_loop_check(symbol_table, loop_check)?;
     waiting_map.extend(sub_waiting_map.iter());
     Ok(val.span_to(result))
+}
+
+fn check_for_loops(
+    entry: &STEntry,
+    loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+) -> Result<(), SpannedError> {
+    // just need a unique id for each symbol to detect loops
+    let symbol_id = Rc::as_ptr(&entry.symbol);
+
+    if loop_check.contains_key(&symbol_id) {
+        let mut error = SpannedError::new(entry.key_span, "Circular definition");
+
+        for (i, (_, back_span)) in loop_check.iter().enumerate() {
+            error = error.with_label_span(*back_span, format!("Definition {} of the loop", i + 1));
+        }
+
+        error = error.with_label("This completes the loop, causing a circular definition");
+
+        // no need to set result to error here because we know that the symbol is already in
+        // the loop twice
+        Err(error)
+    } else {
+        let symbol = entry.symbol.borrow();
+        loop_check.insert(symbol_id, symbol.value.span);
+
+        Ok(())
+    }
 }
