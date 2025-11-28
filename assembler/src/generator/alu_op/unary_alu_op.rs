@@ -4,7 +4,7 @@
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation},
     error::SpannedError,
-    expression::expression_result::ExpressionResult,
+    expression::expression_result::{ExpressionResult, UnwrapSpannedResult},
     generator::alu_op,
     span::Spanned,
     symbol_table::SymbolTable,
@@ -54,13 +54,8 @@ fn generate_unary_alu_op_1(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
-            alu_op::generate_alu_op_2_reg_reg(
-                mnemonic,
-                modifiers,
-                &operand.span_to(register),
-                &operand.span_to(register),
-            )
+            let register = operand.span_to(register).unwrap_spanned();
+            alu_op::generate_alu_op_2_reg_reg(mnemonic, modifiers, &register, &register)
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -81,14 +76,8 @@ fn generate_unary_alu_op_2(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
-            alu_op::generate_alu_op_2_reg(
-                mnemonic,
-                modifiers,
-                &operand.span_to(register),
-                operands,
-                symbol_table,
-            )
+            let register = operand.span_to(register).unwrap_spanned();
+            alu_op::generate_alu_op_2_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,

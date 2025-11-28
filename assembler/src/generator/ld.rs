@@ -1,7 +1,9 @@
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation, Register},
     error::SpannedError,
-    expression::expression_result::{ExpressionResult, Number, RegisterOffset},
+    expression::expression_result::{
+        ExpressionResult, Number, RegisterOffset, UnwrapSpannedResult,
+    },
     generator::{self, Generatable},
     span::Spanned,
     symbol_table::SymbolTable,
@@ -30,10 +32,10 @@ pub fn generate_ld(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
+            let register = operand.span_to(register).unwrap_spanned();
             generate_ld_reg(
                 &operation.full_mnemonic.modifiers.as_ref(),
-                &operand.span_to(register),
+                &register,
                 &operation.operands.as_ref(),
                 symbol_table,
             )
@@ -63,12 +65,12 @@ fn generate_ld_reg(
 
     match &operand.val {
         ExpressionResult::Number(number) => {
-            let number = &number.expect("Expression resulted in None while generating");
-            generate_ld_reg_num(modifiers, register, &operand.span_to(number))
+            let number = operand.span_to(number).unwrap_spanned();
+            generate_ld_reg_num(modifiers, register, &number)
         }
         ExpressionResult::Register(register2) => {
-            let register2 = &register2.expect("Expression resulted in None while generating");
-            generate_ld_reg_reg(modifiers, register, &operand.span_to(register2))
+            let register2 = operand.span_to(register2).unwrap_spanned();
+            generate_ld_reg_reg(modifiers, register, &register2)
         }
         ExpressionResult::Indirect(indirect) => {
             generate_ld_reg_indirect(modifiers, register, &operand.span_to(indirect))
@@ -118,16 +120,16 @@ fn generate_ld_reg_indirect(
 ) -> Result<u32, SpannedError> {
     match indirect.val {
         ExpressionResult::Number(number) => {
-            let number = &number.expect("Expression resulted in None while generating");
-            generate_ld_reg_inum(modifiers, register, &indirect.span_to(number))
+            let number = indirect.span_to(number).unwrap_spanned();
+            generate_ld_reg_inum(modifiers, register, &number)
         }
         ExpressionResult::Register(register2) => {
-            let register2 = &register2.expect("Expression resulted in None while generating");
-            generate_ld_reg_ireg(modifiers, register, &indirect.span_to(register2))
+            let register2 = indirect.span_to(register2).unwrap_spanned();
+            generate_ld_reg_ireg(modifiers, register, &register2)
         }
         ExpressionResult::RegisterOffset(reg_offset) => {
-            let reg_offset = &reg_offset.expect("Expression resulted in None while generating");
-            generate_ld_reg_ireg_offset(modifiers, register, &indirect.span_to(reg_offset))
+            let reg_offset = indirect.span_to(reg_offset).unwrap_spanned();
+            generate_ld_reg_ireg_offset(modifiers, register, &reg_offset)
         }
         _ => Err(SpannedError::incorrect_value(
             indirect.span,
@@ -190,26 +192,16 @@ fn generate_ld_indirect(
 ) -> Result<u32, SpannedError> {
     match indirect.val {
         ExpressionResult::Number(number) => {
-            let number = &number.expect("Expression resulted in None while generating");
-            generate_ld_inum(modifiers, &indirect.span_to(number), operands, symbol_table)
+            let number = indirect.span_to(number).unwrap_spanned();
+            generate_ld_inum(modifiers, &number, operands, symbol_table)
         }
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
-            generate_ld_ireg(
-                modifiers,
-                &indirect.span_to(register),
-                operands,
-                symbol_table,
-            )
+            let register = indirect.span_to(register).unwrap_spanned();
+            generate_ld_ireg(modifiers, &register, operands, symbol_table)
         }
         ExpressionResult::RegisterOffset(reg_offset) => {
-            let reg_offset = &reg_offset.expect("Expression resulted in None while generating");
-            generate_ld_ireg_offset(
-                modifiers,
-                &indirect.span_to(reg_offset),
-                operands,
-                symbol_table,
-            )
+            let reg_offset = indirect.span_to(reg_offset).unwrap_spanned();
+            generate_ld_ireg_offset(modifiers, &reg_offset, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
             indirect.span,
@@ -230,8 +222,8 @@ fn generate_ld_ireg(
 
     match &operand.val {
         ExpressionResult::Register(register2) => {
-            let register2 = &register2.expect("Expression resulted in None while generating");
-            generate_ld_ireg_reg(modifiers, register, &operand.span_to(register2))
+            let register2 = operand.span_to(register2).unwrap_spanned();
+            generate_ld_ireg_reg(modifiers, register, &register2)
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -265,8 +257,8 @@ fn generate_ld_ireg_offset(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
-            generate_ld_ireg_offset_reg(modifiers, reg_offset, &operand.span_to(register))
+            let register = operand.span_to(register).unwrap_spanned();
+            generate_ld_ireg_offset_reg(modifiers, reg_offset, &register)
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,
@@ -303,8 +295,8 @@ fn generate_ld_inum(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
-            generate_ld_inum_reg(modifiers, number, &operand.span_to(register))
+            let register = operand.span_to(register).unwrap_spanned();
+            generate_ld_inum_reg(modifiers, number, &register)
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,

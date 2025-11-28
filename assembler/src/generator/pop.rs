@@ -1,7 +1,7 @@
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Modifier, Operation, Register},
     error::SpannedError,
-    expression::expression_result::ExpressionResult,
+    expression::expression_result::{ExpressionResult, UnwrapSpannedResult},
     generator::{self, Generatable},
     span::Spanned,
     symbol_table::SymbolTable,
@@ -29,11 +29,8 @@ pub fn generate_pop(
         operation.operands[0].span_to(operation.operands[0].as_ref().eval(symbol_table)?.result);
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = &register.expect("Expression resulted in None while generating");
-            generate_pop_reg(
-                &operation.full_mnemonic.modifiers.as_ref(),
-                &operand.span_to(register),
-            )
+            let register = operand.span_to(register).unwrap_spanned();
+            generate_pop_reg(&operation.full_mnemonic.modifiers.as_ref(), &register)
         }
         _ => Err(SpannedError::incorrect_value(
             operand.span,

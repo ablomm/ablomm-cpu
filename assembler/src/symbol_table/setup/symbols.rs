@@ -196,7 +196,7 @@ fn add_export(
                 .with_label_span(
                     entry.export_span.unwrap_or_else(|| {
                         panic!(
-                            "Exported identifier {} doesn't have export_span",
+                            "Exported identifier '{}' doesn't have export_span",
                             identifier.val
                         )
                     }),

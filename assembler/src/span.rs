@@ -1,5 +1,8 @@
 use internment::Intern;
-use std::ops::{Deref, DerefMut, Range};
+use std::{
+    fmt::Display,
+    ops::{Deref, DerefMut, Range},
+};
 
 use crate::src::Src;
 
@@ -43,6 +46,12 @@ impl Span {
             src: self.src,
             range: (self.start().min(other.start()), self.end().max(other.end())),
         }
+    }
+}
+
+impl Display for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}..{}", self.src, self.start(), self.end())
     }
 }
 

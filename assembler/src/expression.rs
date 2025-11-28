@@ -51,7 +51,10 @@ impl Spanned<&Expression> {
                     symbol_table.try_get_with_result(&self.span_to(identifier), loop_check)?;
                 let symbol = entry.symbol.borrow();
                 let result = symbol.result.clone().unwrap_or_else(|| {
-                    panic!("Identifier '{}' does not contain result", identifier)
+                    panic!(
+                        "Identifier '{}' does not contain result after get_with_result",
+                        identifier
+                    )
                 });
                 if !result.val.is_known_val() {
                     waiting_map.insert(*identifier, entry.key_span);
