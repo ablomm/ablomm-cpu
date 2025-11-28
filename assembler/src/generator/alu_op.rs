@@ -1,7 +1,7 @@
 use crate::{
     ast::{AluOpFlags, AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation, Register},
     error::SpannedError,
-    expression::expression_result::{ExpressionResult, Number, UnwrapSpannedResult},
+    expression::expression_result::{ExpressionResult, Number},
     generator::{self, Generatable},
     span::Spanned,
     symbol_table::SymbolTable,
@@ -55,11 +55,11 @@ fn generate_alu_op_2(
 
     match &operand.val {
         ExpressionResult::Number(number) => {
-            let number = operand.span_to(number).unwrap_spanned();
+            let number = operand.span_to(number).unwrap();
             generate_alu_op_2_num(mnemonic, modifiers, &number, operands, symbol_table)
         }
         ExpressionResult::Register(register) => {
-            let register = operand.span_to(register).unwrap_spanned();
+            let register = operand.span_to(register).unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -82,11 +82,11 @@ fn generate_alu_op_2_reg(
 
     match &operand.val {
         ExpressionResult::Number(number) => {
-            let number = operand.span_to(number).unwrap_spanned();
+            let number = operand.span_to(number).unwrap();
             generate_alu_op_2_reg_num(mnemonic, modifiers, register, &number)
         }
         ExpressionResult::Register(register2) => {
-            let register2 = operand.span_to(register2).unwrap_spanned();
+            let register2 = operand.span_to(register2).unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, &register2)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -127,7 +127,7 @@ fn generate_alu_op_2_num(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = operand.span_to(register).unwrap_spanned();
+            let register = operand.span_to(register).unwrap();
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, &register)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -158,7 +158,7 @@ fn generate_alu_op_3(
 
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = operand.span_to(register).unwrap_spanned();
+            let register = operand.span_to(register).unwrap();
             generate_alu_op_3_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -181,7 +181,7 @@ fn generate_alu_op_3_reg(
 
     match &operand.val {
         ExpressionResult::Number(number) => {
-            let number = operand.span_to(number).unwrap_spanned();
+            let number = operand.span_to(number).unwrap();
             generate_alu_op_3_reg_num(
                 mnemonic,
                 modifiers,
@@ -192,7 +192,7 @@ fn generate_alu_op_3_reg(
             )
         }
         ExpressionResult::Register(register2) => {
-            let register2 = operand.span_to(register2).unwrap_spanned();
+            let register2 = operand.span_to(register2).unwrap();
             generate_alu_op_3_reg_reg(
                 mnemonic,
                 modifiers,
@@ -223,11 +223,11 @@ fn generate_alu_op_3_reg_reg(
 
     match &operand.val {
         ExpressionResult::Number(number) => {
-            let number = operand.span_to(number).unwrap_spanned();
+            let number = operand.span_to(number).unwrap();
             generate_alu_op_3_reg_reg_num(mnemonic, modifiers, register1, register2, &number)
         }
         ExpressionResult::Register(register3) => {
-            let register3 = operand.span_to(register3).unwrap_spanned();
+            let register3 = operand.span_to(register3).unwrap();
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, &register3)
         }
         _ => Err(SpannedError::incorrect_value(
@@ -286,7 +286,7 @@ fn generate_alu_op_3_reg_num(
 
     match &operand.val {
         ExpressionResult::Register(register2) => {
-            let register2 = operand.span_to(register2).unwrap_spanned();
+            let register2 = operand.span_to(register2).unwrap();
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, &register2)
         }
         _ => Err(SpannedError::incorrect_value(

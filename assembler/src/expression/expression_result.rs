@@ -100,27 +100,6 @@ impl From<ExpressionResult> for std::string::String {
     }
 }
 
-// generic over any value with a spanned result
-// but mostly for generator, because the expression result during generation should always be Some
-pub trait UnwrapSpannedResult {
-    type Output;
-
-    fn unwrap_spanned(self) -> Spanned<Self::Output>;
-}
-
-impl<'a, T> UnwrapSpannedResult for &Spanned<&'a Option<T>> {
-    type Output = &'a T;
-    fn unwrap_spanned(self) -> Spanned<Self::Output> {
-        let val = self.val.as_ref().unwrap_or_else(|| {
-            panic!(
-                "Option at {} was None while attempting to unwrap",
-                self.span
-            )
-        });
-        self.span_to(val)
-    }
-}
-
 // operations that are not in rust std::op
 
 // asmref to make it clear this is different from rust ref

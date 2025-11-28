@@ -1,7 +1,7 @@
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Modifier, Operation, Register},
     error::SpannedError,
-    expression::expression_result::{ExpressionResult, UnwrapSpannedResult},
+    expression::expression_result::ExpressionResult,
     generator::{self, Generatable},
     span::Spanned,
     symbol_table::SymbolTable,
@@ -29,7 +29,7 @@ pub fn generate_push(
         operation.operands[0].span_to(operation.operands[0].as_ref().eval(symbol_table)?.result);
     match &operand.val {
         ExpressionResult::Register(register) => {
-            let register = operand.span_to(register).unwrap_spanned();
+            let register = operand.span_to(register).unwrap();
             generate_push_reg(&operation.full_mnemonic.modifiers.as_ref(), &register)
         }
         _ => Err(SpannedError::incorrect_value(
