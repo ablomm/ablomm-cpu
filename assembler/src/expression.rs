@@ -52,8 +52,8 @@ impl Spanned<&Expression> {
                 let symbol = entry.symbol.borrow();
                 let result = symbol.result.clone().unwrap_or_else(|| {
                     panic!(
-                        "Identifier '{}' does not contain result after get_with_result",
-                        identifier
+                        "Identifier '{}' at {} does not contain result after get_with_result",
+                        identifier, self.span
                     )
                 });
                 if !result.val.is_known_val() {

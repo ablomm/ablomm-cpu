@@ -41,6 +41,7 @@ pub struct STEntry {
 // not sure of a good name for this, but it's just the value that can be shared among multiple tables
 #[derive(Debug, Clone)]
 pub struct Symbol {
+    // TODO: make these two fields on enum, since at least one needs to be set a time
     pub result: Option<Spanned<ExpressionResult>>,
     pub expression: Option<Spanned<Expression>>,
 
@@ -161,8 +162,8 @@ impl SymbolTable {
 
             let expression = symbol.expression.as_ref().unwrap_or_else(|| {
                 panic!(
-                    "Symbol with identifier '{}' has neither expression nor result",
-                    ident.val
+                    "Symbol with identifier '{}' at {} has neither expression nor result",
+                    ident.val, ident.span
                 )
             });
 

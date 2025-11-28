@@ -93,8 +93,8 @@ impl Spanned<&mut Statement> {
                 .get(&label.identifier.as_ref())
                 .unwrap_or_else(|| {
                     panic!(
-                        "Label '{}' type did not exist in symbol table when inserting final value",
-                        label.identifier.val
+                        "Label '{}' at {} did not exist in symbol table when inserting final value",
+                        label.identifier.val, label.identifier.span
                     )
                 });
 

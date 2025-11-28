@@ -86,8 +86,8 @@ impl Spanned<&mut Statement> {
                 let exports = file_exports_map.get(&import.src).unwrap_or_else(||
                     // add_symbols() should have already created it
                     panic!(
-                        "Attempted to import '{}' when the exporter's symbol table has not been filled",
-                        import.src.val
+                        "Attempted to import '{}' at {} when the exporter's symbol table has not been filled",
+                        import.src.val, import.src.span
                     ));
 
                 match symbol_table.borrow_mut().import(import, exports) {
