@@ -1,4 +1,7 @@
-use std::{fmt::Display, io::Write};
+use std::{
+    fmt::Display,
+    io::{self, Write},
+};
 
 use crate::{Span, expression::expression_result::ExpressionResult, span::Spanned, src::Src};
 use ariadne::{Cache, Color, Fmt};
@@ -7,9 +10,18 @@ use internment::Intern;
 
 pub const ATTENTION_COLOR: Color = Color::Fixed(12); // blue
 
-pub enum Error<T: Cache<Intern<Src>>> {
-    Spanned(Vec<SpannedError>, T),
+pub enum Error {
     Bare(String),
+    Spanned(SpannedError),
+}
+
+impl Error {
+    pub fn eprint(&self, cache: impl ariadne::Cache<Intern<Src>>) -> Result<(), std::io::Error> {
+        match self {
+            Error::Bare(error) => writeln!(io::stderr(), "{}", error),
+            Error::Spanned(error) => error.eprint(cache),
+        }
+    }
 }
 
 // if there was errors, but we were able to recover some result
@@ -112,11 +124,11 @@ impl SpannedError {
     }
 
     pub fn eprint(&self, cache: impl ariadne::Cache<Intern<Src>>) -> Result<(), std::io::Error> {
-        self.write(cache, std::io::stderr())
+        self.write(cache, io::stderr())
     }
 
     pub fn print(&self, cache: impl ariadne::Cache<Intern<Src>>) -> Result<(), std::io::Error> {
-        self.write(cache, std::io::stdout())
+        self.write(cache, io::stdout())
     }
 }
 

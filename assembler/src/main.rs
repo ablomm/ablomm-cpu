@@ -1,5 +1,6 @@
-use ablomm_asm::error::{Error, RecoveredError};
+use ablomm_asm::error::RecoveredError;
 use clap::Parser;
+use std::io::{self, Write};
 use std::{fs, process::ExitCode};
 
 #[derive(Parser, Debug)]
@@ -23,23 +24,26 @@ fn main() -> ExitCode {
                 Some(output_file) => match fs::write(output_file, machine_code) {
                     Ok(_) => (),
                     Err(error) => {
-                        eprintln!("Error while writing to file \"{}\": {}", output_file, error);
+                        let _ = writeln!(
+                            io::stderr(),
+                            "Error while writing to file \"{}\": {}",
+                            output_file,
+                            error
+                        );
+
                         return ExitCode::FAILURE;
                     }
                 },
                 None => {
-                    print!("{}", machine_code);
+                    print!("{}", machine_code); // panics for io errors
                 }
             }
 
             ExitCode::SUCCESS
         }
-        Err(RecoveredError(_, error)) => {
-            match error {
-                Error::Spanned(errors, mut cache) => errors.iter().for_each(|error| {
-                    error.eprint(&mut cache).ok();
-                }),
-                Error::Bare(error) => eprintln!("{}", error),
+        Err(RecoveredError(_, (errors, mut cache))) => {
+            for error in errors {
+                let _ = error.eprint(&mut cache);
             }
 
             ExitCode::FAILURE

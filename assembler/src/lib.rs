@@ -23,15 +23,27 @@ pub type SrcCache = FnCache<Intern<Src>, fn(&Intern<Src>) -> io::Result<String>,
 
 // error includes cache in order to print errors without re-reading files
 // error includes recovered machine_code
-pub fn assemble(src: &str) -> RecoveredResult<Vec<u32>, Vec<u32>, Error<impl Cache<Intern<Src>>>> {
+#[allow(clippy::type_complexity)]
+pub fn assemble(
+    src: &str,
+) -> RecoveredResult<Vec<u32>, Vec<u32>, (Vec<Error>, impl Cache<Intern<Src>>)> {
+    // cache of file name and corresponding file contents, used to
+    // associate file names to contents for printing errors
+    let mut cache: SrcCache = FnCache::new(|src: &Intern<Src>| fs::read_to_string(src.as_path()));
+
     // fails if file not found
     // this is the root file, given in the command-line argument
-    let src = Intern::new(Src::new(Path::new(src).to_path_buf()).map_err(|error| {
-        RecoveredError(
-            Vec::new(),
-            Error::Bare(format!("Error in provided file \"{}\": {}", src, error)),
-        )
-    })?);
+    let src = Intern::new(
+        match Src::new(Path::new(src).to_path_buf())
+            .map_err(|error| Error::Bare(format!("Error in provided file \"{}\": {}", src, error)))
+        {
+            Ok(src) => src,
+            Err(error) => {
+                // have to do ths in a match instead of map_err because cache is moved
+                return Err(RecoveredError(Vec::new(), (vec![error], cache)));
+            }
+        },
+    );
 
     // create a dummy span because there is no actual span for the root file, as it doesn't have a
     // corresponding import statement
@@ -39,10 +51,6 @@ pub fn assemble(src: &str) -> RecoveredResult<Vec<u32>, Vec<u32>, Error<impl Cac
     let src = Spanned::new(src, dummy_span);
 
     let mut errors = Vec::new();
-
-    // cache of file name and corresponding file contents, used to
-    // associate file names to contents for printing errors
-    let mut cache: SrcCache = FnCache::new(|src: &Intern<Src>| fs::read_to_string(src.as_path()));
 
     let mut ast = match src.build_ast(&mut cache) {
         Ok(ast) => ast,
@@ -68,6 +76,9 @@ pub fn assemble(src: &str) -> RecoveredResult<Vec<u32>, Vec<u32>, Error<impl Cac
     if errors.is_empty() {
         Ok(machine_code)
     } else {
-        Err(RecoveredError(machine_code, Error::Spanned(errors, cache)))
+        Err(RecoveredError(
+            machine_code,
+            (errors.into_iter().map(Error::Spanned).collect(), cache),
+        ))
     }
 }
