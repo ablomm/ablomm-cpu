@@ -5,11 +5,12 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use indexmap::IndexMap;
 use internment::Intern;
 
 use crate::{
-    Span, SpannedError, ast::Expression, expression::expression_result::ExpressionResult,
+    Span, SpannedError,
+    ast::Expression,
+    expression::{LoopCheck, expression_result::ExpressionResult},
     span::Spanned,
 };
 
@@ -135,28 +136,34 @@ impl SymbolTable {
 impl Symbol {
     pub fn try_get_result(
         &mut self,
-        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
-    ) -> Result<Spanned<ExpressionResult>, SpannedError> {
+        loop_check: &mut LoopCheck,
+    ) -> Result<ExpressionResult, SpannedError> {
         match &self.value.val {
             // doesn't matter too much to clone since eval_with_loop_check() would need to clone anyways
-            SymbolValue::Result(result) => Ok(self.value.span_to(result.clone())),
+            SymbolValue::Result(result) => Ok(result.clone()),
             SymbolValue::Expression(expression) => {
                 let expression = self.value.span_to(expression);
 
-                let home_symbol_table = self
+                let symbol_table = self
                     .symbol_table
                     .upgrade()
                     // should never fail because all symbol tables are ultimately owned by the ast
                     // and all SymbolTables get dropped togther when Ast gets dropped (maybe use arena)
                     .expect("symbol's symbol table pointer invalid");
 
-                let result = expression
-                    .eval_with_loop_check(&home_symbol_table.borrow(), loop_check)
-                    .map(|eval_return| self.value.span_to(eval_return.result))?;
-
-                self.value = result.span_to(SymbolValue::Result(result.val.clone()));
-
-                Ok(result)
+                match expression
+                    .eval_with_loop_check(&symbol_table.borrow(), loop_check)
+                    .map(|eval_return| eval_return.result)
+                {
+                    Ok(result) => {
+                        self.value.val = SymbolValue::Result(result.clone());
+                        Ok(result)
+                    }
+                    Err(error) => {
+                        self.value.val = SymbolValue::Result(ExpressionResult::Error);
+                        Err(error)
+                    }
+                }
             }
         }
     }

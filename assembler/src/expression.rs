@@ -24,6 +24,8 @@ macro_rules! op {
     }};
 }
 
+pub type LoopCheck = IndexMap<*const RefCell<Symbol>, (Span, Span)>;
+
 pub struct EvalReturn {
     pub result: ExpressionResult,
     // the identifiers that are causing the result to be None. It is empty if the value is known
@@ -39,7 +41,7 @@ impl Spanned<&Expression> {
     pub fn eval_with_loop_check(
         &self,
         symbol_table: &SymbolTable,
-        loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+        loop_check: &mut LoopCheck,
     ) -> Result<EvalReturn, SpannedError> {
         let mut waiting_map = HashMap::new();
         let result = match self.val {
@@ -48,10 +50,8 @@ impl Spanned<&Expression> {
             Expression::Number(number) => ExpressionResult::Number(Some(Number(*number))),
             Expression::Identifier(identifier) => {
                 let entry = symbol_table.try_get(&self.span_to(identifier))?;
-
-                check_for_loops(&entry, loop_check)?;
-
-                entry.symbol.borrow_mut().try_get_result(loop_check)?.val
+                check_for_loops(&entry, self.span, loop_check)?;
+                entry.symbol.borrow_mut().try_get_result(loop_check)?
             }
             Expression::Ref(a) => op!(a.asm_ref(), symbol_table, waiting_map, loop_check, a)?,
             Expression::Deref(a) => op!(a.asm_deref(), symbol_table, waiting_map, loop_check, a)?,
@@ -81,7 +81,7 @@ fn get_operand(
     val: &Spanned<Expression>,
     symbol_table: &SymbolTable,
     waiting_map: &mut HashMap<Intern<std::string::String>, Span>,
-    loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+    loop_check: &mut LoopCheck,
 ) -> Result<Spanned<ExpressionResult>, SpannedError> {
     let EvalReturn {
         result,
@@ -95,27 +95,43 @@ fn get_operand(
 
 fn check_for_loops(
     entry: &STEntry,
-    loop_check: &mut IndexMap<*const RefCell<Symbol>, Span>,
+    identifier_span: Span,
+    loop_check: &mut IndexMap<*const RefCell<Symbol>, (Span, Span)>,
 ) -> Result<(), SpannedError> {
     // just need a unique id for each symbol to detect loops
     let symbol_id = Rc::as_ptr(&entry.symbol);
+    // the index at which the sequence starts to loop
+    let loop_index = loop_check.get_index_of(&symbol_id);
 
-    if loop_check.contains_key(&symbol_id) {
-        let mut error = SpannedError::new(entry.key_span, "Circular definition");
+    if let Some(loop_index) = loop_index {
+        let mut error = SpannedError::new(identifier_span, "Circular definition");
 
-        for (i, (_, back_span)) in loop_check.iter().enumerate() {
-            error = error.with_label_span(*back_span, format!("Definition {} of the loop", i + 1));
+        for (i, (key_span, identifier_span)) in loop_check.values().enumerate() {
+            // first span is the key, then each subsequent span is the identifier within the
+            // definition for a chain of dependencies
+            let span = if i == 0 { key_span } else { identifier_span };
+            error = error.with_label_span(*span, format!("Identifier {}", i + 1));
         }
 
-        error = error.with_label("This completes the loop, causing a circular definition");
+        error = error.with_label(format!(
+            "This is identifier {}, causing a circular definition",
+            loop_index + 1
+        ));
 
-        // no need to set result to error here because we know that the symbol is already in
-        // the loop twice
+        // the first identifier_span is the identifier within a generatable statement.
+        // Because the assembler only evaulates expressions if it gets generated, then we should
+        // also include the identifier that was in the generated statement to notify that this
+        // statement had an error
+        if let Some((_key_span, identifier_span)) = loop_check.values().next() {
+            error = error.with_label_span(
+                *identifier_span,
+                "Error evaluating this identifier: see above",
+            );
+        }
+
         Err(error)
     } else {
-        let symbol = entry.symbol.borrow();
-        loop_check.insert(symbol_id, symbol.value.span);
-
+        loop_check.insert(symbol_id, (entry.key_span, identifier_span));
         Ok(())
     }
 }
