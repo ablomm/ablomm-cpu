@@ -44,11 +44,9 @@ pub fn generate_ld(
             &operation.operands.as_ref(),
             symbol_table,
         ),
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register", "indirect"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -73,11 +71,9 @@ fn generate_ld_reg(
         ExpressionResult::Indirect(indirect) => {
             generate_ld_reg_indirect(modifiers, register, &operand.span_to(indirect))
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register", "indirect"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -129,11 +125,9 @@ fn generate_ld_reg_indirect(
             let reg_offset = indirect.span_to(reg_offset).unwrap();
             generate_ld_reg_ireg_offset(modifiers, register, &reg_offset)
         }
-        _ => Err(SpannedError::incorrect_value(
-            indirect.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register", "register offset"],
-            Some(indirect.val),
+            indirect,
         )),
     }
 }
@@ -201,11 +195,9 @@ fn generate_ld_indirect(
             let reg_offset = indirect.span_to(reg_offset).unwrap();
             generate_ld_ireg_offset(modifiers, &reg_offset, operands, symbol_table)
         }
-        _ => Err(SpannedError::incorrect_value(
-            indirect.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register", "register offset"],
-            Some(indirect.val),
+            indirect,
         )),
     }
 }
@@ -223,11 +215,9 @@ fn generate_ld_ireg(
             let register2 = operand.span_to(register2).unwrap();
             generate_ld_ireg_reg(modifiers, register, &register2)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -258,11 +248,9 @@ fn generate_ld_ireg_offset(
             let register = operand.span_to(register).unwrap();
             generate_ld_ireg_offset_reg(modifiers, reg_offset, &register)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -296,11 +284,9 @@ fn generate_ld_inum(
             let register = operand.span_to(register).unwrap();
             generate_ld_inum_reg(modifiers, number, &register)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }

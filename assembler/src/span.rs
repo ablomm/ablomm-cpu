@@ -115,7 +115,7 @@ impl ariadne::Span for Span {
 }
 
 // just a struct to hold a span and a value for error messages
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Spanned<T> {
     pub val: T,
     pub span: Span,

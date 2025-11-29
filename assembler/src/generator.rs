@@ -119,11 +119,9 @@ impl Spanned<&Expression> {
                 }
                 Ok(opcodes)
             }
-            _ => Err(SpannedError::incorrect_value(
-                result.span,
-                "type",
+            _ => Err(SpannedError::incorrect_type(
                 vec!["number", "string"],
-                Some(result.val),
+                &result.as_ref(),
             )),
         }
     }

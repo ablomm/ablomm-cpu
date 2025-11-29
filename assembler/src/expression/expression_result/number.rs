@@ -32,12 +32,7 @@ impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn mul(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self * &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -62,12 +57,7 @@ impl Div<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn div(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self / &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -102,12 +92,7 @@ impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn rem(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self % &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -145,11 +130,9 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
             ExpressionResult::String(string) => self + &rhs.span_to(string),
             ExpressionResult::Register(register) => self + &rhs.span_to(register),
             ExpressionResult::RegisterOffset(reg_offset) => self + &rhs.span_to(reg_offset),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
+            _ => Err(SpannedError::incorrect_type(
                 vec!["number", "string", "register", "register offset"],
-                Some(rhs.val),
+                rhs,
             )),
         }
     }
@@ -207,12 +190,7 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -237,12 +215,7 @@ impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn shl(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self << &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -267,12 +240,7 @@ impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn shr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self >> &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -297,12 +265,7 @@ impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn ashr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self.ashr(&rhs.span_to(number)),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -327,12 +290,7 @@ impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn bitand(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self & &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -355,12 +313,7 @@ impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn bitor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self | &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -383,12 +336,7 @@ impl BitXor<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
     fn bitxor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self ^ &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }

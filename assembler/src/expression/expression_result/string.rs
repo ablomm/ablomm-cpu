@@ -7,12 +7,7 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<String>> {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
             ExpressionResult::String(string) => self + &rhs.span_to(string),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number", "string"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number", "string"], rhs)),
         }
     }
 }

@@ -154,7 +154,9 @@ impl Spanned<&Expression> {
             waiting_map,
         } = self.eval(symbol_table)?;
 
-        match result {
+        let result = self.span_to(result);
+
+        match result.val {
             ExpressionResult::Number(_number) => Ok(1),
             ExpressionResult::String(string) => {
                 let string = string.ok_or_else(|| {
@@ -174,11 +176,9 @@ impl Spanned<&Expression> {
 
                 Ok(((string.len() as f32) / 4.0).ceil() as u32)
             }
-            _ => Err(SpannedError::incorrect_value(
-                self.span,
-                "type",
+            _ => Err(SpannedError::incorrect_type(
                 vec!["number", "string"],
-                Some(result),
+                &result.as_ref(),
             )),
         }
     }

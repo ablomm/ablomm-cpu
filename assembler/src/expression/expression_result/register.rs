@@ -6,12 +6,7 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
@@ -40,12 +35,7 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Register>> {
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_value(
-                rhs.span,
-                "type",
-                vec!["number"],
-                Some(rhs.val),
-            )),
+            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
         }
     }
 }

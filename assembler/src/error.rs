@@ -1,6 +1,6 @@
 use std::{fmt::Display, io::Write};
 
-use crate::{Span, src::Src};
+use crate::{Span, expression::expression_result::ExpressionResult, span::Spanned, src::Src};
 use ariadne::{Cache, Color, Fmt};
 use chumsky::error::{RichPattern, RichReason};
 use internment::Intern;
@@ -23,6 +23,11 @@ pub struct SpannedError {
     labels: Vec<(Span, String)>,
     notes: Vec<String>,
     helps: Vec<String>,
+
+    // if we should not print this error
+    // useful if this error is a consequence of a previous error that should already be printed, so
+    // printing this one would just increase noise
+    ignored: bool,
 }
 
 impl SpannedError {
@@ -33,6 +38,7 @@ impl SpannedError {
             labels: Vec::new(),
             notes: Vec::new(),
             helps: Vec::new(),
+            ignored: false,
         }
     }
 
@@ -58,6 +64,11 @@ impl SpannedError {
         self
     }
 
+    pub fn ignored(mut self, ignored: bool) -> Self {
+        self.ignored = ignored;
+        self
+    }
+
     // check if any of the spans in this error intersect the given span
     pub fn any_span_intersect(&self, span: Span) -> bool {
         span.intersects(&self.span)
@@ -73,6 +84,10 @@ impl SpannedError {
         writer: impl Write,
     ) -> Result<(), std::io::Error> {
         use ariadne::{Config, IndexType, Label, Report, ReportKind};
+
+        if self.ignored {
+            return Ok(());
+        }
 
         let labels = self.labels.iter().map(|(span, message)| {
             Label::new(*span)
@@ -129,6 +144,14 @@ impl SpannedError {
                 .join(" or "),
             found.fg(ATTENTION_COLOR)
         ))
+    }
+
+    pub fn incorrect_type(expected: Vec<impl Display>, found: &Spanned<&ExpressionResult>) -> Self {
+        // Error type is ignored because there should already be an error for when that result was
+        // created; no need to print any more errors about it
+        let ignored = matches!(found.val, ExpressionResult::Error);
+
+        Self::incorrect_value(found.span, "type", expected, Some(found.val)).ignored(ignored)
     }
 
     pub fn incorrect_value(

@@ -62,11 +62,9 @@ fn generate_alu_op_2(
             let register = operand.span_to(register).unwrap();
             generate_alu_op_2_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -89,11 +87,9 @@ fn generate_alu_op_2_reg(
             let register2 = operand.span_to(register2).unwrap();
             generate_alu_op_2_reg_reg(mnemonic, modifiers, register, &register2)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -130,11 +126,9 @@ fn generate_alu_op_2_num(
             let register = operand.span_to(register).unwrap();
             generate_alu_op_2_num_reg(mnemonic, modifiers, number, &register)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -161,11 +155,9 @@ fn generate_alu_op_3(
             let register = operand.span_to(register).unwrap();
             generate_alu_op_3_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -202,11 +194,9 @@ fn generate_alu_op_3_reg(
                 symbol_table,
             )
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -230,11 +220,9 @@ fn generate_alu_op_3_reg_reg(
             let register3 = operand.span_to(register3).unwrap();
             generate_alu_op_3_reg_reg_reg(mnemonic, modifiers, register1, register2, &register3)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["number", "register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -289,11 +277,9 @@ fn generate_alu_op_3_reg_num(
             let register2 = operand.span_to(register2).unwrap();
             generate_alu_op_3_reg_num_reg(mnemonic, modifiers, register, number, &register2)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }

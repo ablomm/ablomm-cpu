@@ -57,11 +57,9 @@ fn generate_unary_alu_op_1(
             let register = operand.span_to(register).unwrap();
             alu_op::generate_alu_op_2_reg_reg(mnemonic, modifiers, &register, &register)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
@@ -79,11 +77,9 @@ fn generate_unary_alu_op_2(
             let register = operand.span_to(register).unwrap();
             alu_op::generate_alu_op_2_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }

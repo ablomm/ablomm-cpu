@@ -32,11 +32,9 @@ pub fn generate_push(
             let register = operand.span_to(register).unwrap();
             generate_push_reg(&operation.full_mnemonic.modifiers.as_ref(), &register)
         }
-        _ => Err(SpannedError::incorrect_value(
-            operand.span,
-            "type",
+        _ => Err(SpannedError::incorrect_type(
             vec!["register"],
-            Some(operand.val),
+            &operand.as_ref(),
         )),
     }
 }
