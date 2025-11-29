@@ -58,6 +58,15 @@ impl SpannedError {
         self
     }
 
+    // check if any of the spans in this error intersect the given span
+    pub fn any_span_intersect(&self, span: Span) -> bool {
+        span.intersects(&self.span)
+            || self
+                .labels
+                .iter()
+                .any(|(label_span, _)| span.intersects(label_span))
+    }
+
     pub fn write(
         &self,
         cache: impl Cache<Intern<Src>>,

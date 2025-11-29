@@ -1,5 +1,6 @@
 use internment::Intern;
 use std::{
+    cmp,
     fmt::Display,
     ops::{Deref, DerefMut, Range},
 };
@@ -38,6 +39,27 @@ impl Span {
 
     pub fn end(&self) -> usize {
         self.range.1
+    }
+
+    // None if no intersection
+    pub fn intersection(&self, other: &Self) -> Option<Self> {
+        if self.src != other.src {
+            // no intersection since they are in seperate files
+            return None;
+        }
+
+        let start = cmp::max(self.start(), other.start());
+        let end = cmp::min(self.end(), other.end());
+
+        if start <= end {
+            Some(Self::new(self.src, start..end))
+        } else {
+            None
+        }
+    }
+
+    pub fn intersects(&self, other: &Self) -> bool {
+        self.intersection(other).is_some()
     }
 
     pub fn union(&self, other: &Self) -> Self {

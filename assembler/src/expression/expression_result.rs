@@ -20,6 +20,7 @@ pub enum ExpressionResult {
     Register(Option<Register>),
     RegisterOffset(Option<RegisterOffset>),
     Indirect(Indirect),
+    // TODO: skip printing errors caused by the Error type, since the root cause is already printed earlier
     Error,
 }
 
@@ -87,7 +88,7 @@ impl Display for ExpressionResult {
             ExpressionResult::Register(_) => "register",
             ExpressionResult::RegisterOffset(_) => "register offset",
             ExpressionResult::Indirect(indirect) => &format!("{} {}", "indirect", **indirect),
-            ExpressionResult::Error => "error type",
+            ExpressionResult::Error => "unknown (previous error)",
         };
 
         write!(f, "{}", string)

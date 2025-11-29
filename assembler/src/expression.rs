@@ -106,28 +106,15 @@ fn check_for_loops(
     if let Some(loop_index) = loop_index {
         let mut error = SpannedError::new(identifier_span, "Circular definition");
 
-        for (i, (key_span, identifier_span)) in loop_check.values().enumerate() {
+        for (i, (key_span, identifier_span)) in loop_check.values().skip(loop_index).enumerate() {
             // first span is the key, then each subsequent span is the identifier within the
             // definition for a chain of dependencies
             let span = if i == 0 { key_span } else { identifier_span };
             error = error.with_label_span(*span, format!("Identifier {}", i + 1));
         }
 
-        error = error.with_label(format!(
-            "This is identifier {}, causing a circular definition",
-            loop_index + 1
-        ));
-
-        // the first identifier_span is the identifier within a generatable statement.
-        // Because the assembler only evaulates expressions if it gets generated, then we should
-        // also include the identifier that was in the generated statement to notify that this
-        // statement had an error
-        if let Some((_key_span, identifier_span)) = loop_check.values().next() {
-            error = error.with_label_span(
-                *identifier_span,
-                "Error evaluating this identifier: see above",
-            );
-        }
+        // identifier 1 is always the start of loop because we .skip(loop_index)
+        error = error.with_label("This is identifier 1, causing a circular definition");
 
         Err(error)
     } else {
