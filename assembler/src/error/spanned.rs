@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     fmt::Display,
     io::{self, Write},
 };
@@ -155,22 +156,46 @@ impl SpannedError {
     }
 
     pub fn identifier_already_defined(
-        first_define: Span,
-        first_define_import: Option<Span>,
-        second_define: Span,
-        second_define_import: Option<Span>,
+        define1: Span,
+        define1_import: Option<Span>,
+        define2: Span,
+        define2_import: Option<Span>,
     ) -> Self {
+        let mut order = None;
+        if let (Some(define1_import), Some(define2_import)) = (define1_import, define2_import) {
+            order = define1_import.partial_cmp(&define2_import);
+        }
+        if order.is_none() {
+            if let Some(define1_import) = define1_import {
+                order = define1_import.partial_cmp(&define2);
+            }
+        }
+        if order.is_none() {
+            if let Some(define2_import) = define2_import {
+                order = define1.partial_cmp(&define2_import);
+            }
+        }
+        if order.is_none() {
+            order = define1.partial_cmp(&define2);
+        }
+        let order = order.unwrap_or(Ordering::Less);
+
+        let (first_define, first_import, second_define, second_import) = match order {
+            Ordering::Equal | Ordering::Less => (define1, define1_import, define2, define2_import),
+            Ordering::Greater => (define2, define2_import, define1, define1_import),
+        };
+
         let mut error = SpannedError::new(second_define, "Identifier already defined")
             .with_label_span(first_define, "Defined first here");
 
-        if let Some(import) = first_define_import {
+        if let Some(import) = first_import {
             error = error.with_label_span(import, "Imported here")
         }
 
         error = error.with_label("Defined again here");
 
-        if let Some(import) = second_define_import {
-            let message = if first_define_import.is_some() {
+        if let Some(import) = second_import {
+            let message = if first_import.is_some() {
                 "Imported again here"
             } else {
                 "Imported here"

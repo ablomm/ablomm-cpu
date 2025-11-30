@@ -1,6 +1,6 @@
 use internment::Intern;
 use std::{
-    cmp,
+    cmp::{self, Ordering},
     fmt::Display,
     ops::{Deref, DerefMut, Range},
 };
@@ -74,6 +74,16 @@ impl Span {
 impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}:{}..{}", self.src, self.start(), self.end())
+    }
+}
+
+impl PartialOrd for Span {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.src == other.src {
+            self.start().partial_cmp(&other.start())
+        } else {
+            None
+        }
     }
 }
 

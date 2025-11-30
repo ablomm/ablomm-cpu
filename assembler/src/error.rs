@@ -92,9 +92,10 @@ impl Error {
 
     pub fn incorrect_type(expected: Vec<impl Display>, found: &Spanned<&ExpressionResult>) -> Self {
         let error = Self::Spanned(Box::new(SpannedError::incorrect_type(expected, found)));
-        // Error type is ignored because there should already be an error for when that result was
-        // created; no need to print any more errors about it
+
         if matches!(found.val, ExpressionResult::Error) {
+            // Error type is ignored because there should already be an error for when that result was
+            // created; no need to print any more errors about it
             Self::Silenced(Box::new(error))
         } else {
             error
@@ -116,16 +117,16 @@ impl Error {
     }
 
     pub fn identifier_already_defined(
-        first_define: Span,
-        first_define_import: Option<Span>,
-        second_define: Span,
-        second_define_import: Option<Span>,
+        define1: Span,
+        define1_import: Option<Span>,
+        define2: Span,
+        define2_import: Option<Span>,
     ) -> Self {
         Self::Spanned(Box::new(SpannedError::identifier_already_defined(
-            first_define,
-            first_define_import,
-            second_define,
-            second_define_import,
+            define1,
+            define1_import,
+            define2,
+            define2_import,
         )))
     }
 }
