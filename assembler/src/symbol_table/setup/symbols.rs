@@ -167,7 +167,10 @@ impl Spanned<&mut Statement> {
                     }
                 };
 
-                for (key, val) in sub_exports {
+                for (key, mut val) in sub_exports {
+                    // the export statement of a sub-block is essentially an import to the parent
+                    val.import_span = val.export_span;
+
                     match symbol_table.borrow_mut().try_insert(key, val) {
                         Ok(_) => (),
                         Err(insert_error) => errors.push(insert_error),
