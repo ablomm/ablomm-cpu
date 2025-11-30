@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     Span, error::ATTENTION_COLOR, expression::expression_result::ExpressionResult, span::Spanned,
-    src::Src,
+    src::Src, utils,
 };
 use ariadne::{Cache, Color, Fmt};
 use chumsky::error::{RichPattern, RichReason};
@@ -161,27 +161,14 @@ impl SpannedError {
         define2: Span,
         define2_import: Option<Span>,
     ) -> Self {
-        let mut order = None;
-        if let (Some(define1_import), Some(define2_import)) = (define1_import, define2_import) {
-            order = define1_import.partial_cmp(&define2_import);
-        }
-        if order.is_none() {
-            if let Some(define1_import) = define1_import {
-                order = define1_import.partial_cmp(&define2);
-            }
-        }
-        if order.is_none() {
-            if let Some(define2_import) = define2_import {
-                order = define1.partial_cmp(&define2_import);
-            }
-        }
-        if order.is_none() {
-            order = define1.partial_cmp(&define2);
-        }
-        let order = order.unwrap_or(Ordering::Less);
+        let order = utils::fallback_ordering(
+            &[define1_import, Some(define1)].iter().flatten().collect(),
+            &[define2_import, Some(define2)].iter().flatten().collect(),
+        )
+        .unwrap_or(Ordering::Less);
 
         let (first_define, first_import, second_define, second_import) = match order {
-            Ordering::Equal | Ordering::Less => (define1, define1_import, define2, define2_import),
+            Ordering::Less | Ordering::Equal => (define1, define1_import, define2, define2_import),
             Ordering::Greater => (define2, define2_import, define1, define1_import),
         };
 

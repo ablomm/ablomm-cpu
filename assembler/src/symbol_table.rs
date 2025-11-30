@@ -30,13 +30,13 @@ pub struct SymbolTable {
 pub struct STEntry {
     pub symbol: Rc<RefCell<Symbol>>,
 
-    // the span of the original definition identifier
+    // the span of the original definition
     pub key_span: Span,
 
     // the span of the specifier that imports this symbol
     pub import_span: Option<Span>,
 
-    // the span of the export statement of the import
+    // the span of the export statement of an imported identifier
     pub export_span: Option<Span>,
 }
 
@@ -44,6 +44,7 @@ pub struct STEntry {
 #[derive(Debug, Clone)]
 pub struct Symbol {
     pub value: Spanned<SymbolValue>,
+
     // the symbol_table of where the identifier was defined, needed to evaluate imported identifiers
     // weak pointer because symbol_table already contains reference to the symbol
     pub symbol_table: Weak<RefCell<SymbolTable>>,

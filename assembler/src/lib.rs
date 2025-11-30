@@ -18,6 +18,7 @@ mod parser;
 mod span;
 mod src;
 mod symbol_table;
+mod utils;
 
 pub type SrcCache = FnCache<Intern<Src>, fn(&Intern<Src>) -> io::Result<String>, String>;
 
