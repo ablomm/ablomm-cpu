@@ -147,7 +147,7 @@ impl SymbolTable {
                         import_key.val,
                         STEntry {
                             symbol: Rc::clone(&import_entry.symbol),
-                            key_span: import_entry.key_span,
+                            key_span: import_key.span,
                             import_span,
                             export_span: import_entry.export_span,
                         },
