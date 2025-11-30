@@ -2,7 +2,7 @@ use std::{fs, io, path::Path};
 
 use ariadne::{Cache, FnCache};
 
-use error::{ATTENTION_COLOR, Error, SpannedError};
+use error::Error;
 use internment::Intern;
 use span::{Span, Spanned};
 use src::Src;
@@ -23,7 +23,7 @@ pub type SrcCache = FnCache<Intern<Src>, fn(&Intern<Src>) -> io::Result<String>,
 
 // error includes cache in order to print errors without re-reading files
 // error includes recovered machine_code
-#[allow(clippy::type_complexity)]
+#[allow(clippy::type_complexity)] // the return type is not THAT bad
 pub fn assemble(
     src: &str,
 ) -> RecoveredResult<Vec<u32>, Vec<u32>, (Vec<Error>, impl Cache<Intern<Src>>)> {
@@ -76,9 +76,6 @@ pub fn assemble(
     if errors.is_empty() {
         Ok(machine_code)
     } else {
-        Err(RecoveredError(
-            machine_code,
-            (errors.into_iter().map(Error::Spanned).collect(), cache),
-        ))
+        Err(RecoveredError(machine_code, (errors, cache)))
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation, Register},
-    error::SpannedError,
+    error::Error,
     expression::expression_result::{ExpressionResult, Number, RegisterOffset},
     generator::{self, Generatable},
     span::Spanned,
@@ -10,14 +10,14 @@ use crate::{
 pub fn generate_ld(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     assert!(matches!(
         operation.full_mnemonic.mnemonic.val,
         AsmMnemonic::Ld
     ));
 
     if operation.operands.len() != 2 {
-        return Err(SpannedError::incorrect_num(
+        return Err(Error::incorrect_num(
             operation.operands.span,
             "operand",
             vec![2],
@@ -44,7 +44,7 @@ pub fn generate_ld(
             &operation.operands.as_ref(),
             symbol_table,
         ),
-        _ => Err(SpannedError::incorrect_type(
+        _ => Err(Error::incorrect_type(
             vec!["register", "indirect"],
             &operand.as_ref(),
         )),
@@ -56,7 +56,7 @@ fn generate_ld_reg(
     register: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
 
     match &operand.val {
@@ -71,7 +71,7 @@ fn generate_ld_reg(
         ExpressionResult::Indirect(indirect) => {
             generate_ld_reg_indirect(modifiers, register, &operand.span_to(indirect))
         }
-        _ => Err(SpannedError::incorrect_type(
+        _ => Err(Error::incorrect_type(
             vec!["number", "register", "indirect"],
             &operand.as_ref(),
         )),
@@ -83,7 +83,7 @@ fn generate_ld_reg_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let mut opcode = 0;
     opcode |= generator::generate_modifiers_alu(modifiers)?;
     opcode |= CpuMnemonic::Pass.generate();
@@ -96,7 +96,7 @@ fn generate_ld_reg_num(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     number: &Spanned<&Number>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     generator::assert_range(&number.as_u32().copied(), 0..(1 << 16))?;
 
     let mut opcode = 0;
@@ -111,7 +111,7 @@ fn generate_ld_reg_indirect(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     indirect: &Spanned<&ExpressionResult>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     match indirect.val {
         ExpressionResult::Number(number) => {
             let number = indirect.span_to(number).unwrap();
@@ -125,7 +125,7 @@ fn generate_ld_reg_indirect(
             let reg_offset = indirect.span_to(reg_offset).unwrap();
             generate_ld_reg_ireg_offset(modifiers, register, &reg_offset)
         }
-        _ => Err(SpannedError::incorrect_type(
+        _ => Err(Error::incorrect_type(
             vec!["number", "register", "register offset"],
             indirect,
         )),
@@ -136,7 +136,7 @@ fn generate_ld_reg_ireg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let mut opcode = 0;
     opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Ldr.generate();
@@ -149,7 +149,7 @@ fn generate_ld_reg_ireg_offset(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     reg_offset: &Spanned<&RegisterOffset>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     generator::assert_range(
         &reg_offset.span_to(reg_offset.offset),
         (-1 << 11)..(1 << 11),
@@ -165,7 +165,7 @@ fn generate_ld_reg_inum(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     number: &Spanned<&Number>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     generator::assert_range(&number.as_u32().copied(), 0..(1 << 16))?;
 
     let mut opcode = 0;
@@ -181,7 +181,7 @@ fn generate_ld_indirect(
     indirect: &Spanned<&ExpressionResult>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     match indirect.val {
         ExpressionResult::Number(number) => {
             let number = indirect.span_to(number).unwrap();
@@ -195,7 +195,7 @@ fn generate_ld_indirect(
             let reg_offset = indirect.span_to(reg_offset).unwrap();
             generate_ld_ireg_offset(modifiers, &reg_offset, operands, symbol_table)
         }
-        _ => Err(SpannedError::incorrect_type(
+        _ => Err(Error::incorrect_type(
             vec!["number", "register", "register offset"],
             indirect,
         )),
@@ -207,7 +207,7 @@ fn generate_ld_ireg(
     register: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
 
     match &operand.val {
@@ -215,10 +215,7 @@ fn generate_ld_ireg(
             let register2 = operand.span_to(register2).unwrap();
             generate_ld_ireg_reg(modifiers, register, &register2)
         }
-        _ => Err(SpannedError::incorrect_type(
-            vec!["register"],
-            &operand.as_ref(),
-        )),
+        _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }
 
@@ -226,7 +223,7 @@ fn generate_ld_ireg_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let mut opcode = 0;
     opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Str.generate();
@@ -240,7 +237,7 @@ fn generate_ld_ireg_offset(
     reg_offset: &Spanned<&RegisterOffset>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
 
     match &operand.val {
@@ -248,10 +245,7 @@ fn generate_ld_ireg_offset(
             let register = operand.span_to(register).unwrap();
             generate_ld_ireg_offset_reg(modifiers, reg_offset, &register)
         }
-        _ => Err(SpannedError::incorrect_type(
-            vec!["register"],
-            &operand.as_ref(),
-        )),
+        _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }
 
@@ -259,7 +253,7 @@ fn generate_ld_ireg_offset_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     reg_offset: &Spanned<&RegisterOffset>,
     register: &Spanned<&Register>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     generator::assert_range(
         &reg_offset.span_to(reg_offset.offset),
         (-1 << 11)..(1 << 11),
@@ -276,7 +270,7 @@ fn generate_ld_inum(
     number: &Spanned<&Number>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let operand = operands[1].span_to(operands[1].as_ref().eval(symbol_table)?.result);
 
     match &operand.val {
@@ -284,10 +278,7 @@ fn generate_ld_inum(
             let register = operand.span_to(register).unwrap();
             generate_ld_inum_reg(modifiers, number, &register)
         }
-        _ => Err(SpannedError::incorrect_type(
-            vec!["register"],
-            &operand.as_ref(),
-        )),
+        _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }
 
@@ -295,7 +286,7 @@ fn generate_ld_inum_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     number: &Spanned<&Number>,
     register: &Spanned<&Register>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     generator::assert_range(&number.as_u32().copied(), 0..(1 << 16))?;
 
     let mut opcode = 0;

@@ -3,7 +3,7 @@
 
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation},
-    error::SpannedError,
+    error::Error,
     expression::expression_result::ExpressionResult,
     generator::alu_op,
     span::Spanned,
@@ -13,7 +13,7 @@ use crate::{
 pub fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let mnemonic = if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
         operation.full_mnemonic.mnemonic.span_to(mnemonic)
     } else {
@@ -35,7 +35,7 @@ pub fn generate_unary_alu_op(
             symbol_table,
         )
     } else {
-        Err(SpannedError::incorrect_num(
+        Err(Error::incorrect_num(
             operation.operands.span,
             "operand",
             vec![1, 2],
@@ -49,7 +49,7 @@ fn generate_unary_alu_op_1(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let operand = operands[0].span_to(operands[0].as_ref().eval(symbol_table)?.result);
 
     match &operand.val {
@@ -57,10 +57,7 @@ fn generate_unary_alu_op_1(
             let register = operand.span_to(register).unwrap();
             alu_op::generate_alu_op_2_reg_reg(mnemonic, modifiers, &register, &register)
         }
-        _ => Err(SpannedError::incorrect_type(
-            vec!["register"],
-            &operand.as_ref(),
-        )),
+        _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }
 
@@ -69,7 +66,7 @@ fn generate_unary_alu_op_2(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let operand = operands[0].span_to(operands[0].as_ref().eval(symbol_table)?.result);
 
     match &operand.val {
@@ -77,9 +74,6 @@ fn generate_unary_alu_op_2(
             let register = operand.span_to(register).unwrap();
             alu_op::generate_alu_op_2_reg(mnemonic, modifiers, &register, operands, symbol_table)
         }
-        _ => Err(SpannedError::incorrect_type(
-            vec!["register"],
-            &operand.as_ref(),
-        )),
+        _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }

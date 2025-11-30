@@ -3,7 +3,7 @@ use std::{
     ops::{Add, BitAnd, BitOr, BitXor, Deref, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub},
 };
 
-use super::*;
+use crate::{ast::Register, error::Error, span::Spanned};
 
 mod indirect;
 mod number;
@@ -124,22 +124,20 @@ pub trait Ashr<Rhs = Self> {
 }
 
 impl AsmRef for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn asm_ref(self) -> Self::Output {
         match self.val {
             ExpressionResult::Indirect(indirect) => self.span_to(indirect).asm_ref(),
-            _ => Err(
-                SpannedError::incorrect_type(vec!["indirect"], self).with_note(
-                    "You can only take a reference of a value that was previously dereferenced",
-                ),
-            ),
+            _ => Err(Error::incorrect_type(vec!["indirect"], self).with_note(
+                "You can only take a reference of a value that was previously dereferenced",
+            )),
         }
     }
 }
 
 impl AsmDeref for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn asm_deref(self) -> Self::Output {
         Ok(ExpressionResult::Indirect(Indirect(Box::new(
@@ -149,64 +147,64 @@ impl AsmDeref for &Spanned<&ExpressionResult> {
 }
 
 impl Neg for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn neg(self) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => -&self.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Not for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn not(self) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => !&self.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn mul(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) * rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Div<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn div(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) / rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn rem(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) % rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) + rhs,
             ExpressionResult::String(string) => &self.span_to(string) + rhs,
             ExpressionResult::Register(register) => &self.span_to(register) + rhs,
             ExpressionResult::RegisterOffset(reg_offset) => &self.span_to(reg_offset) + rhs,
-            _ => Err(SpannedError::incorrect_type(
+            _ => Err(Error::incorrect_type(
                 vec!["number", "string", "register", "register offset"],
                 self,
             )),
@@ -215,13 +213,13 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) - rhs,
             ExpressionResult::Register(register) => &self.span_to(register) - rhs,
             ExpressionResult::RegisterOffset(reg_offset) => &self.span_to(reg_offset) - rhs,
-            _ => Err(SpannedError::incorrect_type(
+            _ => Err(Error::incorrect_type(
                 vec!["number", "register", "register offset"],
                 self,
             )),
@@ -230,61 +228,61 @@ impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
 }
 
 impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn shl(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) << rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn shr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) >> rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn ashr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => self.span_to(number).ashr(rhs),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn bitand(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) & rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn bitor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) | rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }
 
 impl BitXor<&Spanned<&ExpressionResult>> for &Spanned<&ExpressionResult> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
     fn bitxor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match self.val {
             ExpressionResult::Number(number) => &self.span_to(number) ^ rhs,
-            _ => Err(SpannedError::incorrect_type(vec!["number"], self)),
+            _ => Err(Error::incorrect_type(vec!["number"], self)),
         }
     }
 }

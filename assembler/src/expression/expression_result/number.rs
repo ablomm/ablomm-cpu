@@ -1,7 +1,16 @@
-use super::*;
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
+
+use ariadne::Fmt;
+
+use crate::{
+    ast::Register,
+    error::{ATTENTION_COLOR, Error, SpannedError},
+    expression::expression_result::{Ashr, ExpressionResult, Number, RegisterOffset, String},
+    span::Spanned,
+};
 
 impl Neg for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn neg(self) -> Self::Output {
         if let Some(val) = self.val {
@@ -15,7 +24,7 @@ impl Neg for &Spanned<&Option<Number>> {
 }
 
 impl Not for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn not(self) -> Self::Output {
         if let Some(val) = self.val {
@@ -27,18 +36,18 @@ impl Not for &Spanned<&Option<Number>> {
 }
 
 impl Mul<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn mul(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self * &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Mul<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn mul(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -52,30 +61,30 @@ impl Mul<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Div<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn div(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self / &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Div<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn div(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs_val)) = (self.val, rhs.val) {
             let rhs = rhs.span_to(rhs_val);
             if **rhs.val == 0 {
-                return Err(
+                return Err(Error::Spanned(Box::new(
                     SpannedError::new(rhs.span, "Division by 0").with_label(format!(
                         "Cannot divide by {}, and expression evaluates to {}",
                         "0".fg(ATTENTION_COLOR),
                         "0".fg(ATTENTION_COLOR)
                     )),
-                );
+                )));
             }
             Ok(ExpressionResult::Number(Some(Number(
                 lhs.wrapping_div(**rhs.val),
@@ -87,30 +96,30 @@ impl Div<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Rem<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn rem(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self % &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Rem<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn rem(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs_val)) = (self.val, rhs.val) {
             let rhs = rhs.span_to(rhs_val);
             if **rhs.val == 0 {
-                return Err(
+                return Err(Error::Spanned(Box::new(
                     SpannedError::new(rhs.span, "Remainder by 0").with_label(format!(
                         "Cannot take remainder by {}, and expression evaluates to {}",
                         "0".fg(ATTENTION_COLOR),
                         "0".fg(ATTENTION_COLOR)
                     )),
-                );
+                )));
             }
             Ok(ExpressionResult::Number(Some(Number(
                 lhs.wrapping_rem(**rhs.val),
@@ -122,7 +131,7 @@ impl Rem<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
@@ -130,7 +139,7 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
             ExpressionResult::String(string) => self + &rhs.span_to(string),
             ExpressionResult::Register(register) => self + &rhs.span_to(register),
             ExpressionResult::RegisterOffset(reg_offset) => self + &rhs.span_to(reg_offset),
-            _ => Err(SpannedError::incorrect_type(
+            _ => Err(Error::incorrect_type(
                 vec!["number", "string", "register", "register offset"],
                 rhs,
             )),
@@ -139,7 +148,7 @@ impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
 }
 
 impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -153,7 +162,7 @@ impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Add<&Spanned<&Option<String>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<String>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -167,7 +176,7 @@ impl Add<&Spanned<&Option<String>>> for &Spanned<&Option<Number>> {
 }
 
 impl Add<&Spanned<&Option<Register>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<Register>>) -> Self::Output {
         // delegate to register implementation (reg + num = num + reg)
@@ -176,7 +185,7 @@ impl Add<&Spanned<&Option<Register>>> for &Spanned<&Option<Number>> {
 }
 
 impl Add<&Spanned<&Option<RegisterOffset>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<RegisterOffset>>) -> Self::Output {
         // delegate to register offset implementation (reg_offset + num = num + reg_offset)
@@ -185,18 +194,18 @@ impl Add<&Spanned<&Option<RegisterOffset>>> for &Spanned<&Option<Number>> {
 }
 
 impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Sub<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -210,18 +219,18 @@ impl Sub<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Shl<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn shl(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self << &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Shl<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn shl(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -235,18 +244,18 @@ impl Shl<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Shr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn shr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self >> &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Shr<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn shr(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -260,18 +269,18 @@ impl Shr<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl Ashr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn ashr(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self.ashr(&rhs.span_to(number)),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Ashr<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn ashr(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -285,18 +294,18 @@ impl Ashr<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl BitAnd<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn bitand(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self & &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl BitAnd<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn bitand(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -308,18 +317,18 @@ impl BitAnd<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl BitOr<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn bitor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self | &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl BitOr<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn bitor(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -331,18 +340,18 @@ impl BitOr<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
 }
 
 impl BitXor<&Spanned<&ExpressionResult>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn bitxor(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self ^ &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl BitXor<&Spanned<&Option<Number>>> for &Spanned<&Option<Number>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn bitxor(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {

@@ -1,13 +1,13 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use ariadne::Fmt;
 use expression_result::{Ashr, AsmDeref, AsmRef, ExpressionResult, Number, String};
 use indexmap::IndexMap;
 use internment::Intern;
 
 use crate::{
-    ATTENTION_COLOR, Span, SpannedError,
-    ast::{Expression, Register},
+    Error, Span,
+    ast::Expression,
+    error::SpannedError,
     span::Spanned,
     symbol_table::{STEntry, Symbol, SymbolTable},
 };
@@ -28,13 +28,14 @@ pub type LoopCheck = IndexMap<*const RefCell<Symbol>, (Span, Span)>;
 
 pub struct EvalReturn {
     pub result: ExpressionResult,
+
     // the identifiers that are causing the result to be None. It is empty if the value is known
     // i.e. waiting for these identifiers to have known values before it itself can be known
     pub waiting_map: HashMap<Intern<std::string::String>, Span>,
 }
 
 impl Spanned<&Expression> {
-    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, SpannedError> {
+    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, Error> {
         self.eval_with_loop_check(symbol_table, &mut IndexMap::new())
     }
 
@@ -42,7 +43,7 @@ impl Spanned<&Expression> {
         &self,
         symbol_table: &SymbolTable,
         loop_check: &mut LoopCheck,
-    ) -> Result<EvalReturn, SpannedError> {
+    ) -> Result<EvalReturn, Error> {
         let mut waiting_map = HashMap::new();
         let result = match self.val {
             Expression::Register(register) => ExpressionResult::Register(Some(*register)),
@@ -82,7 +83,7 @@ fn get_operand(
     symbol_table: &SymbolTable,
     waiting_map: &mut HashMap<Intern<std::string::String>, Span>,
     loop_check: &mut LoopCheck,
-) -> Result<Spanned<ExpressionResult>, SpannedError> {
+) -> Result<Spanned<ExpressionResult>, Error> {
     let EvalReturn {
         result,
         waiting_map: sub_waiting_map,
@@ -97,7 +98,7 @@ fn check_for_loops(
     entry: &STEntry,
     identifier_span: Span,
     loop_check: &mut IndexMap<*const RefCell<Symbol>, (Span, Span)>,
-) -> Result<(), SpannedError> {
+) -> Result<(), Error> {
     // just need a unique id for each symbol to detect loops
     let symbol_id = Rc::as_ptr(&entry.symbol);
     // the index at which the sequence starts to loop
@@ -116,7 +117,7 @@ fn check_for_loops(
         // identifier 1 is always the start of loop because we .skip(loop_index)
         error = error.with_label("This is identifier 1, causing a circular definition");
 
-        Err(error)
+        Err(Error::Spanned(Box::new(error)))
     } else {
         loop_check.insert(symbol_id, (entry.key_span, identifier_span));
         Ok(())

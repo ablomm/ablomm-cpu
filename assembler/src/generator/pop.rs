@@ -1,6 +1,6 @@
 use crate::{
     ast::{AsmMnemonic, CpuMnemonic, Modifier, Operation, Register},
-    error::SpannedError,
+    error::Error,
     expression::expression_result::ExpressionResult,
     generator::{self, Generatable},
     span::Spanned,
@@ -10,14 +10,14 @@ use crate::{
 pub fn generate_pop(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     assert!(matches!(
         operation.full_mnemonic.mnemonic.val,
         AsmMnemonic::Pop
     ));
 
     if operation.operands.len() != 1 {
-        return Err(SpannedError::incorrect_num(
+        return Err(Error::incorrect_num(
             operation.operands.span,
             "operand",
             vec![1],
@@ -32,17 +32,14 @@ pub fn generate_pop(
             let register = operand.span_to(register).unwrap();
             generate_pop_reg(&operation.full_mnemonic.modifiers.as_ref(), &register)
         }
-        _ => Err(SpannedError::incorrect_type(
-            vec!["register"],
-            &operand.as_ref(),
-        )),
+        _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }
 
 fn generate_pop_reg(
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
-) -> Result<u32, SpannedError> {
+) -> Result<u32, Error> {
     let mut opcode = 0;
     opcode |= generator::generate_modifiers_non_alu(modifiers)?;
     opcode |= CpuMnemonic::Pop.generate();

@@ -1,18 +1,24 @@
-use super::*;
+use std::ops::{Add, Sub};
+
+use crate::{
+    error::Error,
+    expression::expression_result::{ExpressionResult, Number, RegisterOffset},
+    span::Spanned,
+};
 
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<RegisterOffset>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<RegisterOffset>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -29,18 +35,18 @@ impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<RegisterOffset>> {
 }
 
 impl Sub<&Spanned<&ExpressionResult>> for &Spanned<&Option<RegisterOffset>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self - &rhs.span_to(number),
-            _ => Err(SpannedError::incorrect_type(vec!["number"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number"], rhs)),
         }
     }
 }
 
 impl Sub<&Spanned<&Option<Number>>> for &Spanned<&Option<RegisterOffset>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn sub(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {

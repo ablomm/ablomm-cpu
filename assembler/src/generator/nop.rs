@@ -1,11 +1,11 @@
 use crate::{
-    SpannedError,
+    Error,
     ast::{AsmMnemonic, CpuMnemonic, Operation},
     generator::{self, Generatable},
     span::Spanned,
 };
 
-pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, SpannedError> {
+pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     assert!(matches!(
         operation.full_mnemonic.mnemonic.val,
         AsmMnemonic::Nop
@@ -13,7 +13,7 @@ pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, SpannedError
 
     #[allow(clippy::len_zero)]
     if operation.operands.len() != 0 {
-        return Err(SpannedError::incorrect_num(
+        return Err(Error::incorrect_num(
             operation.operands.span,
             "operand",
             vec![0],

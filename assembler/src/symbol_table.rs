@@ -8,8 +8,9 @@ use std::{
 use internment::Intern;
 
 use crate::{
-    Span, SpannedError,
+    Error, Span,
     ast::Expression,
+    error::SpannedError,
     expression::{LoopCheck, expression_result::ExpressionResult},
     span::Spanned,
 };
@@ -107,20 +108,20 @@ impl SymbolTable {
     }
 
     // just returns a nice error instead of Option
-    pub fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, SpannedError> {
-        self.get_recursive(ident.val).ok_or(
+    pub fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, Error> {
+        self.get_recursive(ident.val).ok_or(Error::Spanned(Box::new(
             SpannedError::new(ident.span, "Missing identifier")
                 .with_label("Could not find identifier"),
-        )
+        )))
     }
 
     fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
-    fn try_insert(&mut self, key: Key, new_entry: Value) -> Result<(), SpannedError> {
+    fn try_insert(&mut self, key: Key, new_entry: Value) -> Result<(), Error> {
         if let Some(entry) = self.table.get(&key) {
-            return Err(SpannedError::identifier_already_defined(
+            return Err(Error::identifier_already_defined(
                 entry.key_span,
                 entry.import_span,
                 new_entry.key_span,
@@ -137,7 +138,7 @@ impl Symbol {
     pub fn try_get_result(
         &mut self,
         loop_check: &mut LoopCheck,
-    ) -> Result<ExpressionResult, SpannedError> {
+    ) -> Result<ExpressionResult, Error> {
         match &self.value.val {
             // doesn't matter too much to clone since eval_with_loop_check() would need to clone anyways
             SymbolValue::Result(result) => Ok(result.clone()),

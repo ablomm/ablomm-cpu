@@ -1,19 +1,25 @@
-use super::*;
+use std::ops::Add;
+
+use crate::{
+    error::Error,
+    expression::expression_result::{ExpressionResult, Number, String},
+    span::Spanned,
+};
 
 impl Add<&Spanned<&ExpressionResult>> for &Spanned<&Option<String>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&ExpressionResult>) -> Self::Output {
         match rhs.val {
             ExpressionResult::Number(number) => self + &rhs.span_to(number),
             ExpressionResult::String(string) => self + &rhs.span_to(string),
-            _ => Err(SpannedError::incorrect_type(vec!["number", "string"], rhs)),
+            _ => Err(Error::incorrect_type(vec!["number", "string"], rhs)),
         }
     }
 }
 
 impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<String>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<Number>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {
@@ -27,7 +33,7 @@ impl Add<&Spanned<&Option<Number>>> for &Spanned<&Option<String>> {
 }
 
 impl Add<&Spanned<&Option<String>>> for &Spanned<&Option<String>> {
-    type Output = Result<ExpressionResult, SpannedError>;
+    type Output = Result<ExpressionResult, Error>;
 
     fn add(self, rhs: &Spanned<&Option<String>>) -> Self::Output {
         if let (Some(lhs), Some(rhs)) = (self.val, rhs.val) {

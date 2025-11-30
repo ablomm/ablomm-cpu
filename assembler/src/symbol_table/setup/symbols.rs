@@ -4,7 +4,7 @@ use internment::Intern;
 
 use crate::{
     ast::{Ast, Block, File, Statement},
-    error::{RecoveredError, RecoveredResult, SpannedError},
+    error::{Error, RecoveredError, RecoveredResult, SpannedError},
     expression::expression_result::ExpressionResult,
     span::Spanned,
     src::Src,
@@ -81,7 +81,7 @@ impl Spanned<&mut Statement> {
         &mut self,
         symbol_table: &Rc<RefCell<SymbolTable>>,
         exports: &mut ExportMap,
-    ) -> Result<(), Vec<SpannedError>> {
+    ) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         match self.val {
@@ -189,9 +189,9 @@ fn add_export(
     exports: &mut ExportMap,
     identifier: Spanned<Intern<String>>,
     mut entry: STEntry,
-) -> Result<(), SpannedError> {
+) -> Result<(), Error> {
     if let Some(entry) = exports.get(&identifier.val) {
-        return Err(
+        return Err(Error::Spanned(Box::new(
             SpannedError::new(identifier.span, "Identifier already exported")
                 .with_label_span(
                     entry.export_span.unwrap_or_else(|| {
@@ -204,7 +204,7 @@ fn add_export(
                 )
                 .with_label("Exported again here")
                 .with_help("Try removing one of these exports"),
-        );
+        )));
     }
 
     entry.export_span = Some(identifier.span);

@@ -3,7 +3,7 @@ use crate::ast::{
     Modifier, Operation, Register,
 };
 use crate::ast::{Ast, Statement};
-use crate::error::{ATTENTION_COLOR, RecoveredError, RecoveredResult, SpannedError};
+use crate::error::{ATTENTION_COLOR, Error, RecoveredError, RecoveredResult, SpannedError};
 use crate::expression::expression_result::ExpressionResult;
 use crate::span::Spanned;
 use crate::symbol_table::SymbolTable;
@@ -80,7 +80,7 @@ impl Spanned<&Statement> {
 }
 
 impl Spanned<&Operation> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, SpannedError> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         match self.full_mnemonic.mnemonic.val {
             AsmMnemonic::Nop => nop::generate_nop(self),
             AsmMnemonic::Ld => ld::generate_ld(self, symbol_table),
@@ -95,7 +95,7 @@ impl Spanned<&Operation> {
 }
 
 impl Spanned<&Expression> {
-    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, SpannedError> {
+    fn generate(&self, symbol_table: &SymbolTable) -> Result<Vec<u32>, Error> {
         let result = self.span_to(self.eval(symbol_table)?.result);
 
         match result.val {
@@ -119,7 +119,7 @@ impl Spanned<&Expression> {
                 }
                 Ok(opcodes)
             }
-            _ => Err(SpannedError::incorrect_type(
+            _ => Err(Error::incorrect_type(
                 vec!["number", "string"],
                 &result.as_ref(),
             )),
@@ -145,55 +145,55 @@ fn seperate_modifiers(
     (conditions, alu_modifiers)
 }
 
-fn generate_modifiers_non_alu(
-    modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-) -> Result<u32, SpannedError> {
+fn generate_modifiers_non_alu(modifiers: &Spanned<&Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
     let (conditions, alu_modifiers) = seperate_modifiers(modifiers.val);
 
     if conditions.len() > 1 {
-        return Err(SpannedError::new(conditions[1].span, "Incorrect modifiers")
-            .with_label(format!(
-                "Multiple {} is not supported",
-                "conditions".fg(ATTENTION_COLOR)
-            ))
-            .with_help("Try removing this condition"));
+        return Err(Error::Spanned(Box::new(
+            SpannedError::new(conditions[1].span, "Incorrect modifiers")
+                .with_label(format!(
+                    "Multiple {} is not supported",
+                    "conditions".fg(ATTENTION_COLOR)
+                ))
+                .with_help("Try removing this condition"),
+        )));
     }
     if !alu_modifiers.is_empty() {
-        return Err(
+        return Err(Error::Spanned(Box::new(
             SpannedError::new(alu_modifiers[0].span, "Incorrect modifiers")
                 .with_label(format!(
                     "{} is not supported on this instruction",
                     "Alu modifiers".fg(ATTENTION_COLOR)
                 ))
                 .with_help("Try removing this modifier"),
-        );
+        )));
     }
 
     Ok(conditions.generate())
 }
 
-fn generate_modifiers_alu(
-    modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
-) -> Result<u32, SpannedError> {
+fn generate_modifiers_alu(modifiers: &Spanned<&Vec<Spanned<Modifier>>>) -> Result<u32, Error> {
     let (conditions, alu_modifiers) = seperate_modifiers(modifiers.val);
 
     if conditions.len() > 1 {
-        return Err(SpannedError::new(conditions[1].span, "Incorrect modifiers")
-            .with_label(format!(
-                "Multiple {} is not supported",
-                "conditions".fg(ATTENTION_COLOR)
-            ))
-            .with_help("Try removing this condition"));
+        return Err(Error::Spanned(Box::new(
+            SpannedError::new(conditions[1].span, "Incorrect modifiers")
+                .with_label(format!(
+                    "Multiple {} is not supported",
+                    "conditions".fg(ATTENTION_COLOR)
+                ))
+                .with_help("Try removing this condition"),
+        )));
     }
     if alu_modifiers.len() > 1 {
-        return Err(
+        return Err(Error::Spanned(Box::new(
             SpannedError::new(alu_modifiers[1].span, "Incorrect modifiers")
                 .with_label(format!(
                     "Multiple {} is not supported",
                     "alu modifiers".fg(ATTENTION_COLOR)
                 ))
                 .with_help("Try removing this modifier"),
-        );
+        )));
     }
 
     Ok(conditions.generate() | alu_modifiers.generate())
@@ -203,16 +203,18 @@ fn generate_modifiers_alu(
 fn assert_range<T: Display + PartialOrd>(
     number: &Spanned<T>,
     range: Range<T>,
-) -> Result<(), SpannedError> {
+) -> Result<(), Error> {
     if !range.contains(&number.val) {
-        return Err(SpannedError::new(number.span, "Immediate outside range")
-            .with_label(format!(
-                "Only argument in range of [{}, {}) is supported; expression evaluates to {}",
-                range.start.to_string().fg(ATTENTION_COLOR),
-                range.end.to_string().fg(ATTENTION_COLOR),
-                number.val.to_string().fg(ATTENTION_COLOR),
-            ))
-            .with_help("If you require a range larger than this, use a register instead"));
+        return Err(Error::Spanned(Box::new(
+            SpannedError::new(number.span, "Immediate outside range")
+                .with_label(format!(
+                    "Only argument in range of [{}, {}) is supported; expression evaluates to {}",
+                    range.start.to_string().fg(ATTENTION_COLOR),
+                    range.end.to_string().fg(ATTENTION_COLOR),
+                    number.val.to_string().fg(ATTENTION_COLOR),
+                ))
+                .with_help("If you require a range larger than this, use a register instead"),
+        )));
     }
 
     Ok(())

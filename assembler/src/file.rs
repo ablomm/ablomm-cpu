@@ -7,7 +7,7 @@ use internment::Intern;
 use crate::{
     SrcCache,
     ast::{Ast, Block, File, Statement},
-    error::{RecoveredError, RecoveredResult, SpannedError},
+    error::{Error, RecoveredError, RecoveredResult, SpannedError},
     parser,
     span::Spanned,
     src::Src,
@@ -76,10 +76,10 @@ impl Spanned<Intern<Src>> {
             Err(error) => {
                 return Err(RecoveredError(
                     None,
-                    vec![
+                    vec![Error::Spanned(Box::new(
                         SpannedError::new(self.span, "Error reading file")
                             .with_label(format!("{:?}", error)),
-                    ],
+                    ))],
                 ));
             }
         };
@@ -89,7 +89,10 @@ impl Spanned<Intern<Src>> {
             .parse(assembly_code.with_context(self.val))
             .into_output_errors();
 
-        let errors: Vec<_> = errors.iter().map(|error| error.into()).collect();
+        let errors: Vec<_> = errors
+            .iter()
+            .map(|error| Error::Spanned(Box::new(error.into())))
+            .collect();
 
         if let Some(file) = file {
             if errors.is_empty() {

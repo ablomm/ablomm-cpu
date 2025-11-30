@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     ast::{Ast, Block, Expression, File, Operation, Statement},
-    error::{RecoveredError, RecoveredResult, SpannedError},
+    error::{Error, RecoveredError, RecoveredResult, SpannedError},
     expression::{
         EvalReturn,
         expression_result::{ExpressionResult, Number},
@@ -13,7 +13,7 @@ use crate::{
 
 impl Ast {
     // calculates label addresses
-    pub fn set_labels(&mut self) -> Result<(), Vec<SpannedError>> {
+    pub fn set_labels(&mut self) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         let mut address_accumulator = 0;
@@ -126,7 +126,7 @@ impl Spanned<&mut Statement> {
 }
 
 impl Block {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         let mut num_words = 0;
         for statement in &self.statements {
             num_words += statement.as_ref().num_words(symbol_table)?;
@@ -137,7 +137,7 @@ impl Block {
 }
 
 impl Spanned<&Statement> {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         match self.val {
             Statement::GenLiteral(literal) => self.span_to(literal).num_words(symbol_table),
             Statement::Block(block) => block.num_words(&block.symbol_table.borrow()),
@@ -148,7 +148,7 @@ impl Spanned<&Statement> {
 }
 
 impl Spanned<&Expression> {
-    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, SpannedError> {
+    pub fn num_words(&self, symbol_table: &SymbolTable) -> Result<u32, Error> {
         let EvalReturn {
             result,
             waiting_map,
@@ -176,7 +176,7 @@ impl Spanned<&Expression> {
 
                 Ok(((string.len() as f32) / 4.0).ceil() as u32)
             }
-            _ => Err(SpannedError::incorrect_type(
+            _ => Err(Error::incorrect_type(
                 vec!["number", "string"],
                 &result.as_ref(),
             )),
@@ -185,7 +185,7 @@ impl Spanned<&Expression> {
 }
 
 impl Operation {
-    pub fn num_words(&self) -> Result<u32, SpannedError> {
+    pub fn num_words(&self) -> Result<u32, Error> {
         Ok(1)
     }
 }

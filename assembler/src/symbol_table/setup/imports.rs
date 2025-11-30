@@ -4,7 +4,7 @@ use ariadne::Fmt;
 
 use crate::{
     ast::{Ast, Block, File, Import, ImportSpecifier, Statement},
-    error::{ATTENTION_COLOR, SpannedError},
+    error::{ATTENTION_COLOR, Error, SpannedError},
     span::Spanned,
     symbol_table::{
         STEntry, SymbolTable,
@@ -14,10 +14,7 @@ use crate::{
 
 impl Ast {
     // adds imports to importers' symbol table
-    pub fn add_imports(
-        &mut self,
-        file_exports_map: &FileExportMap,
-    ) -> Result<(), Vec<SpannedError>> {
+    pub fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         for file in self.files.iter_mut() {
@@ -36,7 +33,7 @@ impl Ast {
 }
 
 impl Spanned<&mut File> {
-    fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<SpannedError>> {
+    fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<Error>> {
         self.span
             .spanned(&mut self.block)
             .add_imports(file_exports_map)
@@ -44,7 +41,7 @@ impl Spanned<&mut File> {
 }
 
 impl Spanned<&mut Block> {
-    fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<SpannedError>> {
+    fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         // to satisfy borrow checker
@@ -77,7 +74,7 @@ impl Spanned<&mut Statement> {
         &mut self,
         symbol_table: &Rc<RefCell<SymbolTable>>,
         file_exports_map: &FileExportMap,
-    ) -> Result<(), Vec<SpannedError>> {
+    ) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         match self.val {
@@ -114,18 +111,24 @@ impl Spanned<&mut Statement> {
 }
 
 impl SymbolTable {
-    fn import(&mut self, import: &Import, exports: &ExportMap) -> Result<(), SpannedError> {
+    fn import(&mut self, import: &Import, exports: &ExportMap) -> Result<(), Error> {
         match &import.specifier.val {
             // selective import (i.e. import <ident> [as <ident>[, ...]] from <file>
             ImportSpecifier::Named(named_imports) => {
                 for named_import in named_imports {
-                    let import_entry = exports.get(&named_import.identifier).ok_or(
-                        SpannedError::new(named_import.identifier.span, "Identifier not found")
-                            .with_label(format!(
-                                "Identifier is not exported in '{}'",
-                                import.src.val.fg(ATTENTION_COLOR)
-                            )),
-                    )?;
+                    let import_entry =
+                        exports
+                            .get(&named_import.identifier)
+                            .ok_or(Error::Spanned(Box::new(
+                                SpannedError::new(
+                                    named_import.identifier.span,
+                                    "Identifier not found",
+                                )
+                                .with_label(format!(
+                                    "Identifier is not exported in '{}'",
+                                    import.src.val.fg(ATTENTION_COLOR)
+                                )),
+                            )))?;
 
                     // if the import is aliased, then treat it as a new definition, in regards to
                     // errors, since the names are different (i.e., it is defined at the alias

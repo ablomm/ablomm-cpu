@@ -1,11 +1,14 @@
-use crate::{SpannedError, ast::Ast, error::RecoveredError};
+use crate::{
+    ast::Ast,
+    error::{Error, RecoveredError},
+};
 
 mod imports;
 mod labels;
 mod symbols;
 
 impl Ast {
-    pub fn init_symbol_tables(&mut self) -> Result<(), Vec<SpannedError>> {
+    pub fn init_symbol_tables(&mut self) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         let file_exports_map = match self.add_symbols() {
