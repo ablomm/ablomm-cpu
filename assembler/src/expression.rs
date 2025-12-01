@@ -52,7 +52,9 @@ impl Spanned<&Expression> {
             Expression::Identifier(identifier) => {
                 let entry = symbol_table.try_get(&self.span_to(identifier))?;
                 check_for_loops(&entry, self.span, loop_check)?;
-                entry.symbol.borrow_mut().try_get_result(loop_check)?
+                let result = entry.symbol.borrow_mut().try_get_result(loop_check)?;
+                remove_from_loop_check(&entry, loop_check); // we got the result, so we can remove it
+                result
             }
             Expression::Ref(a) => op!(a.asm_ref(), symbol_table, waiting_map, loop_check, a)?,
             Expression::Deref(a) => op!(a.asm_deref(), symbol_table, waiting_map, loop_check, a)?,
@@ -97,7 +99,7 @@ fn get_operand(
 fn check_for_loops(
     entry: &STEntry,
     identifier_span: Span,
-    loop_check: &mut IndexMap<*const RefCell<Symbol>, (Span, Span)>,
+    loop_check: &mut LoopCheck,
 ) -> Result<(), Error> {
     // just need a unique id for each symbol to detect loops
     let symbol_id = Rc::as_ptr(&entry.symbol);
@@ -122,4 +124,9 @@ fn check_for_loops(
         loop_check.insert(symbol_id, (entry.key_span, identifier_span));
         Ok(())
     }
+}
+
+fn remove_from_loop_check(entry: &STEntry, loop_check: &mut LoopCheck) {
+    let symbol_id = Rc::as_ptr(&entry.symbol);
+    loop_check.shift_remove(&symbol_id);
 }
