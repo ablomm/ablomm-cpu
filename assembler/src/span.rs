@@ -25,7 +25,7 @@ impl Span {
         }
     }
 
-    pub fn spanned<T>(self, val: T) -> Spanned<T> {
+    pub(crate) fn spanned<T>(self, val: T) -> Spanned<T> {
         Spanned::new(val, self)
     }
 
@@ -126,38 +126,38 @@ impl ariadne::Span for Span {
 
 // just a struct to hold a span and a value for error messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Spanned<T> {
-    pub val: T,
-    pub span: Span,
+pub(crate) struct Spanned<T> {
+    pub(crate) val: T,
+    pub(crate) span: Span,
 }
 
 impl<T> Spanned<T> {
-    pub fn new(val: T, span: Span) -> Self {
+    pub(crate) fn new(val: T, span: Span) -> Self {
         Self { val, span }
     }
 
     // converts &Spanned<T> to Spanned<&T>
-    pub fn as_ref(&self) -> Spanned<&T> {
+    pub(crate) fn as_ref(&self) -> Spanned<&T> {
         Spanned::new(&self.val, self.span)
     }
 
-    pub fn as_mut_ref(&mut self) -> Spanned<&mut T> {
+    pub(crate) fn as_mut_ref(&mut self) -> Spanned<&mut T> {
         Spanned::new(&mut self.val, self.span)
     }
 
-    pub fn span_to<V>(&self, to: V) -> Spanned<V> {
+    pub(crate) fn span_to<V>(&self, to: V) -> Spanned<V> {
         Spanned::new(to, self.span)
     }
 }
 
 impl<T: Copy> Spanned<&T> {
-    pub fn copied(&self) -> Spanned<T> {
+    pub(crate) fn copied(&self) -> Spanned<T> {
         Spanned::new(*self.val, self.span)
     }
 }
 
 impl<T> Spanned<&mut T> {
-    pub fn to_borrow(&self) -> Spanned<&T> {
+    pub(crate) fn to_borrow(&self) -> Spanned<&T> {
         Spanned::new(self.val, self.span)
     }
 }
@@ -179,7 +179,7 @@ impl<T> DerefMut for Spanned<T> {
 impl<'a, T> Spanned<&'a Option<T>> {
     // generic over any value with a spanned result
     // but mostly for generator, because the expression result during generation should always be Some
-    pub fn unwrap(&self) -> Spanned<&'a T> {
+    pub(crate) fn unwrap(&self) -> Spanned<&'a T> {
         let val = self.val.as_ref().unwrap_or_else(|| {
             panic!(
                 "Option at {} was None while attempting to unwrap",

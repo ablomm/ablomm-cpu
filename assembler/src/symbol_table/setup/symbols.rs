@@ -11,12 +11,12 @@ use crate::{
     symbol_table::{self, STEntry, Symbol, SymbolTable, SymbolValue},
 };
 
-pub type ExportMap = HashMap<symbol_table::Key, symbol_table::Value>;
-pub type FileExportMap = HashMap<Intern<Src>, ExportMap>;
+pub(super) type ExportMap = HashMap<symbol_table::Key, symbol_table::Value>;
+pub(super) type FileExportMap = HashMap<Intern<Src>, ExportMap>;
 
 impl Ast {
     // generates symbol table for block and sub_blocks (excluding imports), returns exported symbols per file
-    pub fn add_symbols(&mut self) -> RecoveredResult<FileExportMap> {
+    pub(super) fn add_symbols(&mut self) -> RecoveredResult<FileExportMap> {
         let mut file_exports_map = FileExportMap::new();
         let mut errors = Vec::new();
 

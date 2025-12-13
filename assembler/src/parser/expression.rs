@@ -4,7 +4,8 @@ use crate::span::Spanned;
 use chumsky::prelude::*;
 use internment::Intern;
 
-pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Expression, Extra<'src>> {
+pub(super) fn expression_parser<'src, I: Input<'src>>()
+-> impl Parser<'src, I, Expression, Extra<'src>> {
     recursive(|expression| {
         let atom = choice((
             keywords::register_parser().map(Expression::Register),
@@ -149,7 +150,7 @@ pub fn expression_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Express
     })
 }
 
-pub fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<'src>> {
+pub(super) fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<'src>> {
     let bin_num = just("0b")
         .ignore_then(
             text::digits(2)
@@ -211,7 +212,7 @@ pub fn number_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, u32, Extra<
     choice((bin_num, oct_num, hex_num, dec_num, char_num)).labelled("number")
 }
 
-pub fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
+pub(super) fn string_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, String, Extra<'src>> {
     let escape_char = just('\\')
         .ignore_then(choice((
             just('\\').to('\\'),

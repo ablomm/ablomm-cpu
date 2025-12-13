@@ -14,7 +14,10 @@ use crate::{
 
 impl Ast {
     // adds imports to importers' symbol table
-    pub fn add_imports(&mut self, file_exports_map: &FileExportMap) -> Result<(), Vec<Error>> {
+    pub(super) fn add_imports(
+        &mut self,
+        file_exports_map: &FileExportMap,
+    ) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         for file in self.files.iter_mut() {

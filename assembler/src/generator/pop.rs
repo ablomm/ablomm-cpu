@@ -7,7 +7,7 @@ use crate::{
     symbol_table::SymbolTable,
 };
 
-pub fn generate_pop(
+pub(super) fn generate_pop(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {

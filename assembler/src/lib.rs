@@ -15,8 +15,8 @@ mod expression;
 mod file;
 mod generator;
 mod parser;
-mod span;
-mod src;
+pub mod span;
+pub mod src;
 mod symbol_table;
 mod utils;
 

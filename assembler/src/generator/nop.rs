@@ -5,7 +5,7 @@ use crate::{
     span::Spanned,
 };
 
-pub fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
+pub(super) fn generate_nop(operation: &Spanned<&Operation>) -> Result<u32, Error> {
     assert!(matches!(
         operation.full_mnemonic.mnemonic.val,
         AsmMnemonic::Nop

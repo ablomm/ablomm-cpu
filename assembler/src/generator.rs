@@ -20,7 +20,7 @@ mod push;
 
 impl Ast {
     // if errors, it will return an errors with a recovered program
-    pub fn generate(&self) -> RecoveredResult<Vec<u32>> {
+    pub(super) fn generate(&self) -> RecoveredResult<Vec<u32>> {
         let mut opcodes = Vec::new();
 
         for file in &self.files {
@@ -220,7 +220,7 @@ fn assert_range<T: Display + PartialOrd>(
     Ok(())
 }
 
-pub trait Generatable {
+trait Generatable {
     fn generate(&self) -> u32;
 }
 

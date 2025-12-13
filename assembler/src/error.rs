@@ -7,11 +7,11 @@ use crate::{Span, expression::expression_result::ExpressionResult, span::Spanned
 use ariadne::{Color, Fmt};
 use internment::Intern;
 
-pub mod spanned;
+mod spanned;
 
 pub use spanned::SpannedError;
 
-pub const ATTENTION_COLOR: Color = Color::Blue;
+pub(crate) const ATTENTION_COLOR: Color = Color::Blue;
 
 // if there was errors, but we were able to recover some result
 pub struct RecoveredError<T, E = Vec<SpannedError>>(pub T, pub E);
@@ -76,7 +76,7 @@ impl Error {
 }
 
 impl Error {
-    pub fn incorrect_num(
+    pub(crate) fn incorrect_num(
         span: Span,
         object_name: impl Display,
         expected: Vec<usize>,
@@ -90,7 +90,10 @@ impl Error {
         )))
     }
 
-    pub fn incorrect_type(expected: Vec<impl Display>, found: &Spanned<&ExpressionResult>) -> Self {
+    pub(crate) fn incorrect_type(
+        expected: Vec<impl Display>,
+        found: &Spanned<&ExpressionResult>,
+    ) -> Self {
         let error = Self::Spanned(Box::new(SpannedError::incorrect_type(expected, found)));
 
         if matches!(found.val, ExpressionResult::Error) {
@@ -102,7 +105,8 @@ impl Error {
         }
     }
 
-    pub fn incorrect_value(
+    #[allow(dead_code)]
+    pub(crate) fn incorrect_value(
         span: Span,
         object_name: impl Display,
         expected: Vec<impl Display>,
@@ -116,7 +120,7 @@ impl Error {
         )))
     }
 
-    pub fn identifier_already_defined(
+    pub(crate) fn identifier_already_defined(
         define1: Span,
         define1_import: Option<Span>,
         define2: Span,

@@ -18,7 +18,7 @@ impl Src {
         Ok(Src(pathbuf))
     }
 
-    pub fn get_relative(&self, relative_path: &Path) -> io::Result<Src> {
+    pub(crate) fn get_relative(&self, relative_path: &Path) -> io::Result<Src> {
         // parent() should* always return something because src is a file (we read it as a file)
         Src::new(
             self.parent()

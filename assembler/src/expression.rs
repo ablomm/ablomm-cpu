@@ -12,7 +12,7 @@ use crate::{
     symbol_table::{STEntry, Symbol, SymbolTable},
 };
 
-pub mod expression_result;
+pub(super) mod expression_result;
 
 macro_rules! op {
     ($e:expr, $symbol_table:ident, $waiting_map:ident, $loop_check:ident, $($val:ident),* ) => {{
@@ -24,22 +24,22 @@ macro_rules! op {
     }};
 }
 
-pub type LoopCheck = IndexMap<*const RefCell<Symbol>, (Span, Span)>;
+pub(crate) type LoopCheck = IndexMap<*const RefCell<Symbol>, (Span, Span)>;
 
-pub struct EvalReturn {
-    pub result: ExpressionResult,
+pub(crate) struct EvalReturn {
+    pub(crate) result: ExpressionResult,
 
     // the identifiers that are causing the result to be None. It is empty if the value is known
     // i.e. waiting for these identifiers to have known values before it itself can be known
-    pub waiting_map: HashMap<Intern<std::string::String>, Span>,
+    pub(crate) waiting_map: HashMap<Intern<std::string::String>, Span>,
 }
 
 impl Spanned<&Expression> {
-    pub fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, Error> {
+    pub(crate) fn eval(&self, symbol_table: &SymbolTable) -> Result<EvalReturn, Error> {
         self.eval_with_loop_check(symbol_table, &mut IndexMap::new())
     }
 
-    pub fn eval_with_loop_check(
+    pub(crate) fn eval_with_loop_check(
         &self,
         symbol_table: &SymbolTable,
         loop_check: &mut LoopCheck,

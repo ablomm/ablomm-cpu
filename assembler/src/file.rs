@@ -15,7 +15,7 @@ use crate::{
 
 impl Spanned<Intern<Src>> {
     // takes Src and returns the full Ast assuming Src is the root file
-    pub fn build_ast(&self, cache: &mut SrcCache) -> RecoveredResult<Ast> {
+    pub(super) fn build_ast(&self, cache: &mut SrcCache) -> RecoveredResult<Ast> {
         let files = self
             .build_file_queue(cache, &mut HashSet::new())
             .map_err(|RecoveredError(files, errors)| RecoveredError(Ast { files }, errors))?;

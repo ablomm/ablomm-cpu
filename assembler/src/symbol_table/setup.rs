@@ -8,7 +8,7 @@ mod labels;
 mod symbols;
 
 impl Ast {
-    pub fn init_symbol_tables(&mut self) -> Result<(), Vec<Error>> {
+    pub(crate) fn init_symbol_tables(&mut self) -> Result<(), Vec<Error>> {
         let mut errors = Vec::new();
 
         let file_exports_map = match self.add_symbols() {

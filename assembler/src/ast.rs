@@ -4,25 +4,25 @@ use crate::{span::Spanned, src::Src, symbol_table::SymbolTable};
 use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Clone)]
-pub struct Ast {
-    pub files: Vec<Spanned<File>>,
+pub(crate) struct Ast {
+    pub(crate) files: Vec<Spanned<File>>,
 }
 
 // this technically isn't needed, but I'm keeping it here just incase it becomes useful to
 // distinguish between a normal block and a full file. you can get the Src through the Spanned<File>
 #[derive(Debug, Clone)]
-pub struct File {
-    pub block: Block,
+pub(crate) struct File {
+    pub(crate) block: Block,
 }
 
 #[derive(Debug, Clone)]
-pub struct Block {
-    pub statements: Vec<Spanned<Statement>>,
-    pub symbol_table: Rc<RefCell<SymbolTable>>,
+pub(crate) struct Block {
+    pub(crate) statements: Vec<Spanned<Statement>>,
+    pub(crate) symbol_table: Rc<RefCell<SymbolTable>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Statement {
+pub(crate) enum Statement {
     Block(Block),
     Operation(Operation),
     Label(Label),
@@ -34,37 +34,37 @@ pub enum Statement {
 }
 
 #[derive(Debug, Clone)]
-pub struct Label {
-    pub export: bool,
-    pub identifier: Spanned<Intern<String>>,
+pub(crate) struct Label {
+    pub(crate) export: bool,
+    pub(crate) identifier: Spanned<Intern<String>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Assignment {
-    pub export: bool,
-    pub identifier: Spanned<Intern<String>>,
-    pub expression: Spanned<Expression>,
+pub(crate) struct Assignment {
+    pub(crate) export: bool,
+    pub(crate) identifier: Spanned<Intern<String>>,
+    pub(crate) expression: Spanned<Expression>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Import {
-    pub src: Spanned<Intern<Src>>,
-    pub specifier: Spanned<ImportSpecifier>,
+pub(crate) struct Import {
+    pub(crate) src: Spanned<Intern<Src>>,
+    pub(crate) specifier: Spanned<ImportSpecifier>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ImportSpecifier {
+pub(crate) enum ImportSpecifier {
     Named(Vec<Spanned<NamedImport>>), // import print as print2, thing from "lib/import.asm";
     Glob,                             // import * from "lib/import.asm";
 }
 #[derive(Debug, Clone)]
-pub struct NamedImport {
-    pub identifier: Spanned<Intern<String>>,
-    pub alias: Option<Spanned<Intern<String>>>,
+pub(crate) struct NamedImport {
+    pub(crate) identifier: Spanned<Intern<String>>,
+    pub(crate) alias: Option<Spanned<Intern<String>>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Expression {
+pub(crate) enum Expression {
     Register(Register),
     String(String),
     Number(u32),
@@ -88,19 +88,19 @@ pub enum Expression {
 }
 
 #[derive(Debug, Clone)]
-pub struct Operation {
-    pub full_mnemonic: Spanned<FullMnemonic>,
-    pub operands: Spanned<Vec<Spanned<Expression>>>,
+pub(crate) struct Operation {
+    pub(crate) full_mnemonic: Spanned<FullMnemonic>,
+    pub(crate) operands: Spanned<Vec<Spanned<Expression>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct FullMnemonic {
-    pub mnemonic: Spanned<AsmMnemonic>,
-    pub modifiers: Spanned<Vec<Spanned<Modifier>>>,
+pub(crate) struct FullMnemonic {
+    pub(crate) mnemonic: Spanned<AsmMnemonic>,
+    pub(crate) modifiers: Spanned<Vec<Spanned<Modifier>>>,
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum AsmMnemonic {
+pub(crate) enum AsmMnemonic {
     Nop,
     Ld,
     Push,
@@ -111,7 +111,7 @@ pub enum AsmMnemonic {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum CpuMnemonic {
+pub(crate) enum CpuMnemonic {
     Nop = 0,
     Ld,
     Ldr,
@@ -138,13 +138,13 @@ pub enum CpuMnemonic {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum Modifier {
+pub(crate) enum Modifier {
     Condition(Condition),
     AluModifier(AluModifier),
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum Condition {
+pub(crate) enum Condition {
     #[allow(dead_code)]
     None = 0, // not used, but for completeness
     Eq,
@@ -164,13 +164,13 @@ pub enum Condition {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum AluModifier {
+pub(crate) enum AluModifier {
     S,
     T,
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum AluOpFlags {
+pub(crate) enum AluOpFlags {
     Immediate = 1 << 3,
     Reverse = 1 << 2,
     Loadn = 1 << 1,
@@ -178,7 +178,7 @@ pub enum AluOpFlags {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum Register {
+pub(crate) enum Register {
     R0 = 0,
     R1,
     R2,

@@ -10,7 +10,7 @@ use crate::{
     symbol_table::SymbolTable,
 };
 
-pub fn generate_unary_alu_op(
+pub(crate) fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {

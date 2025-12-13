@@ -9,9 +9,9 @@ use crate::{
 
 mod unary_alu_op;
 
-pub use unary_alu_op::generate_unary_alu_op;
+pub(super) use unary_alu_op::generate_unary_alu_op;
 
-pub fn generate_alu_op(
+pub(super) fn generate_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {

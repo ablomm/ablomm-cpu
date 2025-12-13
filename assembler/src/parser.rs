@@ -22,12 +22,15 @@ type ParseError<'src> = Rich<'src, char, Span>;
 type Extra<'src> = extra::Err<ParseError<'src>>;
 
 // a trait alias for StrInput to make parsers more concise
-pub trait Input<'src>: StrInput<'src, Token = char, Span = Span, Slice = &'src str> {}
+pub(super) trait Input<'src>:
+    StrInput<'src, Token = char, Span = Span, Slice = &'src str>
+{
+}
 
 impl<'src, T> Input<'src> for T where T: StrInput<'src, Token = char, Span = Span, Slice = &'src str>
 {}
 
-pub fn file_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, File, Extra<'src>> {
+pub(super) fn file_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, File, Extra<'src>> {
     statement_parser()
         .map_with(|val, e| Spanned::new(val, e.span()))
         .padded_by(comment_pad())

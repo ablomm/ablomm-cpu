@@ -14,11 +14,11 @@ use internment::Intern;
 
 #[derive(Debug)]
 pub struct SpannedError {
-    pub(super) span: Span, // main span
-    pub(super) message: String,
-    pub(super) labels: Vec<(Span, String)>,
-    pub(super) notes: Vec<String>,
-    pub(super) helps: Vec<String>,
+    pub span: Span, // main span
+    pub message: String,
+    pub labels: Vec<(Span, String)>,
+    pub notes: Vec<String>,
+    pub helps: Vec<String>,
 }
 
 impl SpannedError {
@@ -55,7 +55,8 @@ impl SpannedError {
     }
 
     // check if any of the spans in this error intersect the given span
-    pub fn any_span_intersect(&self, span: Span) -> bool {
+    #[allow(dead_code)]
+    pub(crate) fn any_span_intersect(&self, span: Span) -> bool {
         span.intersects(&self.span)
             || self
                 .labels
@@ -103,7 +104,7 @@ impl SpannedError {
 
 // all the specific error type constructors
 impl SpannedError {
-    pub fn incorrect_num(
+    pub(crate) fn incorrect_num(
         span: Span,
         object_name: impl Display,
         expected: Vec<usize>,
@@ -127,11 +128,14 @@ impl SpannedError {
         ))
     }
 
-    pub fn incorrect_type(expected: Vec<impl Display>, found: &Spanned<&ExpressionResult>) -> Self {
+    pub(crate) fn incorrect_type(
+        expected: Vec<impl Display>,
+        found: &Spanned<&ExpressionResult>,
+    ) -> Self {
         Self::incorrect_value(found.span, "type", expected, Some(found.val))
     }
 
-    pub fn incorrect_value(
+    pub(crate) fn incorrect_value(
         span: Span,
         object_name: impl Display,
         expected: Vec<impl Display>,
@@ -155,7 +159,7 @@ impl SpannedError {
             .with_label(format!("Expected {}, but found {}", expected, found,))
     }
 
-    pub fn identifier_already_defined(
+    pub(crate) fn identifier_already_defined(
         define1: Span,
         define1_import: Option<Span>,
         define2: Span,

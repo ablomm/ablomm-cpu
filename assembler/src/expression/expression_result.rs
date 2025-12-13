@@ -14,7 +14,7 @@ mod string;
 // the Option<T> is used to allow evaluating expressions in order to get it's type, without knowing
 // the concrete value; useful for calculating the number of words of some statements
 #[derive(Debug, Clone)]
-pub enum ExpressionResult {
+pub(crate) enum ExpressionResult {
     Number(Option<Number>),
     String(Option<String>),
     Register(Option<Register>),
@@ -26,7 +26,7 @@ pub enum ExpressionResult {
 
 // newtypes
 #[derive(Debug, Clone, Copy)]
-pub struct Number(pub u32);
+pub(crate) struct Number(pub(crate) u32);
 
 impl Deref for Number {
     type Target = u32;
@@ -36,13 +36,13 @@ impl Deref for Number {
 }
 
 impl Spanned<&Number> {
-    pub fn as_u32(&self) -> Spanned<&u32> {
+    pub(crate) fn as_u32(&self) -> Spanned<&u32> {
         self.span_to(**self)
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct String(pub std::string::String);
+pub(crate) struct String(pub(crate) std::string::String);
 
 impl Deref for String {
     type Target = std::string::String;
@@ -52,13 +52,13 @@ impl Deref for String {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct RegisterOffset {
-    pub reg: Spanned<Register>,
-    pub offset: i32,
+pub(crate) struct RegisterOffset {
+    pub(crate) reg: Spanned<Register>,
+    pub(crate) offset: i32,
 }
 
 #[derive(Debug, Clone)]
-pub struct Indirect(pub Box<ExpressionResult>);
+pub(crate) struct Indirect(pub(crate) Box<ExpressionResult>);
 
 impl Deref for Indirect {
     type Target = Box<ExpressionResult>;
@@ -68,7 +68,8 @@ impl Deref for Indirect {
 }
 
 impl ExpressionResult {
-    pub fn is_known_val(&self) -> bool {
+    #[allow(dead_code)]
+    pub(crate) fn is_known_val(&self) -> bool {
         match self {
             ExpressionResult::Number(None) => false,
             ExpressionResult::String(None) => false,
@@ -104,20 +105,20 @@ impl From<ExpressionResult> for std::string::String {
 // operations that are not in rust std::op
 
 // asmref to make it clear this is different from rust ref
-pub trait AsmRef {
+pub(crate) trait AsmRef {
     type Output;
 
     fn asm_ref(self) -> Self::Output;
 }
 
 // asmref to make it clear this is different from rust deref
-pub trait AsmDeref {
+pub(crate) trait AsmDeref {
     type Output;
 
     fn asm_deref(self) -> Self::Output;
 }
 
-pub trait Ashr<Rhs = Self> {
+pub(crate) trait Ashr<Rhs = Self> {
     type Output;
 
     fn ashr(self, rhs: Rhs) -> Self::Output;

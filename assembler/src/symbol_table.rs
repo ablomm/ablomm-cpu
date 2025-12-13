@@ -15,49 +15,50 @@ use crate::{
     span::Spanned,
 };
 
-pub type Key = Intern<String>;
-pub type Value = STEntry;
+pub(crate) type Key = Intern<String>;
+pub(crate) type Value = STEntry;
 
-pub mod setup;
+pub(super) mod setup;
 
 #[derive(Debug, Clone)]
-pub struct SymbolTable {
-    pub table: HashMap<Key, Value>,
-    pub parent: Option<Rc<RefCell<SymbolTable>>>,
+pub(crate) struct SymbolTable {
+    pub(crate) table: HashMap<Key, Value>,
+    pub(crate) parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct STEntry {
-    pub symbol: Rc<RefCell<Symbol>>,
+pub(crate) struct STEntry {
+    pub(crate) symbol: Rc<RefCell<Symbol>>,
 
     // the span of the original definition
-    pub key_span: Span,
+    pub(crate) key_span: Span,
 
     // the span of the specifier that imports this symbol
-    pub import_span: Option<Span>,
+    pub(crate) import_span: Option<Span>,
 
     // the span of the export statement of an imported identifier
-    pub export_span: Option<Span>,
+    pub(crate) export_span: Option<Span>,
 }
 
 // not sure of a good name for this, but it's just the value that can be shared among multiple tables
 #[derive(Debug, Clone)]
-pub struct Symbol {
-    pub value: Spanned<SymbolValue>,
+pub(crate) struct Symbol {
+    pub(crate) value: Spanned<SymbolValue>,
 
     // the symbol_table of where the identifier was defined, needed to evaluate imported identifiers
     // weak pointer because symbol_table already contains reference to the symbol
-    pub symbol_table: Weak<RefCell<SymbolTable>>,
+    pub(crate) symbol_table: Weak<RefCell<SymbolTable>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum SymbolValue {
+pub(crate) enum SymbolValue {
     Result(ExpressionResult),
     Expression(Expression),
 }
 
 impl SymbolTable {
-    pub fn contains_key<Q>(&self, key: &Q) -> bool
+    #[allow(dead_code)]
+    pub(crate) fn contains_key<Q>(&self, key: &Q) -> bool
     where
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
@@ -65,7 +66,8 @@ impl SymbolTable {
         self.table.contains_key(key)
     }
 
-    pub fn contains_key_recursive<Q>(&self, key: &Q) -> bool
+    #[allow(dead_code)]
+    pub(crate) fn contains_key_recursive<Q>(&self, key: &Q) -> bool
     where
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
@@ -81,7 +83,7 @@ impl SymbolTable {
         false
     }
 
-    pub fn get<Q>(&self, key: &Q) -> Option<&Value>
+    pub(crate) fn get<Q>(&self, key: &Q) -> Option<&Value>
     where
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
@@ -92,7 +94,7 @@ impl SymbolTable {
     // owned value because parent may go out of scope while borrowed
     // I have attempted to return an enum of either &T or Ref<T>, but I have
     // gave up because of the borrow checker
-    pub fn get_recursive<Q>(&self, key: &Q) -> Option<Value>
+    pub(crate) fn get_recursive<Q>(&self, key: &Q) -> Option<Value>
     where
         Q: Eq + Hash + ?Sized,
         Key: std::borrow::Borrow<Q>,
@@ -109,18 +111,18 @@ impl SymbolTable {
     }
 
     // just returns a nice error instead of Option
-    pub fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, Error> {
+    pub(crate) fn try_get(&self, ident: &Spanned<&Key>) -> Result<Value, Error> {
         self.get_recursive(ident.val).ok_or(Error::Spanned(Box::new(
             SpannedError::new(ident.span, "Missing identifier")
                 .with_label("Could not find identifier"),
         )))
     }
 
-    fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
+    pub(crate) fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.table.insert(key, value)
     }
 
-    fn try_insert(&mut self, key: Key, new_entry: Value) -> Result<(), Error> {
+    pub(crate) fn try_insert(&mut self, key: Key, new_entry: Value) -> Result<(), Error> {
         if let Some(entry) = self.table.get(&key) {
             return Err(Error::identifier_already_defined(
                 entry.key_span,
@@ -136,7 +138,7 @@ impl SymbolTable {
 }
 
 impl Symbol {
-    pub fn try_get_result(
+    pub(crate) fn try_get_result(
         &mut self,
         loop_check: &mut LoopCheck,
     ) -> Result<ExpressionResult, Error> {
