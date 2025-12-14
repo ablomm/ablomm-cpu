@@ -42,11 +42,11 @@ package reg_pkg;
   // takes in a mask_e and converts it to the corresponding 32-bit mask
   function static logic [31:0] mask_32(input reg_mask_e mask_e);
     unique case (mask_e)
-      LS8: mask_32 = 'h000000ff;
-      LS16: mask_32 = 'h0000ffff;
-      LS27: mask_32 = 'h00ffffff;
-      LS32: mask_32 = 'hffffffff;
-      default: mask_32 = 'hffffffff;
+      LS8: return 'h000000ff;
+      LS16: return 'h0000ffff;
+      LS27: return 'h00ffffff;
+      LS32: return 'hffffffff;
+      default: return 'hffffffff;
     endcase
   endfunction
 endpackage

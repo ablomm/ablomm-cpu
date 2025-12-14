@@ -127,22 +127,22 @@ module cu (
 
   function static logic satisfies_condition(input cond_e condition, input alu_status_t status);
     unique case (condition)
-      cu_pkg::NONE: satisfies_condition = 1;
-      cu_pkg::EQ: satisfies_condition = status.zero;
-      cu_pkg::NE: satisfies_condition = !status.zero;
-      cu_pkg::NEG: satisfies_condition = status.negative;
-      cu_pkg::POS: satisfies_condition = !status.negative;
-      cu_pkg::VS: satisfies_condition = status.overflow;
-      cu_pkg::VC: satisfies_condition = !status.overflow;
-      cu_pkg::ULT: satisfies_condition = !status.carry;
-      cu_pkg::UGT: satisfies_condition = status.carry && !status.zero;
-      cu_pkg::ULE: satisfies_condition = !status.carry || status.zero;
-      cu_pkg::UGE: satisfies_condition = status.carry;
-      cu_pkg::SLT: satisfies_condition = status.negative !== status.overflow;
-      cu_pkg::SGT: satisfies_condition = !status.zero && (status.negative === status.overflow);
-      cu_pkg::SLE: satisfies_condition = status.zero || (status.negative !== status.overflow);
-      cu_pkg::SGE: satisfies_condition = status.negative === status.overflow;
-      default: satisfies_condition = 1;
+      cu_pkg::NONE: return 1;
+      cu_pkg::EQ: return status.zero;
+      cu_pkg::NE: return !status.zero;
+      cu_pkg::NEG: return status.negative;
+      cu_pkg::POS: return !status.negative;
+      cu_pkg::VS: return status.overflow;
+      cu_pkg::VC: return !status.overflow;
+      cu_pkg::ULT: return !status.carry;
+      cu_pkg::UGT: return status.carry && !status.zero;
+      cu_pkg::ULE: return !status.carry || status.zero;
+      cu_pkg::UGE: return status.carry;
+      cu_pkg::SLT: return status.negative !== status.overflow;
+      cu_pkg::SGT: return !status.zero && (status.negative === status.overflow);
+      cu_pkg::SLE: return status.zero || (status.negative !== status.overflow);
+      cu_pkg::SGE: return status.negative === status.overflow;
+      default: return 1;
     endcase
   endfunction
 

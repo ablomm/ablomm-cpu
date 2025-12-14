@@ -21,8 +21,6 @@ module lr_reg #(
 
   always_ff @(posedge clk or posedge rst)
     if (rst) value <= INITIAL_VAL;
-    else begin
-      if (ld) value <= in;
-      if (ld_pc) value <= pc;
-    end
+    else if (ld) value <= in;
+    else if (ld_pc) value <= pc;
 endmodule

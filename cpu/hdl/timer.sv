@@ -51,10 +51,10 @@ module timer #(
       input timer_reg_e reg_sel, input timer_ctrl_t control_reg,
       input logic [WORD_SIZE-1:0] interval_reg, input logic [WORD_SIZE-1:0] timer_reg);
     unique case (reg_sel)
-      timer_pkg::ACK: sel_reg_val = 'b0;
-      timer_pkg::CTRL: sel_reg_val = WORD_SIZE'(control_reg);
-      timer_pkg::INTERVAL: sel_reg_val = interval_reg;
-      timer_pkg::TIMER: sel_reg_val = timer_reg;
+      timer_pkg::ACK: return 'b0;
+      timer_pkg::CTRL: return WORD_SIZE'(control_reg);
+      timer_pkg::INTERVAL: return interval_reg;
+      timer_pkg::TIMER: return timer_reg;
       default: ;
     endcase
   endfunction
