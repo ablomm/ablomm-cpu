@@ -55,7 +55,7 @@ module timer #(
       timer_pkg::CTRL: return WORD_SIZE'(control_reg);
       timer_pkg::INTERVAL: return interval_reg;
       timer_pkg::TIMER: return timer_reg;
-      default: ;
+      default: return 'b0;
     endcase
   endfunction
 endmodule
