@@ -40,7 +40,7 @@ package reg_pkg;
   } reg_mask_e;
 
   // takes in a mask_e and converts it to the corresponding 32-bit mask
-  function static logic [31:0] mask_32(input reg_mask_e mask_e);
+  function static logic [31:0] get_mask_32(input reg_mask_e mask_e);
     unique case (mask_e)
       LS8: return 'h000000ff;
       LS16: return 'h0000ffff;

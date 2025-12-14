@@ -7,7 +7,6 @@ module mask_filter
     input [WIDTH-1:0] in,
     input reg_mask_e mask
 );
-  logic [31:0] mask_32;
-  assign mask_32 = reg_pkg::mask_32(mask);
+  wire [31:0] mask_32 = reg_pkg::get_mask_32(mask);
   assign out = in & mask_32;
 endmodule
