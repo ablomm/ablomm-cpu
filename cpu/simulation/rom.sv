@@ -9,7 +9,6 @@ module rom #(
     input rd,
     input en
 );
-
   logic [WORD_SIZE-1:0] mem[DEPTH];
 
   assign out = (en && rd) ? mem[addr] : 'hz;

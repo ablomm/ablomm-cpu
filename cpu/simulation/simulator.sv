@@ -76,5 +76,4 @@ module simulator;
       .wr  (wr),
       .en  (addr[15] === 1'b1)
   );
-
 endmodule

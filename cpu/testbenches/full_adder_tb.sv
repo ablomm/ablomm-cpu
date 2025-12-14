@@ -14,7 +14,6 @@ module full_adder_tb;
     test_adder(32'h7fffffff, 1, 32'h80000000, 0, 1);  // 2^31-1 + 1 (signed overflow)
   end
 
-
   task static test_adder(logic [31:0] in_a, logic [31:0] in_b, logic [31:0] expected_out,
                          logic expected_carry_out, logic expected_overflow);
     begin
@@ -35,6 +34,5 @@ module full_adder_tb;
       assert (expected_overflow === expected_overflow)
       else $fatal;
     end
-
   endtask
 endmodule

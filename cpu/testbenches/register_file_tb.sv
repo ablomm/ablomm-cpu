@@ -1,5 +1,6 @@
-import reg_pkg::*;
 module register_file_tb;
+  import reg_pkg::*;
+
   logic clk;
   logic rst = 0;
   tri [31:0] a, b;

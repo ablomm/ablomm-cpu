@@ -1,6 +1,6 @@
-import timer_pkg::*;
-
 module timer_tb;
+  import timer_pkg::*;
+
   logic clk;
   logic [31:0] data;
   wire [31:0] out;

@@ -1,6 +1,6 @@
-import alu_pkg::*;
-
-module alu #(
+module alu
+  import alu_pkg::*;
+#(
     parameter integer WIDTH = 32
 ) (
     input oe,

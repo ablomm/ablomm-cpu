@@ -1,9 +1,9 @@
-import cu_pkg::*;
-import alu_pkg::*;
-import reg_pkg::*;
-
 // control unit
-module cu (
+module cu
+  import cu_pkg::*;
+  import alu_pkg::*;
+  import reg_pkg::*;
+(
     input clk,
     input wire en,
     input wire rst,

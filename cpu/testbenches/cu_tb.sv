@@ -1,4 +1,5 @@
 module cu_tb;
+  import alu_pkg::*;
   import cu_pkg::*;
   import reg_pkg::*;
 

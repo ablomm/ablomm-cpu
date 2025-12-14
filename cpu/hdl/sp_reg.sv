@@ -15,7 +15,6 @@ module sp_reg #(
     input pre_dec,
     output [SIZE-1:0] value  // only if you need to directly access (not on the data/addr bus)
 );
-
   logic [SIZE-1:0] value_reg = INITIAL_VAL;
 
   // I have to do this instead of just having an `always @(pre_dec) value_reg -= 1;

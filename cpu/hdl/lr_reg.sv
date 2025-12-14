@@ -15,7 +15,6 @@ module lr_reg #(
     input ld_pc,
     output logic [SIZE-1:0] value = INITIAL_VAL // only if you need to directly access (not on the data/addr bus)
 );
-
   assign a = oe_a ? value : 'hz;
   assign b = oe_b ? value : 'hz;
 

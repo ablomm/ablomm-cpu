@@ -1,6 +1,7 @@
-import reg_pkg::*;
-
 module status_reg_tb;
+  import alu_pkg::*;
+  import reg_pkg::*;
+
   logic clk;
   logic rst = 0;
   tri status_t a, b;

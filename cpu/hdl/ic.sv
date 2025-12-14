@@ -8,7 +8,6 @@ module ic #(
     input rd,
     output irq_out
 );
-
   // for some reason verilator complains when it's 'hz
   assign out = rd ? irq_in : {IRQ_LENGTH{1'hz}};
   assign irq_out = irq_in !== 'b0;

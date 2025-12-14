@@ -4,7 +4,6 @@ module tty (
     input wr,
     input en
 );
-
   always @(posedge clk) begin
     if (en && wr) $write("%s", data);
   end

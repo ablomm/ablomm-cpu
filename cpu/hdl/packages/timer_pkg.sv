@@ -11,5 +11,4 @@ package timer_pkg;
     INTERVAL,
     TIMER
   } timer_reg_e;
-
 endpackage

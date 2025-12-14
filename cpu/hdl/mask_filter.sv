@@ -1,6 +1,6 @@
-import reg_pkg::*;
-
-module mask_filter #(
+module mask_filter
+  import reg_pkg::*;
+#(
     parameter integer WIDTH = 32
 ) (
     output tri [WIDTH-1:0] out,

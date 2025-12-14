@@ -1,8 +1,8 @@
-import cu_pkg::*;
-import alu_pkg::*;
-import reg_pkg::*;
-
-module cpu (
+module cpu
+  import cu_pkg::*;
+  import alu_pkg::*;
+  import reg_pkg::*;
+(
     input clk,
     input en,
     input rst,
@@ -12,7 +12,6 @@ module cpu (
     output rd,
     output wr
 );
-
   // reg buses get filtered and eventually go on the a or b buses
   // driven by multiple things
   tri  [31:0] a_reg_bus;

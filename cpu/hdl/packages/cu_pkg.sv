@@ -103,5 +103,4 @@ package cu_pkg;
     instruction_e instruction;
     ir_operands_t operands;
   } ir_t;
-
 endpackage

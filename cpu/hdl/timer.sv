@@ -1,6 +1,6 @@
-import timer_pkg::*;
-
-module timer #(
+module timer
+  import timer_pkg::*;
+#(
     parameter integer WORD_SIZE = 32
 ) (
     input clk,

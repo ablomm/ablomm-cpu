@@ -1,6 +1,7 @@
-import reg_pkg::*;
-
-module status_reg #(
+module status_reg
+  import alu_pkg::*;
+  import reg_pkg::*;
+#(
     parameter status_t INITIAL_VAL = 0
 ) (
     input clk,
@@ -19,7 +20,6 @@ module status_reg #(
     input ld_mode,
     output status_t value = INITIAL_VAL
 );
-
   // for some reason verilator complains when it's 'hz
   assign a = oe_a ? value : 6'hz;
   assign b = oe_b ? value : 6'hz;
