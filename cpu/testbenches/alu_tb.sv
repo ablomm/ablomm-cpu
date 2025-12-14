@@ -6,7 +6,7 @@ module alu_tb;
   logic carry_in;
   logic [31:0] a, b;
   wire [31:0] out;
-  wire [ 3:0] status;
+  alu_status_t status;
 
   alu alu0 (.*);
 

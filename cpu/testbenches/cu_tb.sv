@@ -14,7 +14,7 @@ module cu_tb;
   logic wr;
 
   logic oe_alu;
-  logic [3:0] alu_op;
+  alu_op_e alu_op;
 
   reg_mask_e a_reg_mask;
   reg_mask_e b_reg_mask;
