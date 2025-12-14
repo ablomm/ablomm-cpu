@@ -1,16 +1,21 @@
 module mask_filter_tb;
+  import reg_pkg::*;
+
   wire [31:0] out;
-  logic [31:0] in, mask;
+  logic [31:0] in;
+  reg_mask_e mask;
 
   mask_filter mask_filter0 (.*);
   initial begin
     #600;
     $display("\ntesting filter");
-    test_filter('hffffffff, 'hf0f0f0f0, 'hf0f0f0f0);
-    test_filter('h12312312, 'h50f37431, 'h10312010);
+    test_filter('hffffffff, reg_pkg::LS8, 'h000000ff);
+    test_filter('hfffff1f2, reg_pkg::LS16, 'h0000f1f2);
+    test_filter('hff1ff1f2, reg_pkg::LS27, 'h001ff1f2);
+    test_filter('h5f1ff1f2, reg_pkg::LS32, 'h5f1ff1f2);
   end
 
-  task static test_filter(input logic [31:0] in_in, input logic [31:0] mask_in,
+  task static test_filter(input logic [31:0] in_in, input reg_mask_e mask_in,
                           input logic [31:0] expected);
     begin
       in   = in_in;

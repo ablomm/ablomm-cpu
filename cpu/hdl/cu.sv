@@ -18,9 +18,9 @@ module cu (
     output logic oe_alu,
     output alu_op_e alu_op,
 
-    output logic [31:0] a_reg_mask,
-    output logic [31:0] b_reg_mask,
-    output logic signed [11:0] b_reg_offset,
+    output reg_mask_e a_reg_mask,
+    output reg_mask_e b_reg_mask,
+    output logic en_offset,
 
     output reg_e sel_a_reg,
     output reg_e sel_b_reg,
@@ -126,27 +126,24 @@ module cu (
     end
 
   function static logic satisfies_condition(input cond_e condition, input alu_status_t status);
-    begin
-      unique case (condition)
-        cu_pkg::NONE: satisfies_condition = 1;
-        cu_pkg::EQ: satisfies_condition = status.zero;
-        cu_pkg::NE: satisfies_condition = !status.zero;
-        cu_pkg::NEG: satisfies_condition = status.negative;
-        cu_pkg::POS: satisfies_condition = !status.negative;
-        cu_pkg::VS: satisfies_condition = status.overflow;
-        cu_pkg::VC: satisfies_condition = !status.overflow;
-        cu_pkg::ULT: satisfies_condition = !status.carry;
-        cu_pkg::UGT: satisfies_condition = status.carry && !status.zero;
-        cu_pkg::ULE: satisfies_condition = !status.carry || status.zero;
-        cu_pkg::UGE: satisfies_condition = status.carry;
-        cu_pkg::SLT: satisfies_condition = status.negative !== status.overflow;
-        cu_pkg::SGT: satisfies_condition = !status.zero && (status.negative === status.overflow);
-        cu_pkg::SLE: satisfies_condition = status.zero || (status.negative !== status.overflow);
-        cu_pkg::SGE: satisfies_condition = status.negative === status.overflow;
-        default: satisfies_condition = 1;
-      endcase
-    end
-
+    unique case (condition)
+      cu_pkg::NONE: satisfies_condition = 1;
+      cu_pkg::EQ: satisfies_condition = status.zero;
+      cu_pkg::NE: satisfies_condition = !status.zero;
+      cu_pkg::NEG: satisfies_condition = status.negative;
+      cu_pkg::POS: satisfies_condition = !status.negative;
+      cu_pkg::VS: satisfies_condition = status.overflow;
+      cu_pkg::VC: satisfies_condition = !status.overflow;
+      cu_pkg::ULT: satisfies_condition = !status.carry;
+      cu_pkg::UGT: satisfies_condition = status.carry && !status.zero;
+      cu_pkg::ULE: satisfies_condition = !status.carry || status.zero;
+      cu_pkg::UGE: satisfies_condition = status.carry;
+      cu_pkg::SLT: satisfies_condition = status.negative !== status.overflow;
+      cu_pkg::SGT: satisfies_condition = !status.zero && (status.negative === status.overflow);
+      cu_pkg::SLE: satisfies_condition = status.zero || (status.negative !== status.overflow);
+      cu_pkg::SGE: satisfies_condition = status.negative === status.overflow;
+      default: satisfies_condition = 1;
+    endcase
   endfunction
 
   // outputs
@@ -157,6 +154,10 @@ module cu (
 
     oe_alu = 0;
     alu_op = alu_op_e'(0);
+
+    a_reg_mask = reg_pkg::LS32;
+    b_reg_mask = reg_pkg::LS32;
+    en_offset = 0;
 
     sel_a_reg = reg_e'(0);
     sel_b_reg = reg_e'(0);
@@ -183,9 +184,6 @@ module cu (
     mode_in = cpu_mode_e'(0);
     ld_mode = 0;
 
-    a_reg_mask = 32'hffffffff;
-    b_reg_mask = 32'hffffffff;
-    b_reg_offset = 0;
 
     if (en) begin
       unique case (state)
@@ -206,7 +204,7 @@ module cu (
         // reg_a <- *address
         LD: begin
           oe_b_ir = 1;
-          b_reg_mask = 32'hffff;
+          b_reg_mask = reg_pkg::LS16;
           rd = 1;
           sel_in_reg = reg_e'(ir.operands.ld.reg_a);
           ld_reg = 1;
@@ -217,7 +215,7 @@ module cu (
         LDR: begin
           sel_b_reg = reg_e'(ir.operands.ldr.reg_b);
           oe_b_reg = 1;
-          b_reg_offset = ir.operands.ldr.offset;
+          en_offset = 1;
           rd = 1;
           sel_in_reg = reg_e'(ir.operands.ldr.reg_a);
           ld_reg = 1;
@@ -226,7 +224,7 @@ module cu (
         // reg_a <- immediate
         LDI: begin
           oe_b_ir = 1;
-          b_reg_mask = 32'hffff;
+          b_reg_mask = reg_pkg::LS16;
           alu_op = alu_pkg::PASS;
           oe_alu = 1;
           sel_in_reg = reg_e'(ir.operands.ld.reg_a);
@@ -238,7 +236,7 @@ module cu (
           sel_a_reg = reg_e'(ir.operands.st.reg_a);
           oe_a_reg = 1;
           oe_b_ir = 1;
-          b_reg_mask = 32'hffff;
+          b_reg_mask = reg_pkg::LS16;
           wr = 1;
         end
 
@@ -248,7 +246,7 @@ module cu (
           oe_a_reg = 1;
           sel_b_reg = reg_e'(ir.operands.str.reg_b);
           oe_b_reg = 1;
-          b_reg_offset = ir.operands.str.offset;
+          en_offset = 1;
           wr = 1;
         end
 
@@ -276,14 +274,14 @@ module cu (
           if (ir.operands.unknown_alu_op.flags.immediate) begin
             if (ir.operands.alu_op_i.flags.reverse) begin
               oe_a_ir = 1;
-              a_reg_mask = 32'hff;
+              a_reg_mask = reg_pkg::LS8;
               sel_b_reg = reg_e'(ir.operands.alu_op_i.reg_b);
               oe_b_reg = 1;
             end else begin
               sel_a_reg = reg_e'(ir.operands.alu_op_i.reg_b);
               oe_a_reg = 1;
               oe_b_ir = 1;
-              b_reg_mask = 32'hff;
+              b_reg_mask = reg_pkg::LS8;
             end
 
           end else begin
@@ -299,7 +297,8 @@ module cu (
             oe_b_reg = 1;
           end
 
-          alu_op = alu_op_e'(ir[23:20]);  // the alu op will always be the second nibble of the instruction
+          // the alu op will always be the second nibble of the instruction
+          alu_op = alu_op_e'(ir[23:20]);
           oe_alu = ~ir.operands.unknown_alu_op.flags.loadn;
           sel_in_reg = reg_e'(ir.operands.unknown_alu_op.reg_a);
           ld_reg = ~ir.operands.unknown_alu_op.flags.loadn;

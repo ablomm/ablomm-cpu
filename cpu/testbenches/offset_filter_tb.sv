@@ -1,7 +1,8 @@
 module offset_filter_tb;
-  wire  [31:0] out;
+  wire [31:0] out;
   logic [31:0] in;
   logic [11:0] offset;
+  logic en = 1;
 
   offset_filter #(.OFFSET_WIDTH(12)) offset_filter (.*);
   initial begin

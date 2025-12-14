@@ -31,9 +31,9 @@ module cpu (
   wire oe_alu;
   wire alu_op_e alu_op;
 
-  wire [31:0] a_reg_mask;
-  wire [31:0] b_reg_mask;
-  wire signed [11:0] b_reg_offset;
+  wire reg_mask_e a_reg_mask;
+  wire reg_mask_e b_reg_mask;
+  wire en_offset;
 
   wire reg_e sel_a_reg;
   wire reg_e sel_b_reg;
@@ -95,7 +95,8 @@ module cpu (
   ) offset_filter_b (
       .out(b_bus),
       .in(b_mask_filter_out),
-      .offset(b_reg_offset)
+      .offset(ir[11:0]),
+      .en(en_offset)
   );
 
   // public registers

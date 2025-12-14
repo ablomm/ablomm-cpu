@@ -30,4 +30,23 @@ package reg_pkg;
     PCLINK,  // pseudo register: same as PC, except loading will also load LR to previous PC state
     PC
   } reg_e;
+
+  typedef enum logic [1:0] {
+    // least significate x bits
+    LS8,
+    LS16,
+    LS27,
+    LS32
+  } reg_mask_e;
+
+  // takes in a mask_e and converts it to the corresponding 32-bit mask
+  function static logic [31:0] mask_32(input reg_mask_e mask_e);
+    unique case (mask_e)
+      LS8: mask_32 = 'h000000ff;
+      LS16: mask_32 = 'h0000ffff;
+      LS27: mask_32 = 'h00ffffff;
+      LS32: mask_32 = 'hffffffff;
+      default: mask_32 = 'hffffffff;
+    endcase
+  endfunction
 endpackage

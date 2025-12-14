@@ -4,7 +4,8 @@ module offset_filter #(
 ) (
     output tri [WIDTH-1:0] out,
     input [WIDTH-1:0] in,
-    input signed [OFFSET_WIDTH-1:0] offset
+    input signed [OFFSET_WIDTH-1:0] offset,
+    input en
 );
-  assign out = in + WIDTH'(offset);
+  assign out = en ? in + WIDTH'(offset) : in;
 endmodule
