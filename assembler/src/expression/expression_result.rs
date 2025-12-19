@@ -20,7 +20,6 @@ pub(crate) enum ExpressionResult {
     Register(Option<Register>),
     RegisterOffset(Option<RegisterOffset>),
     Indirect(Indirect),
-    // TODO: skip printing errors caused by the Error type, since the root cause is already printed earlier
     Error,
 }
 

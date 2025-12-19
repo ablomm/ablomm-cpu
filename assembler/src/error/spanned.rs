@@ -223,5 +223,7 @@ fn format_rich_pattern<T: Display>(rich_pattern: &RichPattern<'_, T>) -> String 
         RichPattern::Any => "anything".to_string(),
         RichPattern::SomethingElse => "something else".to_string(),
         RichPattern::EndOfInput => "end of input".to_string(),
+        // all cases are covered as of 0.12.0, but the enum is non_exhaustive
+        _ => "unknown".to_string(),
     }
 }
