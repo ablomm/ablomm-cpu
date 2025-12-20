@@ -238,7 +238,7 @@ impl Generatable for CpuMnemonic {
 
 impl Generatable for AluCpuMnemonic {
     fn generate(&self) -> u32 {
-        let cpu_mnemonic: CpuMnemonic = (*self).into();
+        let cpu_mnemonic: CpuMnemonic = self.into();
         cpu_mnemonic.generate()
     }
 }

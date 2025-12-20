@@ -155,8 +155,8 @@ pub(crate) enum AluCpuMnemonic {
     Ror,
 }
 
-impl From<AluCpuMnemonic> for CpuMnemonic {
-    fn from(value: AluCpuMnemonic) -> Self {
+impl From<&AluCpuMnemonic> for CpuMnemonic {
+    fn from(value: &AluCpuMnemonic) -> Self {
         match value {
             AluCpuMnemonic::Pass => Self::Pass,
             AluCpuMnemonic::And => Self::And,
@@ -184,8 +184,8 @@ pub(crate) enum UnaryAluCpuMnemonic {
     Neg,
 }
 
-impl From<UnaryAluCpuMnemonic> for AluCpuMnemonic {
-    fn from(value: UnaryAluCpuMnemonic) -> Self {
+impl From<&UnaryAluCpuMnemonic> for AluCpuMnemonic {
+    fn from(value: &UnaryAluCpuMnemonic) -> Self {
         match value {
             UnaryAluCpuMnemonic::Pass => Self::Pass,
             UnaryAluCpuMnemonic::Not => Self::Not,
@@ -209,8 +209,8 @@ pub(crate) enum BinaryAluCpuMnemonic {
     Ror,
 }
 
-impl From<BinaryAluCpuMnemonic> for AluCpuMnemonic {
-    fn from(value: BinaryAluCpuMnemonic) -> Self {
+impl From<&BinaryAluCpuMnemonic> for AluCpuMnemonic {
+    fn from(value: &BinaryAluCpuMnemonic) -> Self {
         match value {
             BinaryAluCpuMnemonic::And => Self::And,
             BinaryAluCpuMnemonic::Or => Self::Or,

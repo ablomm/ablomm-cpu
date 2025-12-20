@@ -2,7 +2,7 @@
 // the least significant bits for it's input (i.e. the second input of a binary operation)
 
 use crate::{
-    ast::{AluCpuMnemonic, AsmMnemonic, Expression, Modifier, Operation},
+    ast::{AsmMnemonic, Expression, Modifier, Operation, UnaryAluCpuMnemonic},
     error::Error,
     expression::expression_result::ExpressionResult,
     generator::alu_op,
@@ -14,12 +14,11 @@ pub(crate) fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let mnemonic: Spanned<AluCpuMnemonic> =
-        if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
-            operation.full_mnemonic.mnemonic.span_to(mnemonic.into())
-        } else {
-            panic!("Function was not called with AsmMnemonic::UnaryAlu");
-        };
+    let mnemonic = if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
+        operation.full_mnemonic.mnemonic.span_to(mnemonic)
+    } else {
+        panic!("Function was not called with AsmMnemonic::UnaryAlu");
+    };
 
     if operation.operands.len() == 1 {
         generate_unary_alu_op_1(
@@ -46,7 +45,7 @@ pub(crate) fn generate_unary_alu_op(
 }
 
 fn generate_unary_alu_op_1(
-    mnemonic: &Spanned<&AluCpuMnemonic>,
+    mnemonic: &Spanned<&UnaryAluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -56,14 +55,19 @@ fn generate_unary_alu_op_1(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = operand.span_to(register).unwrap();
-            alu_op::generate_alu_op_2_reg_reg(mnemonic, modifiers, &register, &register)
+            alu_op::generate_alu_op_2_reg_reg(
+                &mnemonic.span_to(&mnemonic.val.into()),
+                modifiers,
+                &register,
+                &register,
+            )
         }
         _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }
 }
 
 fn generate_unary_alu_op_2(
-    mnemonic: &Spanned<&AluCpuMnemonic>,
+    mnemonic: &Spanned<&UnaryAluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -73,7 +77,13 @@ fn generate_unary_alu_op_2(
     match &operand.val {
         ExpressionResult::Register(register) => {
             let register = operand.span_to(register).unwrap();
-            alu_op::generate_alu_op_2_reg(mnemonic, modifiers, &register, operands, symbol_table)
+            alu_op::generate_alu_op_2_reg(
+                &mnemonic.span_to(&mnemonic.val.into()),
+                modifiers,
+                &register,
+                operands,
+                symbol_table,
+            )
         }
         _ => Err(Error::incorrect_type(vec!["register"], &operand.as_ref())),
     }

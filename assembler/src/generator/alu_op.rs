@@ -17,7 +17,7 @@ pub(super) fn generate_alu_op(
 ) -> Result<u32, Error> {
     let mnemonic: Spanned<AluCpuMnemonic> =
         if let AsmMnemonic::BinaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
-            operation.full_mnemonic.mnemonic.span_to(mnemonic.into())
+            operation.full_mnemonic.mnemonic.span_to((&mnemonic).into())
         } else {
             panic!("Function was not called with AsmMnemonic::BinaryAlu");
         };
