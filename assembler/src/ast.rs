@@ -137,6 +137,27 @@ pub(crate) enum CpuMnemonic {
     Ror,
 }
 
+impl CpuMnemonic {
+    pub(crate) fn is_alu_op(&self) -> bool {
+        matches!(
+            self,
+            Self::Pass
+                | Self::And
+                | Self::Or
+                | Self::Xor
+                | Self::Not
+                | Self::Add
+                | Self::Sub
+                | Self::Neg
+                | Self::Shl
+                | Self::Shr
+                | Self::Ashr
+                | Self::Rol
+                | Self::Ror
+        )
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum Modifier {
     Condition(Condition),

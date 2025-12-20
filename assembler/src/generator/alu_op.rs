@@ -16,6 +16,7 @@ pub(super) fn generate_alu_op(
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
     let mnemonic = if let AsmMnemonic::BinaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
+        assert!(mnemonic.is_alu_op());
         operation.full_mnemonic.mnemonic.span_to(mnemonic)
     } else {
         panic!("Function was not called with AsmMnemonic::BinaryAlu");
