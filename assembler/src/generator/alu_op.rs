@@ -1,5 +1,5 @@
 use crate::{
-    ast::{AluOpFlags, AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation, Register},
+    ast::{AluCpuMnemonic, AluOpFlags, AsmMnemonic, Expression, Modifier, Operation, Register},
     error::Error,
     expression::expression_result::{ExpressionResult, Number},
     generator::{self, Generatable},
@@ -15,12 +15,12 @@ pub(super) fn generate_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let mnemonic = if let AsmMnemonic::BinaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
-        assert!(mnemonic.is_alu_op());
-        operation.full_mnemonic.mnemonic.span_to(mnemonic)
-    } else {
-        panic!("Function was not called with AsmMnemonic::BinaryAlu");
-    };
+    let mnemonic: Spanned<AluCpuMnemonic> =
+        if let AsmMnemonic::BinaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
+            operation.full_mnemonic.mnemonic.span_to(mnemonic.into())
+        } else {
+            panic!("Function was not called with AsmMnemonic::BinaryAlu");
+        };
 
     if operation.operands.len() == 2 {
         generate_alu_op_2(
@@ -47,7 +47,7 @@ pub(super) fn generate_alu_op(
 }
 
 fn generate_alu_op_2(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -71,7 +71,7 @@ fn generate_alu_op_2(
 }
 
 fn generate_alu_op_2_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
@@ -96,7 +96,7 @@ fn generate_alu_op_2_reg(
 }
 
 fn generate_alu_op_2_reg_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
@@ -105,7 +105,7 @@ fn generate_alu_op_2_reg_reg(
 }
 
 fn generate_alu_op_2_reg_num(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     number: &Spanned<&Number>,
@@ -114,7 +114,7 @@ fn generate_alu_op_2_reg_num(
 }
 
 fn generate_alu_op_2_num(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     number: &Spanned<&Number>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
@@ -132,7 +132,7 @@ fn generate_alu_op_2_num(
 }
 
 fn generate_alu_op_2_num_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     number: &Spanned<&Number>,
     register: &Spanned<&Register>,
@@ -141,7 +141,7 @@ fn generate_alu_op_2_num_reg(
 }
 
 fn generate_alu_op_3(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -158,7 +158,7 @@ fn generate_alu_op_3(
 }
 
 fn generate_alu_op_3_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
@@ -197,7 +197,7 @@ fn generate_alu_op_3_reg(
 }
 
 fn generate_alu_op_3_reg_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
@@ -223,7 +223,7 @@ fn generate_alu_op_3_reg_reg(
 }
 
 fn generate_alu_op_3_reg_reg_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
@@ -239,7 +239,7 @@ fn generate_alu_op_3_reg_reg_reg(
 }
 
 fn generate_alu_op_3_reg_reg_num(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     register2: &Spanned<&Register>,
@@ -258,7 +258,7 @@ fn generate_alu_op_3_reg_reg_num(
 }
 
 fn generate_alu_op_3_reg_num(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register: &Spanned<&Register>,
     number: &Spanned<&Number>,
@@ -277,7 +277,7 @@ fn generate_alu_op_3_reg_num(
 }
 
 fn generate_alu_op_3_reg_num_reg(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     register1: &Spanned<&Register>,
     number: &Spanned<&Number>,

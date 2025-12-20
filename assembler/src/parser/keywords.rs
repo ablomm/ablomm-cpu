@@ -1,4 +1,6 @@
-use crate::ast::{AluModifier, AsmMnemonic, Condition, CpuMnemonic, Register};
+use crate::ast::{
+    AluModifier, AsmMnemonic, BinaryAluCpuMnemonic, Condition, Register, UnaryAluCpuMnemonic,
+};
 use crate::parser::{Extra, Input};
 use chumsky::prelude::*;
 
@@ -10,18 +12,18 @@ pub(super) fn mnemonic_parser<'src, I: Input<'src>>()
         text::keyword("push").to(AsmMnemonic::Push),
         text::keyword("pop").to(AsmMnemonic::Pop),
         text::keyword("int").to(AsmMnemonic::Int),
-        text::keyword("and").to(AsmMnemonic::BinaryAlu(CpuMnemonic::And)),
-        text::keyword("or").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Or)),
-        text::keyword("xor").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Xor)),
-        text::keyword("not").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Not)),
-        text::keyword("add").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Add)),
-        text::keyword("sub").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Sub)),
-        text::keyword("neg").to(AsmMnemonic::UnaryAlu(CpuMnemonic::Neg)),
-        text::keyword("shl").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shl)),
-        text::keyword("shr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Shr)),
-        text::keyword("ashr").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ashr)),
-        text::keyword("rol").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Rol)),
-        text::keyword("ror").to(AsmMnemonic::BinaryAlu(CpuMnemonic::Ror)),
+        text::keyword("and").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::And)),
+        text::keyword("or").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Or)),
+        text::keyword("xor").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Xor)),
+        text::keyword("not").to(AsmMnemonic::UnaryAlu(UnaryAluCpuMnemonic::Not)),
+        text::keyword("add").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Add)),
+        text::keyword("sub").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Sub)),
+        text::keyword("neg").to(AsmMnemonic::UnaryAlu(UnaryAluCpuMnemonic::Neg)),
+        text::keyword("shl").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Shl)),
+        text::keyword("shr").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Shr)),
+        text::keyword("ashr").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Ashr)),
+        text::keyword("rol").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Rol)),
+        text::keyword("ror").to(AsmMnemonic::BinaryAlu(BinaryAluCpuMnemonic::Ror)),
     ))
     .labelled("mnemonic")
 }

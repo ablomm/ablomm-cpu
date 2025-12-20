@@ -106,8 +106,8 @@ pub(crate) enum AsmMnemonic {
     Push,
     Pop,
     Int,
-    UnaryAlu(CpuMnemonic),
-    BinaryAlu(CpuMnemonic),
+    UnaryAlu(UnaryAluCpuMnemonic),
+    BinaryAlu(BinaryAluCpuMnemonic),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -137,24 +137,92 @@ pub(crate) enum CpuMnemonic {
     Ror,
 }
 
-impl CpuMnemonic {
-    pub(crate) fn is_alu_op(&self) -> bool {
-        matches!(
-            self,
-            Self::Pass
-                | Self::And
-                | Self::Or
-                | Self::Xor
-                | Self::Not
-                | Self::Add
-                | Self::Sub
-                | Self::Neg
-                | Self::Shl
-                | Self::Shr
-                | Self::Ashr
-                | Self::Rol
-                | Self::Ror
-        )
+// just for better typing
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum AluCpuMnemonic {
+    Pass,
+    And,
+    Or,
+    Xor,
+    Not,
+    Add,
+    Sub,
+    Neg,
+    Shl,
+    Shr,
+    Ashr,
+    Rol,
+    Ror,
+}
+
+impl From<AluCpuMnemonic> for CpuMnemonic {
+    fn from(value: AluCpuMnemonic) -> Self {
+        match value {
+            AluCpuMnemonic::Pass => Self::Pass,
+            AluCpuMnemonic::And => Self::And,
+            AluCpuMnemonic::Or => Self::Or,
+            AluCpuMnemonic::Xor => Self::Xor,
+            AluCpuMnemonic::Not => Self::Not,
+            AluCpuMnemonic::Add => Self::Add,
+            AluCpuMnemonic::Sub => Self::Sub,
+            AluCpuMnemonic::Neg => Self::Neg,
+            AluCpuMnemonic::Shl => Self::Shl,
+            AluCpuMnemonic::Shr => Self::Shr,
+            AluCpuMnemonic::Ashr => Self::Ashr,
+            AluCpuMnemonic::Rol => Self::Rol,
+            AluCpuMnemonic::Ror => Self::Ror,
+        }
+    }
+}
+
+// just for better typing
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum UnaryAluCpuMnemonic {
+    #[allow(dead_code)]
+    Pass,
+    Not,
+    Neg,
+}
+
+impl From<UnaryAluCpuMnemonic> for AluCpuMnemonic {
+    fn from(value: UnaryAluCpuMnemonic) -> Self {
+        match value {
+            UnaryAluCpuMnemonic::Pass => Self::Pass,
+            UnaryAluCpuMnemonic::Not => Self::Not,
+            UnaryAluCpuMnemonic::Neg => Self::Neg,
+        }
+    }
+}
+
+// just for better typing
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum BinaryAluCpuMnemonic {
+    And,
+    Or,
+    Xor,
+    Add,
+    Sub,
+    Shl,
+    Shr,
+    Ashr,
+    Rol,
+    Ror,
+}
+
+impl From<BinaryAluCpuMnemonic> for AluCpuMnemonic {
+    fn from(value: BinaryAluCpuMnemonic) -> Self {
+        match value {
+            BinaryAluCpuMnemonic::And => Self::And,
+            BinaryAluCpuMnemonic::Or => Self::Or,
+            BinaryAluCpuMnemonic::Xor => Self::Xor,
+            BinaryAluCpuMnemonic::Add => Self::Add,
+            BinaryAluCpuMnemonic::Sub => Self::Sub,
+            BinaryAluCpuMnemonic::Shl => Self::Shl,
+            BinaryAluCpuMnemonic::Shr => Self::Shr,
+            BinaryAluCpuMnemonic::Ashr => Self::Ashr,
+            BinaryAluCpuMnemonic::Rol => Self::Rol,
+            BinaryAluCpuMnemonic::Ror => Self::Ror,
+        }
     }
 }
 

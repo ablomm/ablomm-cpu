@@ -2,7 +2,7 @@
 // the least significant bits for it's input (i.e. the second input of a binary operation)
 
 use crate::{
-    ast::{AsmMnemonic, CpuMnemonic, Expression, Modifier, Operation},
+    ast::{AluCpuMnemonic, AsmMnemonic, Expression, Modifier, Operation},
     error::Error,
     expression::expression_result::ExpressionResult,
     generator::alu_op,
@@ -14,12 +14,12 @@ pub(crate) fn generate_unary_alu_op(
     operation: &Spanned<&Operation>,
     symbol_table: &SymbolTable,
 ) -> Result<u32, Error> {
-    let mnemonic = if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
-        assert!(mnemonic.is_alu_op());
-        operation.full_mnemonic.mnemonic.span_to(mnemonic)
-    } else {
-        panic!("Function was not called with AsmMnemonic::UnaryAlu");
-    };
+    let mnemonic: Spanned<AluCpuMnemonic> =
+        if let AsmMnemonic::UnaryAlu(mnemonic) = operation.full_mnemonic.mnemonic.val {
+            operation.full_mnemonic.mnemonic.span_to(mnemonic.into())
+        } else {
+            panic!("Function was not called with AsmMnemonic::UnaryAlu");
+        };
 
     if operation.operands.len() == 1 {
         generate_unary_alu_op_1(
@@ -46,7 +46,7 @@ pub(crate) fn generate_unary_alu_op(
 }
 
 fn generate_unary_alu_op_1(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
@@ -63,7 +63,7 @@ fn generate_unary_alu_op_1(
 }
 
 fn generate_unary_alu_op_2(
-    mnemonic: &Spanned<&CpuMnemonic>,
+    mnemonic: &Spanned<&AluCpuMnemonic>,
     modifiers: &Spanned<&Vec<Spanned<Modifier>>>,
     operands: &Spanned<&Vec<Spanned<Expression>>>,
     symbol_table: &SymbolTable,
