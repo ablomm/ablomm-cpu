@@ -1,6 +1,6 @@
 use crate::ast::{
-    AluCpuMnemonic, AluModifier, AluOpFlags, AsmMnemonic, Block, Condition, CpuMnemonic,
-    Expression, File, Modifier, Operation, Register,
+    AluCpuMnemonic, AluModifier, AluOpFlags, AsmMnemonic, BinaryAluCpuMnemonic, Block, Condition,
+    CpuMnemonic, Expression, File, Modifier, Operation, Register, UnaryAluCpuMnemonic,
 };
 use crate::ast::{Ast, Statement};
 use crate::error::{ATTENTION_COLOR, Error, RecoveredError, RecoveredResult, SpannedError};
@@ -240,6 +240,20 @@ impl Generatable for AluCpuMnemonic {
     fn generate(&self) -> u32 {
         let cpu_mnemonic: CpuMnemonic = self.into();
         cpu_mnemonic.generate()
+    }
+}
+
+impl Generatable for UnaryAluCpuMnemonic {
+    fn generate(&self) -> u32 {
+        let alu_cpu_mnemonic: AluCpuMnemonic = self.into();
+        alu_cpu_mnemonic.generate()
+    }
+}
+
+impl Generatable for BinaryAluCpuMnemonic {
+    fn generate(&self) -> u32 {
+        let alu_cpu_mnemonic: AluCpuMnemonic = self.into();
+        alu_cpu_mnemonic.generate()
     }
 }
 
