@@ -19,7 +19,7 @@ pub(super) fn expression_parser<'src, I: Input<'src>>()
                 .delimited_by(just('('), just(')'))
                 .labelled("sub-expression"),
         ))
-        .map_with(|val, e| Spanned::new(val, e.span()))
+        .spanned()
         .boxed();
 
         let unary = choice((
@@ -30,10 +30,10 @@ pub(super) fn expression_parser<'src, I: Input<'src>>()
             just('~').to(Expression::Not as fn(_) -> _),
         ))
         .labelled("unary operator")
-        .map_with(|val, e| Spanned::new(val, e.span()))
+        .spanned()
         .padded_by(parser::comment_pad())
         .repeated()
-        .foldr(atom, |op, rhs| {
+        .foldr(atom, |op: Spanned<fn(_) -> _>, rhs: Spanned<_>| {
             let span = op.span.union(&rhs.span); // can't inline because value is moved before span can be created
             Spanned::new(op(Box::new(rhs)), span)
         })

@@ -108,6 +108,22 @@ impl chumsky::span::Span for Span {
     }
 }
 
+impl<T> chumsky::span::WrappingSpan<T> for Span {
+    type Spanned = Spanned<T>;
+
+    fn make_wrapped(self, inner: T) -> Self::Spanned {
+        Spanned::new(inner, self)
+    }
+
+    fn span_of(spanned: &Self::Spanned) -> &Self {
+        &spanned.span
+    }
+
+    fn inner_of(spanned: &Self::Spanned) -> &T {
+        &spanned.val
+    }
+}
+
 impl ariadne::Span for Span {
     type SourceId = Intern<Src>;
 
@@ -125,8 +141,10 @@ impl ariadne::Span for Span {
 }
 
 // just a struct to hold a span and a value for error messages
+// pub because of impl WrappingSpan (Rust doesn't support private impl of public trait and type)
+// also may eventually return errors with Spanned Ast nodes, so should be pub in that case
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct Spanned<T> {
+pub struct Spanned<T> {
     pub(crate) val: T,
     pub(crate) span: Span,
 }
@@ -165,6 +183,7 @@ impl<T> Spanned<&mut T> {
 // just for simplicity (i.e. removes ".val" everywhere)
 impl<T> Deref for Spanned<T> {
     type Target = T;
+
     fn deref(&self) -> &Self::Target {
         &self.val
     }

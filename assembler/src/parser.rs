@@ -32,7 +32,7 @@ impl<'src, T> Input<'src> for T where T: StrInput<'src, Token = char, Span = Spa
 
 pub(super) fn file_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, File, Extra<'src>> {
     statement_parser()
-        .map_with(|val, e| Spanned::new(val, e.span()))
+        .spanned()
         .padded_by(comment_pad())
         .repeated()
         .collect::<Vec<_>>()
@@ -53,7 +53,7 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
         .then(
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
-                .map_with(|val, e| Spanned::new(val, e.span()))
+                .spanned()
                 .padded_by(comment_pad()),
         )
         .map(|(export, identifier)| Label {
@@ -67,11 +67,11 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
         .then(
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
-                .map_with(|val, e| Spanned::new(val, e.span()))
+                .spanned()
                 .padded_by(comment_pad()),
         )
         .then_ignore(just('=').padded_by(comment_pad()))
-        .then(expression::expression_parser().map_with(|val, e| Spanned::new(val, e.span())))
+        .then(expression::expression_parser().spanned())
         .map(|((export, identifier), expression)| Assignment {
             export: export.is_some(),
             identifier,
@@ -83,7 +83,7 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
         .ignore_then(
             text::ident()
                 .map(|s: &str| Intern::new(s.to_string()))
-                .map_with(|val, e| Spanned::new(val, e.span()))
+                .spanned()
                 .padded_by(comment_pad())
                 .separated_by(just(','))
                 .collect::<Vec<_>>(),
@@ -92,7 +92,7 @@ fn statement_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Statement, E
 
     recursive(|statement| {
         let block = statement
-            .map_with(|val, e| Spanned::new(val, e.span()))
+            .spanned()
             .padded_by(comment_pad())
             .repeated()
             .collect::<Vec<_>>()
@@ -156,29 +156,23 @@ fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, E
         .labelled("modifier");
 
     let full_mnemonic = keywords::mnemonic_parser()
-        .map_with(|val, e| Spanned::new(val, e.span()))
-        .then(
-            modifier
-                .map_with(|val, e| Spanned::new(val, e.span()))
-                .repeated()
-                .collect::<Vec<_>>()
-                .map_with(|val, e| Spanned::new(val, e.span())),
-        )
+        .spanned()
+        .then(modifier.spanned().repeated().collect::<Vec<_>>().spanned())
         .map(|(mnemonic, modifiers)| FullMnemonic {
             mnemonic,
             modifiers,
         });
 
     full_mnemonic
-        .map_with(|val, e| Spanned::new(val, e.span()))
+        .spanned()
         .padded_by(comment_pad())
         .then(
             expression::expression_parser()
-                .map_with(|val, e| Spanned::new(val, e.span()))
+                .spanned()
                 .padded_by(comment_pad())
                 .separated_by(just(','))
                 .collect::<Vec<_>>()
-                .map_with(|val, e| Spanned::new(val, e.span())),
+                .spanned(),
         )
         .map(|(full_mnemonic, operands)| Operation {
             full_mnemonic,
@@ -190,14 +184,14 @@ fn operation_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Operation, E
 fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'src>> {
     let named_import = text::ident()
         .map(|s: &str| Intern::new(s.to_string()))
-        .map_with(|val, e| Spanned::new(val, e.span()))
+        .spanned()
         .then(
             text::keyword("as")
                 .padded_by(comment_pad())
                 .ignore_then(
                     text::ident()
                         .map(|s: &str| Intern::new(s.to_string()))
-                        .map_with(|val, e| Spanned::new(val, e.span())),
+                        .spanned(),
                 )
                 .or_not(),
         )
@@ -208,13 +202,13 @@ fn import_parser<'src, I: Input<'src>>() -> impl Parser<'src, I, Import, Extra<'
             choice((
                 just("*").to(ImportSpecifier::Glob),
                 named_import
-                    .map_with(|val, e| Spanned::new(val, e.span()))
+                    .spanned()
                     .padded_by(comment_pad())
                     .separated_by(just(','))
                     .collect::<Vec<_>>()
                     .map(ImportSpecifier::Named),
             ))
-            .map_with(|val, e| Spanned::new(val, e.span()))
+            .spanned()
             .padded_by(comment_pad()),
         )
         .then(text::keyword("from").padded_by(comment_pad()).ignore_then(

@@ -85,7 +85,7 @@ impl Spanned<Intern<Src>> {
         };
 
         let (file, errors) = parser::file_parser()
-            .map_with(|val, e| Spanned::new(val, e.span()))
+            .spanned()
             .parse(assembly_code.with_context(self.val))
             .into_output_errors();
 
