@@ -25,4 +25,6 @@ The CPU will run when the `en` port is set.
 
 The CPU will be paused when the `en` port is clear.
 
-The CPU will be reset on a rising edge of `rst`.
+## Resetting
+
+The CPU will be reset on a rising edge of `rst` (asynchronous reset).
