@@ -488,7 +488,7 @@ The below table enumerates each condition:
 <td>eq</td>
 <td>
       
-`sub.t x, y` where `x == y`
+`sub.t x, y;` where `x == y`
 
 <td>
 
@@ -521,7 +521,7 @@ Zero flag is set; alias for `eq`
 <td>ne</td>
 <td>
       
-`sub.t x, y` where `x != y`
+`sub.t x, y;` where `x != y`
 
 <td>
 
@@ -554,7 +554,7 @@ Zero flag is clear; alias for `ne`
 <td>neg</td>
 <td>
       
-Last ALU operation resulted in negative number if interpreted as a signed value
+The last ALU operation (with S set) resulted in a negative number if interpreted as a signed value
 
 <td>
 
@@ -587,7 +587,7 @@ Negative flag is set; alias for `neg`
 <td>pos</td>
 <td>
       
-Last ALU operation resulted in positive number if interpreted as a signed value
+The last ALU operation (with S set) resulted in a positive number if interpreted as a signed value
 
 <td>
 
@@ -597,7 +597,7 @@ Last ALU operation resulted in positive number if interpreted as a signed value
 <td rowspan="2">POS</td>
 <td rowspan="2">
 
-`if (!N) { *(fp + 3) = r9 }`
+`if (!N) { *(fp + 3) = r0 }`
 
 </td>
 </tr>
@@ -617,10 +617,50 @@ Negative flag is clear; alias for `pos`
 </tr>
 
 <tr>
+<td>vs</td>
+<td>
+      
+The last ALU operation (with S set) resulted in a signed overflow
+
+</td>
+<td>
+
+`ld.vs *(fp + 5), r3;`
+      
+</td>
+<td>VS</td>
+<td>
+
+`if (V) { *(fp + 5) = r3 }`
+
+</td>
+</tr>
+
+<tr>
+<td>vc</td>
+<td>
+      
+The last ALU operation (with S set) did not result in a signed overflow
+
+</td>
+<td>
+
+`ld.vc pc, r5;`
+      
+</td>
+<td>VC</td>
+<td>
+
+`if (!V) { pc = r5 }`
+
+</td>
+</tr>
+
+<tr>
 <td>ult</td>
 <td>
       
-`sub.t x, y` where x and y are unsigned, and `x < y`
+`sub.t x, y;` where x and y are unsigned, and `x < y`
 
 <td>
 
@@ -653,7 +693,7 @@ Carry flag is clear; alias for `ult`
 <td>ugt</td>
 <td>
       
-`sub.t x, y` where x and y are unsigned, and `x > y`
+`sub.t x, y;` where x and y are unsigned, and `x > y`
 
 <td>
 
@@ -672,7 +712,7 @@ Carry flag is clear; alias for `ult`
 <td>ule</td>
 <td>
       
-`sub.t x, y` where x and y are unsigned, and `x <= y`
+`sub.t x, y;` where x and y are unsigned, and `x <= y`
 
 <td>
 
@@ -691,7 +731,7 @@ Carry flag is clear; alias for `ult`
 <td>uge</td>
 <td>
       
-`sub.t x, y` where x and y are unsigned, and `x >= y`
+`sub.t x, y;` where x and y are unsigned, and `x >= y`
 
 <td>
 
@@ -724,7 +764,7 @@ Carry flag is set; alias for `uge`
 <td>slt</td>
 <td>
       
-`sub.t x, y` where x and y are signed, and `x < y`
+`sub.t x, y;` where x and y are signed, and `x < y`
 
 <td>
 
@@ -743,7 +783,7 @@ Carry flag is set; alias for `uge`
 <td>sgt</td>
 <td>
       
-`sub.t x, y` where x and y are signed, and `x > y`
+`sub.t x, y;` where x and y are signed, and `x > y`
 
 <td>
 
@@ -762,7 +802,7 @@ Carry flag is set; alias for `uge`
 <td>sle</td>
 <td>
 
-`sub.t x, y` where x and y are signed, and `x <= y`
+`sub.t x, y;` where x and y are signed, and `x <= y`
 
 <td>
 
@@ -781,7 +821,7 @@ Carry flag is set; alias for `uge`
 <td>sge</td>
 <td>
 
-`sub.t x, y` where x and y are signed, and `x >= y`
+`sub.t x, y;` where x and y are signed, and `x >= y`
 
 <td>
 
