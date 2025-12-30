@@ -64,8 +64,8 @@ The first four of these flags are used for conditional execution. The following 
 | NE | 0x2 | `sub.t x, y` where `x != y` | `!Z` |
 | NEG | 0x3 | Last ALU operation resulted in negative number if interpreted as a signed value | `N` |
 | POS | 0x4 | Last ALU operation resulted in positive number if interpreted as a signed value | `!N` |
-| Vs | 0x5 | Last ALU operation resulted in a signed overflow | `V` |
-| Vc | 0x6 | Last ALU operation did not result in a signed overflow | `!V` |
+| VS | 0x5 | Last ALU operation resulted in a signed overflow | `V` |
+| VC | 0x6 | Last ALU operation did not result in a signed overflow | `!V` |
 | ULT | 0x7 | `sub.t x, y` where x and y are unsigned, and `x < y` | `!C` |
 | UGT | 0x8 | `sub.t x, y` where x and y are unsigned, and `x > y`  | `C && !Z` |
 | ULE | 0x9 | `sub.t x, y` where x and y are unsigned, and `x <= y` | `!C \|\| Z` |
