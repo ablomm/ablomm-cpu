@@ -59,21 +59,21 @@ The first four of these flags are used for conditional execution. The following 
 
 | Condition | Code | Description | NZCV Expression |
 |---|---|---|---|
-| NONE | 0x0 | always executes | `true` |
-| EQ | 0x1 | `sub.t x, y` where `x == y` | `Z` |
-| NE | 0x2 | `sub.t x, y` where `x != y` | `!Z` |
-| NEG | 0x3 | Last ALU operation resulted in negative number if interpreted as a signed value | `N` |
-| POS | 0x4 | Last ALU operation resulted in positive number if interpreted as a signed value | `!N` |
-| VS | 0x5 | Last ALU operation resulted in a signed overflow | `V` |
-| VC | 0x6 | Last ALU operation did not result in a signed overflow | `!V` |
-| ULT | 0x7 | `sub.t x, y` where x and y are unsigned, and `x < y` | `!C` |
-| UGT | 0x8 | `sub.t x, y` where x and y are unsigned, and `x > y`  | `C && !Z` |
-| ULE | 0x9 | `sub.t x, y` where x and y are unsigned, and `x <= y` | `!C \|\| Z` |
-| UGE | 0xa | `sub.t x, y` where x and y are unsigned, and `x >= y`  | `C` |
-| SLT | 0xb | `sub.t x, y` where x and y are signed, and `x < y`  | `N !== V` |
-| SGT | 0xc | `sub.t x, y` where x and y are signed, and `x > y`  | `!Z && (N == V)` |
-| SLE | 0xd | `sub.t x, y` where x and y are signed, and `x <= y`  | `Z \|\| (N != V)` |
-| SGE | 0xe | `sub.t x, y` where x and y are signed, and `x >= y`  | `N == V` |
+| NONE | 0x0 | Always executes | `true` |
+| EQ | 0x1 | `sub.t x, y;` where `x == y` | `Z` |
+| NE | 0x2 | `sub.t x, y;` where `x != y` | `!Z` |
+| NEG | 0x3 | The last ALU operation (with S set) resulted in a negative number if interpreted as a signed value | `N` |
+| POS | 0x4 | The last ALU operation (with S set) resulted in a positive number if interpreted as a signed value | `!N` |
+| VS | 0x5 | The last ALU operation (with S set) resulted in a signed overflow | `V` |
+| VC | 0x6 | The last ALU operation (with S set) did not result in a signed overflow | `!V` |
+| ULT | 0x7 | `sub.t x, y;` where x and y are unsigned, and `x < y` | `!C` |
+| UGT | 0x8 | `sub.t x, y;` where x and y are unsigned, and `x > y`  | `C && !Z` |
+| ULE | 0x9 | `sub.t x, y;` where x and y are unsigned, and `x <= y` | `!C \|\| Z` |
+| UGE | 0xa | `sub.t x, y;` where x and y are unsigned, and `x >= y`  | `C` |
+| SLT | 0xb | `sub.t x, y;` where x and y are signed, and `x < y`  | `N !== V` |
+| SGT | 0xc | `sub.t x, y;` where x and y are signed, and `x > y`  | `!Z && (N == V)` |
+| SLE | 0xd | `sub.t x, y;` where x and y are signed, and `x <= y`  | `Z \|\| (N != V)` |
+| SGE | 0xe | `sub.t x, y;` where x and y are signed, and `x >= y`  | `N == V` |
 
 > [!NOTE]
 > The assembly has more conditions that will alias to this set. The extra aliased conditions are documented in the [Instructions document](../assembler/instructions.md#condition-modifiers). Uppercase distinguishes conditions as seen by the CPU and conditions as seen by the assembler.
@@ -256,10 +256,10 @@ You may have noticed the ALU CPU instruction contains four bits named `I`, `R`, 
 
 | Flag | Description | Purpose |
 |---|---|---|
-| I | Immediate flag; if set to 1, then the last 16 bits of the instruction is interpreted as an immediate value | So we can do stuff like `add, r1, 123` |
-| R | Reverse flag; if set to 1, then the role of Register B, and Register C (or immediate) is flipped | So we can do stuff like `sub 123, r1`; not really useful for if I=0 |
-| Ln | Loadn flag; if set to 1, then do not load the result of the operation into Register A | So we can do stuff like `sub.t, r1, r2`; not really useful for if S=0, but note the .t is like `TST` is other ISAs |
-| S | Set status flag; if set to 1, then sets the status register with it's various flags | So we can do stuff like `sub.s, r1, r2` |
+| I | Immediate flag; if set to 1, then the last 16 bits of the instruction is interpreted as an immediate value | So we can do stuff like `add r1, 123;` |
+| R | Reverse flag; if set to 1, then the role of Register B, and Register C (or immediate) is flipped | So we can do stuff like `sub 123, r1;`. it is not really useful for if I=0 |
+| Ln | Loadn flag; if set to 1, then do not load the result of the operation into Register A | So we can do stuff like `sub.t r1, r2;`. it is not really useful for if S=0, but note the `.t` is like `TST` is other ISAs |
+| S | Set status flag; if set to 1, then sets the status register with it's various flags | So we can do stuff like `sub.s r1, r2;` |
 
 # Interrupt Vector Table
 
